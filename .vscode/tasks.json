@@ -1,0 +1,44 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "process",
+            "label": "simple.ssd",
+            "command": "./bin/build.sh",            
+            "problemMatcher": {
+                "owner": "6502",
+                "fileLocation": [
+                    "relative",
+                    "${workspaceRoot}"
+                ],
+                "pattern": {
+                    "regexp": "^(.*):(\\d+):\\s+(warning|error):\\s+(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "severity": 3,
+                    "message": 4
+                }
+            },
+            "args": [ ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },           
+            "isBuildCommand": true
+        },
+        {
+            "type": "process",
+            "label": "Run 'simple.ssd' in Emulator",
+            "command": "/Applications/b2debug.app/Contents/MacOS/b2",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },           
+            "args": [
+                "-0",
+                "dist/firetrack-adji.ssd",
+                "-b"
+            ]
+        }
+    ]
+}

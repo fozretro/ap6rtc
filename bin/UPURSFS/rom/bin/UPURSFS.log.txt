@@ -1,0 +1,1826 @@
+.start
+     8000   4C 67 80   JMP &8067
+     8003   4C 6D 80   JMP &806D
+     8006   82
+     8007   28
+Macro VERSION_BYTE:
+     8008   01
+End macro VERSION_BYTE
+Macro VERSION_NAME:
+     8009   48 6F 73 ...
+End macro VERSION_NAME
+     8015   00
+Macro VERSION_STRING:
+     8016   30 2E 30 ...
+End macro VERSION_STRING
+     801A   20 28 
+Macro VERSION_DATE:
+     801C   30 36 20 ...
+End macro VERSION_DATE
+     8027   29 
+.Copyright
+     8028   00         BRK
+     8029   28 43 29 
+     802C   53 74 65 ...
+     8066   00         BRK
+.Language
+     8067   20 B0 81   JSR &81B0
+     806A   4C E1 83   JMP &83E1
+.Service
+     806D   C9 01      CMP #&01
+     806F   F0 2F      BEQ &80A0
+     8071   C9 03      CMP #&03
+     8073   F0 2C      BEQ &80A1
+     8075   C9 04      CMP #&04
+     8077   D0 03      BNE &807C
+     8079   4C 1E 81   JMP &811E
+     807C   C9 09      CMP #&09
+     807E   D0 03      BNE &8083
+     8080   4C 69 81   JMP &8169
+     8083   C9 0F      CMP #&0F
+     8085   D0 03      BNE &808A
+     8087   4C AA 81   JMP &81AA
+     808A   C9 10      CMP #&10
+     808C   D0 03      BNE &8091
+     808E   4C AB 81   JMP &81AB
+     8091   C9 12      CMP #&12
+     8093   D0 03      BNE &8098
+     8095   4C DF 81   JMP &81DF
+     8098   C9 25      CMP #&25
+     809A   D0 03      BNE &809F
+     809C   4C 3F 82   JMP &823F
+     809F   60         RTS
+.Serv1
+     80A0   60         RTS
+.Serv3
+     80A1   98         TYA
+     80A2   48         PHA
+     80A3   A9 7A      LDA #&7A
+     80A5   20 F4 FF   JSR &FFF4
+     80A8   E0 FF      CPX #&FF
+     80AA   F0 0E      BEQ &80BA
+     80AC   E0 35      CPX #&35
+     80AE   F0 05      BEQ &80B5
+     80B0   68         PLA
+     80B1   A8         TAY
+     80B2   A9 03      LDA #&03
+     80B4   60         RTS
+.Serv3Select0
+     80B5   A9 78      LDA #&78
+     80B7   20 F4 FF   JSR &FFF4
+.Serv3Select
+     80BA   20 5A 82   JSR &825A
+     80BD   20 72 81   JSR &8172
+     80C0   20 E7 FF   JSR &FFE7
+     80C3   68         PLA
+     80C4   48         PHA
+     80C5   F0 11      BEQ &80D8
+     80C7   A9 FD      LDA #&FD
+     80C9   A2 00      LDX #&00
+     80CB   A0 FF      LDY #&FF
+     80CD   20 F4 FF   JSR &FFF4
+     80D0   E0 00      CPX #&00
+     80D2   D0 04      BNE &80D8
+     80D4   68         PLA
+     80D5   4C 1B 81   JMP &811B
+.ShCtlBreak
+     80D8   20 72 8B   JSR &8B72
+     80DB   D0 04      BNE &80E1
+     80DD   68         PLA
+     80DE   4C 1B 81   JMP &811B
+.breakRTSOk
+     80E1   A0 00      LDY #&00
+     80E3   A9 FF      LDA #&FF
+     80E5   20 3C 82   JSR &823C
+     80E8   68         PLA
+     80E9   D0 30      BNE &811B
+     80EB   C0 00      CPY #&00
+     80ED   F0 2C      BEQ &811B
+     80EF   C0 02      CPY #&02
+     80F1   90 08      BCC &80FB
+     80F3   F0 0C      BEQ &8101
+     80F5   A2 13      LDX #&13
+     80F7   A0 81      LDY #&81
+     80F9   D0 0A      BNE &8105
+.do_loadboot
+     80FB   A2 0B      LDX #&0B
+     80FD   A0 81      LDY #&81
+     80FF   D0 04      BNE &8105
+.do_runboot
+     8101   A2 15      LDX #&15
+     8103   A0 81      LDY #&81
+.do_boot
+     8105   20 F7 FF   JSR &FFF7
+     8108   A9 00      LDA #&00
+     810A   60         RTS
+.loadboot
+     810B   4C 2E 21 ...
+     8112   0D
+.execboot
+     8113   45 2E 
+.runboot
+     8115   21 42 4F ...
+     811A   0D
+.Serv3Ok
+     811B   A9 00      LDA #&00
+     811D   60         RTS
+.Serv4
+     811E   98         TYA
+     811F   48         PHA
+     8120   88         DEY
+     8121   A2 FF      LDX #&FF
+.Serv4Lp
+     8123   E8         INX
+     8124   C8         INY
+     8125   B1 F2      LDA (&F2),Y
+     8127   C9 2E      CMP #&2E
+     8129   F0 1D      BEQ &8148
+     812B   C9 21      CMP #&21
+     812D   90 11      BCC &8140
+     812F   DD 4F 82   CMP &824F,X
+     8132   F0 EF      BEQ &8123
+     8134   49 20      EOR #&20
+     8136   DD 4F 82   CMP &824F,X
+     8139   F0 E8      BEQ &8123
+.Serv4Quit
+     813B   68         PLA
+     813C   A8         TAY
+     813D   A9 04      LDA #&04
+     813F   60         RTS
+.Serv4End
+     8140   BD 4F 82   LDA &824F,X
+     8143   C9 20      CMP #&20
+     8145   D0 F4      BNE &813B
+     8147   88         DEY
+.Serv4Dot
+     8148   C8         INY
+     8149   B1 F2      LDA (&F2),Y
+     814B   C9 20      CMP #&20
+     814D   F0 F9      BEQ &8148
+     814F   29 DF      AND #&DF
+     8151   C9 4F      CMP #&4F
+     8153   D0 0D      BNE &8162
+     8155   C8         INY
+     8156   B1 F2      LDA (&F2),Y
+     8158   29 DF      AND #&DF
+     815A   C9 4E      CMP #&4E
+     815C   F0 52      BEQ &81B0
+     815E   C9 46      CMP #&46
+     8160   F0 4A      BEQ &81AC
+.Serv4FS
+     8162   20 5A 82   JSR &825A
+     8165   68         PLA
+     8166   A9 00      LDA #&00
+     8168   60         RTS
+.Serv9
+     8169   B1 F2      LDA (&F2),Y
+     816B   C9 0D      CMP #&0D
+     816D   D0 38      BNE &81A7
+     816F   20 E7 FF   JSR &FFE7
+.Serv9a
+     8172   A2 00      LDX #&00
+.Serv9Lp
+     8174   BD 09 80   LDA &8009,X
+     8177   D0 04      BNE &817D
+     8179   A9 20      LDA #&20
+     817B   D0 04      BNE &8181
+.Serv9Chk
+     817D   C9 20      CMP #&20
+     817F   F0 06      BEQ &8187
+.Serv9Char
+     8181   20 EE FF   JSR &FFEE
+     8184   E8         INX
+     8185   D0 ED      BNE &8174
+.Serv9Done
+     8187   20 72 8B   JSR &8B72
+     818A   D0 18      BNE &81A4
+     818C   A2 00      LDX #&00
+.Serv9NoRTSLoop
+     818E   BD 9A 81   LDA &819A,X
+     8191   F0 11      BEQ &81A4
+     8193   20 EE FF   JSR &FFEE
+     8196   E8         INX
+     8197   4C 8E 81   JMP &818E
+.Serv9NoRTS
+     819A   20 28 4E ...
+     81A3   00         BRK
+.Serv9RTS
+     81A4   20 E7 FF   JSR &FFE7
+.Serv9Exit
+     81A7   A9 09      LDA #&09
+     81A9   60         RTS
+.ServF
+     81AA   60         RTS
+.Serv10
+     81AB   60         RTS
+.HostFSOff
+     81AC   68         PLA
+     81AD   A9 00      LDA #&00
+     81AF   60         RTS
+.HostFSOn
+     81B0   68         PLA
+     81B1   A2 00      LDX #&00
+     81B3   A0 0C      LDY #&0C
+.Serv12LpA
+     81B5   98         TYA
+     81B6   9D 08 02   STA &0208,X
+     81B9   A9 FF      LDA #&FF
+     81BB   9D 09 02   STA &0209,X
+     81BE   BD 64 82   LDA &8264,X
+     81C1   99 9F 0D   STA &0D9F,Y
+     81C4   BD 65 82   LDA &8265,X
+     81C7   99 A0 0D   STA &0DA0,Y
+     81CA   A5 F4      LDA &F4
+     81CC   99 A1 0D   STA &0DA1,Y
+     81CF   C8         INY
+     81D0   C8         INY
+     81D1   C8         INY
+     81D2   E8         INX
+     81D3   E8         INX
+     81D4   E0 08      CPX #&08
+     81D6   D0 DD      BNE &81B5
+     81D8   F0 3E      BEQ &8218
+     81DA   A5 F4      LDA &F4
+     81DC   8D 8C 02   STA &028C
+.Serv12
+     81DF   CC 59 82   CPY &8259
+     81E2   F0 01      BEQ &81E5
+     81E4   60         RTS
+     81E5   A9 06      LDA #&06
+     81E7   20 3C 82   JSR &823C
+     81EA   A2 00      LDX #&00
+     81EC   A0 1B      LDY #&1B
+.Serv12Lp
+     81EE   98         TYA
+     81EF   9D 12 02   STA &0212,X
+     81F2   A9 FF      LDA #&FF
+     81F4   9D 13 02   STA &0213,X
+     81F7   BD 6E 82   LDA &826E,X
+     81FA   99 9F 0D   STA &0D9F,Y
+     81FD   BD 6F 82   LDA &826F,X
+     8200   99 A0 0D   STA &0DA0,Y
+     8203   A5 F4      LDA &F4
+     8205   99 A1 0D   STA &0DA1,Y
+     8208   C8         INY
+     8209   C8         INY
+     820A   C8         INY
+     820B   E8         INX
+     820C   E8         INX
+     820D   E0 0E      CPX #&0E
+     820F   D0 DD      BNE &81EE
+     8211   A9 8F      LDA #&8F
+     8213   A2 0F      LDX #&0F
+     8215   20 F4 FF   JSR &FFF4
+.Serv12Serial
+     8218   A9 FF      LDA #&FF
+     821A   8D 62 FE   STA &FE62
+     821D   8D 60 FE   STA &FE60
+     8220   A9 7D      LDA #&7D
+     8222   8D 62 FE   STA &FE62
+     8225   8D 60 FE   STA &FE60
+     8228   A9 00      LDA #&00
+     822A   8D 6B FE   STA &FE6B
+     822D   A9 00      LDA #&00
+     822F   85 B5      STA &B5
+     8231   A9 10      LDA #&10
+     8233   85 B8      STA &B8
+     8235   A9 0D      LDA #&0D
+     8237   85 B9      STA &B9
+     8239   A9 00      LDA #&00
+     823B   60         RTS
+.CallFSCV
+     823C   6C 1E 02   JMP (&021E)
+.Serv25
+     823F   A2 00      LDX #&00
+.Serv25Lp
+     8241   BD 4F 82   LDA &824F,X
+     8244   91 F2      STA (&F2),Y
+     8246   C8         INY
+     8247   E8         INX
+     8248   E0 0B      CPX #&0B
+     824A   D0 F5      BNE &8241
+     824C   A9 25      LDA #&25
+     824E   60         RTS
+.Serv25Table
+     824F   55 50 55 ...
+     8257   80
+     8258   9F
+     8259   09
+.SelectFS
+     825A   AC 59 82   LDY &8259
+     825D   A2 12      LDX #&12
+     825F   A9 8F      LDA #&8F
+     8261   4C F4 FF   JMP &FFF4
+.IOVectors
+     8264   F0 84
+     8266   A7 85
+     8268   42 86
+     826A   FF 87
+     826C   E4 84
+.FSVectors
+     826E   88 87
+     8270   7C 82
+     8272   4A 87
+     8274   56 87
+     8276   C3 87
+     8278   9E 82
+     827A   B5 82
+.HostARGS
+     827C   C0 00      CPY #&00
+     827E   D0 06      BNE &8286
+     8280   C9 01      CMP #&01
+     8282   90 05      BCC &8289
+     8284   F0 07      BEQ &828D
+.TubeARGS
+     8286   4C 0E 87   JMP &870E
+.HostARGS0
+     8289   AD 59 82   LDA &8259
+     828C   60         RTS
+.HostARGS1
+     828D   A5 CE      LDA &CE
+     828F   95 00      STA &00,X
+     8291   A5 CF      LDA &CF
+     8293   95 01      STA &01,X
+     8295   A9 FF      LDA #&FF
+     8297   95 02      STA &02,X
+     8299   95 03      STA &03,X
+     829B   A9 00      LDA #&00
+     829D   60         RTS
+.HostFIND
+     829E   C9 00      CMP #&00
+     82A0   D0 10      BNE &82B2
+     82A2   C0 00      CPY #&00
+     82A4   D0 0C      BNE &82B2
+     82A6   8A         TXA
+     82A7   48         PHA
+     82A8   A9 77      LDA #&77
+     82AA   20 F4 FF   JSR &FFF4
+     82AD   68         PLA
+     82AE   AA         TAX
+     82AF   A9 00      LDA #&00
+     82B1   A8         TAY
+.TubeFind
+     82B2   4C 6A 87   JMP &876A
+.HostFSC
+     82B5   C9 06      CMP #&06
+     82B7   F0 0B      BEQ &82C4
+     82B9   C9 07      CMP #&07
+     82BB   F0 19      BEQ &82D6
+     82BD   C9 08      CMP #&08
+     82BF   F0 1B      BEQ &82DC
+     82C1   4C A1 85   JMP &85A1
+.HostFSC6
+     82C4   A9 9C      LDA #&9C
+     82C6   A2 56      LDX #&56
+     82C8   A0 00      LDY #&00
+     82CA   20 F4 FF   JSR &FFF4
+     82CD   A9 E8      LDA #&E8
+     82CF   A2 FF      LDX #&FF
+     82D1   A0 00      LDY #&00
+     82D3   20 F4 FF   JSR &FFF4
+.HostFSC7
+     82D6   AE 57 82   LDX &8257
+     82D9   AC 58 82   LDY &8258
+.HostFSCQuit
+     82DC   60         RTS
+.Error
+     82DD   68         PLA
+     82DE   85 FD      STA &FD
+     82E0   68         PLA
+     82E1   85 FE      STA &FE
+     82E3   A0 00      LDY #&00
+     82E5   8C 00 01   STY &0100
+     82E8   C8         INY
+     82E9   B1 FD      LDA (&FD),Y
+     82EB   99 00 01   STA &0100,Y
+.ErrorLp
+     82EE   C8         INY
+     82EF   B1 FD      LDA (&FD),Y
+     82F1   99 00 01   STA &0100,Y
+     82F4   D0 F8      BNE &82EE
+     82F6   4C 00 01   JMP &0100
+.PrHex
+     82F9   08         PHP
+     82FA   48         PHA
+     82FB   20 01 83   JSR &8301
+     82FE   68         PLA
+     82FF   28         PLP
+     8300   60         RTS
+.PrHex2
+     8301   48         PHA
+     8302   4A         LSR A
+     8303   4A         LSR A
+     8304   4A         LSR A
+     8305   4A         LSR A
+     8306   20 0A 83   JSR &830A
+     8309   68         PLA
+.PrNyb
+     830A   29 0F      AND #&0F
+     830C   C9 0A      CMP #&0A
+     830E   90 02      BCC &8312
+     8310   69 06      ADC #&06
+.PrDig
+     8312   69 30      ADC #&30
+     8314   4C CB FF   JMP &FFCB
+.PrStack
+     8317   08         PHP
+     8318   48         PHA
+     8319   8A         TXA
+     831A   48         PHA
+     831B   BA         TSX
+     831C   BD 06 01   LDA &0106,X
+     831F   20 F9 82   JSR &82F9
+     8322   BD 07 01   LDA &0107,X
+     8325   20 F9 82   JSR &82F9
+     8328   BD 08 01   LDA &0108,X
+     832B   20 F9 82   JSR &82F9
+     832E   BD 09 01   LDA &0109,X
+     8331   20 F9 82   JSR &82F9
+     8334   BD 0A 01   LDA &010A,X
+     8337   20 F9 82   JSR &82F9
+     833A   BD 0B 01   LDA &010B,X
+     833D   20 F9 82   JSR &82F9
+     8340   BD 0C 01   LDA &010C,X
+     8343   20 F9 82   JSR &82F9
+     8346   BD 0D 01   LDA &010D,X
+     8349   20 F9 82   JSR &82F9
+     834C   BD 0E 01   LDA &010E,X
+     834F   20 F9 82   JSR &82F9
+     8352   BD 0F 01   LDA &010F,X
+     8355   20 F9 82   JSR &82F9
+     8358   68         PLA
+     8359   AA         TAX
+     835A   68         PLA
+     835B   28         PLP
+     835C   60         RTS
+.RESET
+     835D   A2 00      LDX #&00
+.LF802
+     835F   BD 00 FF   LDA &FF00,X
+     8362   9D 00 FF   STA &FF00,X
+     8365   CA         DEX
+     8366   D0 F7      BNE &835F
+     8368   A2 36      LDX #&36
+.LF80D
+     836A   BD F7 8C   LDA &8CF7,X
+     836D   9D 00 02   STA &0200,X
+     8370   CA         DEX
+     8371   10 F7      BPL &836A
+     8373   9A         TXS
+     8374   A2 F0      LDX #&F0
+.LF819
+     8376   BD FF FD   LDA &FDFF,X
+     8379   9D FF FD   STA &FDFF,X
+     837C   CA         DEX
+     837D   D0 F7      BNE &8376
+     837F   A0 5D      LDY #&5D
+     8381   84 CA      STY &CA
+     8383   A9 83      LDA #&83
+     8385   85 CB      STA &CB
+.LF82A
+     8387   B1 CA      LDA (&CA),Y
+     8389   91 CA      STA (&CA),Y
+     838B   C8         INY
+     838C   D0 F9      BNE &8387
+     838E   E6 CB      INC &CB
+     8390   A5 CB      LDA &CB
+     8392   C9 FE      CMP #&FE
+     8394   D0 F1      BNE &8387
+     8396   A2 10      LDX #&10
+.LF83B
+     8398   BD B6 83   LDA &83B6,X
+     839B   9D 00 01   STA &0100,X
+     839E   CA         DEX
+     839F   10 F7      BPL &8398
+     83A1   A5 C0      LDA &C0
+     83A3   85 C6      STA &C6
+     83A5   A5 C1      LDA &C1
+     83A7   85 C7      STA &C7
+     83A9   A9 00      LDA #&00
+     83AB   85 FF      STA &FF
+     83AD   85 C4      STA &C4
+     83AF   A9 83      LDA #&83
+     83B1   85 C5      STA &C5
+     83B3   4C 00 01   JMP &0100
+.LF859
+     83B6   58         CLI
+.LF85D
+     83B7   4C BA 83   JMP &83BA
+.LF860
+.STARTUP
+     83BA   A2 FF      LDX #&FF
+     83BC   9A         TXS
+     83BD   A9 7D      LDA #&7D
+     83BF   8D 62 FE   STA &FE62
+     83C2   8D 60 FE   STA &FE60
+     83C5   A9 00      LDA #&00
+     83C7   8D 6B FE   STA &FE6B
+     83CA   A9 00      LDA #&00
+     83CC   85 B5      STA &B5
+     83CE   A9 10      LDA #&10
+     83D0   85 B8      STA &B8
+     83D2   A9 0D      LDA #&0D
+     83D4   85 B9      STA &B9
+     83D6   20 29 8A   JSR &8A29
+     83D9   E8         INX
+     83DA   A9 FF      LDA #&FF
+     83DC   A8         TAY
+     83DD   20 A1 85   JSR &85A1
+     83E0   8A         TXA
+.STARTUP2
+     83E1   48         PHA
+     83E2   20 42 84   JSR &8442
+     83E5   0A
+     83E6   53 65 72 ...
+     83FA   0A
+     83FB   0A
+     83FC   0D
+     83FD   00
+     83FE   EA         NOP
+     83FF   A9 0D      LDA #&0D
+     8401   8D B8 83   STA &83B8
+     8404   A9 84      LDA #&84
+     8406   8D B9 83   STA &83B9
+     8409   68         PLA
+     840A   20 88 85   JSR &8588
+.CmdOSLoop
+     840D   A2 FF      LDX #&FF
+     840F   9A         TXS
+     8410   20 29 8A   JSR &8A29
+     8413   A9 2A      LDA #&2A
+     8415   20 EE FF   JSR &FFEE
+     8418   A2 3D      LDX #&3D
+     841A   A0 84      LDY #&84
+     841C   A9 00      LDA #&00
+     841E   20 68 8D   JSR &8D68
+     8421   B0 0A      BCS &842D
+     8423   A2 00      LDX #&00
+     8425   A0 01      LDY #&01
+     8427   20 6E 8D   JSR &8D6E
+     842A   4C 0D 84   JMP &840D
+.CmdOSEscape
+     842D   A9 7E      LDA #&7E
+     842F   20 F4 FF   JSR &FFF4
+     8432   20 DD 82   JSR &82DD
+     8435   11
+     8436   45 73 63 ...
+     843C   00         BRK
+.LF95D
+     843D   00 01
+     843F   CA
+     8440   20
+     8441   FF
+.PrText
+     8442   68         PLA
+     8443   85 CC      STA &CC
+     8445   68         PLA
+     8446   85 CD      STA &CD
+     8448   A0 00      LDY #&00
+.LFEA0
+     844A   E6 CC      INC &CC
+     844C   D0 02      BNE &8450
+     844E   E6 CD      INC &CD
+.LFEA6
+     8450   B1 CC      LDA (&CC),Y
+     8452   30 06      BMI &845A
+     8454   20 EE FF   JSR &FFEE
+     8457   4C 4A 84   JMP &844A
+.LFEB0
+     845A   6C CC 00   JMP (&00CC)
+.ErrorHandler
+     845D   A2 FF      LDX #&FF
+     845F   9A         TXS
+     8460   20 E7 FF   JSR &FFE7
+     8463   A0 01      LDY #&01
+.LF94D
+     8465   B1 FD      LDA (&FD),Y
+     8467   F0 06      BEQ &846F
+     8469   20 EE FF   JSR &FFEE
+     846C   C8         INY
+     846D   D0 F6      BNE &8465
+.LF957
+     846F   20 E7 FF   JSR &FFE7
+     8472   4C 0D 84   JMP &840D
+.InterruptHandler
+     8475   85 FC      STA &FC
+     8477   68         PLA
+     8478   48         PHA
+     8479   29 10      AND #&10
+     847B   D0 06      BNE &8483
+     847D   6C 04 02   JMP (&0204)
+.IRQ1Handler
+     8480   6C 06 02   JMP (&0206)
+.BRKHandler
+     8483   8A         TXA
+     8484   48         PHA
+     8485   BA         TSX
+     8486   BD 03 01   LDA &0103,X
+     8489   D8         CLD
+     848A   38         SEC
+     848B   E9 01      SBC #&01
+     848D   85 FD      STA &FD
+     848F   BD 04 01   LDA &0104,X
+     8492   E9 00      SBC #&00
+     8494   85 FE      STA &FE
+     8496   68         PLA
+     8497   AA         TAX
+     8498   A5 FC      LDA &FC
+     849A   58         CLI
+     849B   6C 02 02   JMP (&0202)
+.NMIHandler
+     849E   40         RTI
+.Unsupported
+     849F   20 DD 82   JSR &82DD
+     84A2   FF
+     84A3   42 61 64 
+     84A6   00
+.SkipSpaces1
+     84A7   C8         INY
+.SkipSpaces
+     84A8   B1 CA      LDA (&CA),Y
+     84AA   C9 20      CMP #&20
+     84AC   F0 F9      BEQ &84A7
+.NullReturn
+     84AE   60         RTS
+.ScanHex
+     84AF   A2 00      LDX #&00
+     84B1   86 C2      STX &C2
+     84B3   86 C3      STX &C3
+.LF98C
+     84B5   B1 CA      LDA (&CA),Y
+     84B7   C9 30      CMP #&30
+     84B9   90 1F      BCC &84DA
+     84BB   C9 3A      CMP #&3A
+     84BD   90 0A      BCC &84C9
+     84BF   29 DF      AND #&DF
+     84C1   E9 07      SBC #&07
+     84C3   90 15      BCC &84DA
+     84C5   C9 40      CMP #&40
+     84C7   B0 11      BCS &84DA
+.LF9A0
+     84C9   0A         ASL A
+     84CA   0A         ASL A
+     84CB   0A         ASL A
+     84CC   0A         ASL A
+     84CD   A2 03      LDX #&03
+.LF9A6
+     84CF   0A         ASL A
+     84D0   26 C2      ROL &C2
+     84D2   26 C3      ROL &C3
+     84D4   CA         DEX
+     84D5   10 F8      BPL &84CF
+     84D7   C8         INY
+     84D8   D0 DB      BNE &84B5
+.LF9B1
+     84DA   60         RTS
+.MyosRDCH
+     84DB   20 25 88   JSR &8825
+     84DE   48         PHA
+     84DF   A5 FF      LDA &FF
+     84E1   0A         ASL A
+     84E2   68         PLA
+     84E3   60         RTS
+.MyosRDCH_IO
+     84E4   A9 00      LDA #&00
+     84E6   20 0C 88   JSR &880C
+.WaitCarryChar
+     84E9   20 25 88   JSR &8825
+     84EC   0A         ASL A
+     84ED   4C 25 88   JMP &8825
+.MyosCLI
+     84F0   86 CA      STX &CA
+     84F2   84 CB      STY &CB
+     84F4   A0 00      LDY #&00
+.LF9D1
+     84F6   20 A8 84   JSR &84A8
+     84F9   C8         INY
+     84FA   C9 2A      CMP #&2A
+     84FC   F0 F8      BEQ &84F6
+     84FE   29 DF      AND #&DF
+     8500   AA         TAX
+     8501   B1 CA      LDA (&CA),Y
+     8503   E0 47      CPX #&47
+     8505   F0 5D      BEQ &8564
+     8507   E0 48      CPX #&48
+     8509   D0 4E      BNE &8559
+     850B   C9 2E      CMP #&2E
+     850D   F0 2D      BEQ &853C
+     850F   29 DF      AND #&DF
+     8511   C9 45      CMP #&45
+     8513   D0 44      BNE &8559
+     8515   C8         INY
+     8516   B1 CA      LDA (&CA),Y
+     8518   C9 2E      CMP #&2E
+     851A   F0 20      BEQ &853C
+     851C   29 DF      AND #&DF
+     851E   C9 4C      CMP #&4C
+     8520   D0 37      BNE &8559
+     8522   C8         INY
+     8523   B1 CA      LDA (&CA),Y
+     8525   C9 2E      CMP #&2E
+     8527   F0 13      BEQ &853C
+     8529   29 DF      AND #&DF
+     852B   C9 50      CMP #&50
+     852D   D0 2A      BNE &8559
+     852F   C8         INY
+     8530   B1 CA      LDA (&CA),Y
+     8532   29 DF      AND #&DF
+     8534   C9 41      CMP #&41
+     8536   90 04      BCC &853C
+     8538   C9 5B      CMP #&5B
+     853A   90 1D      BCC &8559
+.CmdHELP
+     853C   20 42 84   JSR &8442
+     853F   0A
+     8540   0D
+     8541   53 65 72 ...
+Macro VERSION_STRING:
+     8552   30 2E 30 ...
+End macro VERSION_STRING
+     8556   0A
+     8557   0D
+     8558   EA         NOP
+.MyosCLI_IO
+     8559   A9 02      LDA #&02
+     855B   20 0C 88   JSR &880C
+     855E   20 F0 87   JSR &87F0
+     8561   4C 85 85   JMP &8585
+.CmdGO
+     8564   29 DF      AND #&DF
+     8566   C9 4F      CMP #&4F
+     8568   D0 EF      BNE &8559
+     856A   20 A7 84   JSR &84A7
+     856D   20 AF 84   JSR &84AF
+     8570   20 A8 84   JSR &84A8
+     8573   C9 0D      CMP #&0D
+     8575   D0 E2      BNE &8559
+     8577   8A         TXA
+     8578   F0 11      BEQ &858B
+     857A   A5 C2      LDA &C2
+     857C   85 C6      STA &C6
+     857E   A5 C3      LDA &C3
+     8580   85 C7      STA &C7
+     8582   4C 8B 85   JMP &858B
+.WaitEnterCode
+     8585   20 25 88   JSR &8825
+.WaitCheckCode
+     8588   0A         ASL A
+     8589   90 15      BCC &85A0
+.SaveEnterCode
+     858B   A5 C1      LDA &C1
+     858D   48         PHA
+     858E   A5 C0      LDA &C0
+     8590   48         PHA
+     8591   20 98 89   JSR &8998
+     8594   AA         TAX
+     8595   68         PLA
+     8596   85 C0      STA &C0
+     8598   85 C4      STA &C4
+     859A   68         PLA
+     859B   85 C1      STA &C1
+     859D   85 C5      STA &C5
+     859F   8A         TXA
+.SaveEnterDone
+     85A0   60         RTS
+.MyosFSC
+     85A1   48         PHA
+     85A2   A9 18      LDA #&18
+     85A4   38         SEC
+     85A5   B0 29      BCS &85D0
+.MyosBYTE
+     85A7   C9 80      CMP #&80
+     85A9   B0 15      BCS &85C0
+     85AB   48         PHA
+     85AC   A9 04      LDA #&04
+     85AE   20 0C 88   JSR &880C
+     85B1   8A         TXA
+     85B2   20 FF 87   JSR &87FF
+     85B5   68         PLA
+     85B6   48         PHA
+     85B7   20 FF 87   JSR &87FF
+     85BA   20 25 88   JSR &8825
+     85BD   AA         TAX
+     85BE   68         PLA
+     85BF   60         RTS
+.ByteHigh
+     85C0   C9 82      CMP #&82
+     85C2   F0 46      BEQ &860A
+     85C4   C9 83      CMP #&83
+     85C6   F0 3D      BEQ &8605
+     85C8   C9 84      CMP #&84
+     85CA   F0 34      BEQ &8600
+     85CC   48         PHA
+     85CD   A9 06      LDA #&06
+     85CF   18         CLC
+.ByteHi2
+     85D0   08         PHP
+     85D1   20 0C 88   JSR &880C
+     85D4   28         PLP
+     85D5   8A         TXA
+     85D6   20 FF 87   JSR &87FF
+     85D9   98         TYA
+     85DA   20 FF 87   JSR &87FF
+     85DD   68         PLA
+     85DE   20 FF 87   JSR &87FF
+     85E1   B0 09      BCS &85EC
+     85E3   C9 8E      CMP #&8E
+     85E5   F0 9E      BEQ &8585
+     85E7   C9 9D      CMP #&9D
+     85E9   F0 14      BEQ &85FF
+     85EB   18         CLC
+.ByteHi3
+     85EC   48         PHA
+     85ED   20 25 88   JSR &8825
+     85F0   90 03      BCC &85F5
+     85F2   0A         ASL A
+     85F3   90 1A      BCC &860F
+.ByteHi4
+     85F5   0A         ASL A
+     85F6   20 25 88   JSR &8825
+     85F9   A8         TAY
+     85FA   20 25 88   JSR &8825
+     85FD   AA         TAX
+     85FE   68         PLA
+.LFAEF
+     85FF   60         RTS
+.Byte84
+     8600   A6 C4      LDX &C4
+     8602   A4 C5      LDY &C5
+     8604   60         RTS
+.Byte83
+     8605   A2 00      LDX #&00
+     8607   A0 08      LDY #&08
+     8609   60         RTS
+.Byte82
+     860A   A2 00      LDX #&00
+     860C   A0 00      LDY #&00
+     860E   60         RTS
+.FSCString
+     860F   68         PLA
+     8610   20 EC 87   JSR &87EC
+     8613   A0 FF      LDY #&FF
+.FSCStrLp2
+     8615   C8         INY
+     8616   B1 CA      LDA (&CA),Y
+     8618   C9 21      CMP #&21
+     861A   B0 F9      BCS &8615
+     861C   88         DEY
+.FSCStrLp3
+     861D   C8         INY
+     861E   B1 CA      LDA (&CA),Y
+     8620   C9 20      CMP #&20
+     8622   F0 F9      BEQ &861D
+     8624   98         TYA
+     8625   18         CLC
+     8626   65 CA      ADC &CA
+     8628   85 CE      STA &CE
+     862A   A5 CB      LDA &CB
+     862C   69 00      ADC #&00
+     862E   85 CF      STA &CF
+     8630   20 85 85   JSR &8585
+     8633   10 CA      BPL &85FF
+.FSCStrChr
+     8635   20 25 88   JSR &8825
+     8638   C9 00      CMP #&00
+     863A   F0 C3      BEQ &85FF
+     863C   20 EE FF   JSR &FFEE
+     863F   4C 35 86   JMP &8635
+.MyosWORD
+     8642   86 CA      STX &CA
+     8644   84 CB      STY &CB
+     8646   A8         TAY
+     8647   F0 57      BEQ &86A0
+     8649   48         PHA
+     864A   48         PHA
+     864B   A9 08      LDA #&08
+     864D   20 0C 88   JSR &880C
+     8650   68         PLA
+     8651   20 FF 87   JSR &87FF
+     8654   AA         TAX
+     8655   10 08      BPL &865F
+     8657   A0 00      LDY #&00
+     8659   B1 CA      LDA (&CA),Y
+     865B   A8         TAY
+     865C   4C 68 86   JMP &8668
+.WordSendLow
+     865F   BC E5 86   LDY &86E5,X
+     8662   E0 15      CPX #&15
+     8664   90 02      BCC &8668
+     8666   A0 10      LDY #&10
+.WordSend
+     8668   98         TYA
+     8669   20 FF 87   JSR &87FF
+     866C   88         DEY
+     866D   30 08      BMI &8677
+.LFB38
+     866F   B1 CA      LDA (&CA),Y
+     8671   20 FF 87   JSR &87FF
+     8674   88         DEY
+     8675   10 F8      BPL &866F
+.LFB45
+     8677   8A         TXA
+     8678   10 08      BPL &8682
+     867A   A0 01      LDY #&01
+     867C   B1 CA      LDA (&CA),Y
+     867E   A8         TAY
+     867F   4C 8B 86   JMP &868B
+.WordRecvLow
+     8682   BC F9 86   LDY &86F9,X
+     8685   E0 15      CPX #&15
+     8687   90 02      BCC &868B
+     8689   A0 10      LDY #&10
+.WordRecv
+     868B   98         TYA
+     868C   20 FF 87   JSR &87FF
+     868F   88         DEY
+     8690   30 08      BMI &869A
+.LFB64
+     8692   20 25 88   JSR &8825
+     8695   91 CA      STA (&CA),Y
+     8697   88         DEY
+     8698   10 F8      BPL &8692
+.LFB71
+     869A   A4 CB      LDY &CB
+     869C   A6 CA      LDX &CA
+     869E   68         PLA
+     869F   60         RTS
+.RDLINE
+     86A0   A9 0A      LDA #&0A
+     86A2   20 0C 88   JSR &880C
+     86A5   A0 04      LDY #&04
+.LFB7E
+     86A7   B1 CA      LDA (&CA),Y
+     86A9   20 FF 87   JSR &87FF
+     86AC   88         DEY
+     86AD   C0 01      CPY #&01
+     86AF   D0 F6      BNE &86A7
+     86B1   A9 07      LDA #&07
+     86B3   20 FF 87   JSR &87FF
+     86B6   B1 CA      LDA (&CA),Y
+     86B8   48         PHA
+     86B9   88         DEY
+     86BA   98         TYA
+     86BB   20 FF 87   JSR &87FF
+     86BE   B1 CA      LDA (&CA),Y
+     86C0   48         PHA
+     86C1   A2 FF      LDX #&FF
+     86C3   20 25 88   JSR &8825
+     86C6   0A         ASL A
+     86C7   B0 18      BCS &86E1
+     86C9   68         PLA
+     86CA   85 CA      STA &CA
+     86CC   68         PLA
+     86CD   85 CB      STA &CB
+     86CF   A0 00      LDY #&00
+.RdLineLp
+     86D1   20 25 88   JSR &8825
+     86D4   91 CA      STA (&CA),Y
+     86D6   C8         INY
+     86D7   C9 0D      CMP #&0D
+     86D9   D0 F6      BNE &86D1
+     86DB   A9 00      LDA #&00
+     86DD   88         DEY
+     86DE   18         CLC
+     86DF   E8         INX
+     86E0   60         RTS
+.RdLineEscape
+     86E1   68         PLA
+     86E2   68         PLA
+     86E3   A9 00      LDA #&00
+     86E5   60         RTS
+.WordLengthsLo
+     86E6   00
+     86E7   05
+     86E8   00
+     86E9   05
+     86EA   04
+     86EB   05
+     86EC   08
+     86ED   0E
+     86EE   04
+     86EF   01
+     86F0   01
+     86F1   05
+     86F2   00
+     86F3   01
+     86F4   20
+     86F5   10
+     86F6   0D
+     86F7   00
+     86F8   04
+     86F9   80
+.WordLengthsHi
+     86FA   05
+     86FB   00
+     86FC   05
+     86FD   00
+     86FE   05
+     86FF   00
+     8700   00
+     8701   00
+     8702   05
+     8703   09
+     8704   05
+     8705   00
+     8706   08
+     8707   19
+     8708   00
+     8709   01
+     870A   0D
+     870B   80
+     870C   04
+     870D   80
+.MyosARGS
+     870E   48         PHA
+     870F   A9 0C      LDA #&0C
+     8711   20 0C 88   JSR &880C
+     8714   98         TYA
+     8715   20 FF 87   JSR &87FF
+     8718   B5 03      LDA &03,X
+     871A   20 FF 87   JSR &87FF
+     871D   B5 02      LDA &02,X
+     871F   20 FF 87   JSR &87FF
+     8722   B5 01      LDA &01,X
+     8724   20 FF 87   JSR &87FF
+     8727   B5 00      LDA &00,X
+     8729   20 FF 87   JSR &87FF
+     872C   68         PLA
+     872D   20 FF 87   JSR &87FF
+     8730   20 25 88   JSR &8825
+     8733   48         PHA
+     8734   20 25 88   JSR &8825
+     8737   95 03      STA &03,X
+     8739   20 25 88   JSR &8825
+     873C   95 02      STA &02,X
+     873E   20 25 88   JSR &8825
+     8741   95 01      STA &01,X
+     8743   20 25 88   JSR &8825
+     8746   95 00      STA &00,X
+     8748   68         PLA
+     8749   60         RTS
+.MyosBGET
+     874A   A9 0E      LDA #&0E
+     874C   20 0C 88   JSR &880C
+     874F   98         TYA
+     8750   20 FF 87   JSR &87FF
+     8753   4C E9 84   JMP &84E9
+.MyosBPUT
+     8756   48         PHA
+     8757   A9 10      LDA #&10
+     8759   20 0C 88   JSR &880C
+     875C   98         TYA
+     875D   20 FF 87   JSR &87FF
+     8760   68         PLA
+     8761   20 FF 87   JSR &87FF
+     8764   48         PHA
+     8765   20 25 88   JSR &8825
+     8768   68         PLA
+     8769   60         RTS
+.MyosFIND
+     876A   48         PHA
+     876B   A9 12      LDA #&12
+     876D   20 0C 88   JSR &880C
+     8770   68         PLA
+     8771   20 FF 87   JSR &87FF
+     8774   C9 00      CMP #&00
+     8776   D0 0A      BNE &8782
+     8778   48         PHA
+     8779   98         TYA
+     877A   20 FF 87   JSR &87FF
+     877D   20 25 88   JSR &8825
+     8780   68         PLA
+     8781   60         RTS
+.OPEN
+     8782   20 EC 87   JSR &87EC
+     8785   4C 25 88   JMP &8825
+.MyosFILE
+     8788   86 CC      STX &CC
+     878A   84 CD      STY &CD
+     878C   48         PHA
+     878D   A9 14      LDA #&14
+     878F   20 0C 88   JSR &880C
+     8792   A0 11      LDY #&11
+.LFC5F
+     8794   B1 CC      LDA (&CC),Y
+     8796   20 FF 87   JSR &87FF
+     8799   88         DEY
+     879A   C0 01      CPY #&01
+     879C   D0 F6      BNE &8794
+     879E   88         DEY
+     879F   B1 CC      LDA (&CC),Y
+     87A1   AA         TAX
+     87A2   C8         INY
+     87A3   B1 CC      LDA (&CC),Y
+     87A5   A8         TAY
+     87A6   20 EC 87   JSR &87EC
+     87A9   68         PLA
+     87AA   20 FF 87   JSR &87FF
+     87AD   20 25 88   JSR &8825
+     87B0   48         PHA
+     87B1   A0 11      LDY #&11
+.LFC7E
+     87B3   20 25 88   JSR &8825
+     87B6   91 CC      STA (&CC),Y
+     87B8   88         DEY
+     87B9   C0 01      CPY #&01
+     87BB   D0 F6      BNE &87B3
+     87BD   A4 CD      LDY &CD
+     87BF   A6 CC      LDX &CC
+     87C1   68         PLA
+     87C2   60         RTS
+.MyosGBPB
+     87C3   86 CC      STX &CC
+     87C5   84 CD      STY &CD
+     87C7   48         PHA
+     87C8   A9 16      LDA #&16
+     87CA   20 0C 88   JSR &880C
+     87CD   A0 0C      LDY #&0C
+.LFC9A
+     87CF   B1 CC      LDA (&CC),Y
+     87D1   20 FF 87   JSR &87FF
+     87D4   88         DEY
+     87D5   10 F8      BPL &87CF
+     87D7   68         PLA
+     87D8   20 FF 87   JSR &87FF
+     87DB   A0 0C      LDY #&0C
+.LFCA8
+     87DD   20 25 88   JSR &8825
+     87E0   91 CC      STA (&CC),Y
+     87E2   88         DEY
+     87E3   10 F8      BPL &87DD
+     87E5   A4 CD      LDY &CD
+     87E7   A6 CC      LDX &CC
+     87E9   4C E9 84   JMP &84E9
+.SendString
+     87EC   86 CA      STX &CA
+     87EE   84 CB      STY &CB
+.SendStringF8
+     87F0   A0 00      LDY #&00
+.LF9B8
+     87F2   B1 CA      LDA (&CA),Y
+     87F4   20 FF 87   JSR &87FF
+     87F7   C8         INY
+     87F8   C9 0D      CMP #&0D
+     87FA   D0 F6      BNE &87F2
+     87FC   A4 CB      LDY &CB
+     87FE   60         RTS
+.MyosWRCH
+.SendByte
+     87FF   08         PHP
+     8800   20 00 8B   JSR &8B00
+     8803   C9 7F      CMP #&7F
+     8805   D0 03      BNE &880A
+     8807   20 00 8B   JSR &8B00
+.SendByte2
+     880A   28         PLP
+     880B   60         RTS
+.SendCommand
+     880C   48         PHA
+.SendCmdLp
+     880D   20 1B 88   JSR &881B
+     8810   B0 FB      BCS &880D
+     8812   A9 7F      LDA #&7F
+     8814   20 00 8B   JSR &8B00
+     8817   68         PLA
+     8818   4C 00 8B   JMP &8B00
+.ReadByte
+     881B   20 A9 8C   JSR &8CA9
+     881E   08         PHP
+     881F   B0 08      BCS &8829
+     8821   28         PLP
+     8822   A9 00      LDA #&00
+     8824   60         RTS
+.WaitByte
+     8825   08         PHP
+.WaitByteLp
+     8826   20 46 88   JSR &8846
+.WaitByte2
+     8829   D0 19      BNE &8844
+     882B   20 46 88   JSR &8846
+     882E   F0 14      BEQ &8844
+     8830   48         PHA
+     8831   98         TYA
+     8832   48         PHA
+     8833   8A         TXA
+     8834   48         PHA
+     8835   BA         TSX
+     8836   BD 03 01   LDA &0103,X
+     8839   20 4C 88   JSR &884C
+     883C   68         PLA
+     883D   AA         TAX
+     883E   68         PLA
+     883F   A8         TAY
+     8840   68         PLA
+     8841   4C 26 88   JMP &8826
+.WaitByteOk
+     8844   28         PLP
+.WaitByteOk2
+     8845   60         RTS
+.WaitData
+     8846   20 A9 8C   JSR &8CA9
+     8849   90 FB      BCC &8846
+     884B   60         RTS
+.WaitCommand
+     884C   F0 0C      BEQ &885A
+     884E   30 39      BMI &8889
+     8850   A8         TAY
+.WaitLength
+     8851   20 25 88   JSR &8825
+     8854   88         DEY
+     8855   91 CC      STA (&CC),Y
+     8857   10 F8      BPL &8851
+     8859   60         RTS
+.WaitError
+     885A   8D 00 01   STA &0100
+     885D   A8         TAY
+     885E   20 25 88   JSR &8825
+     8861   8D 01 01   STA &0101
+.WaitErrorLp
+     8864   20 25 88   JSR &8825
+     8867   99 02 01   STA &0102,Y
+     886A   C8         INY
+     886B   C9 00      CMP #&00
+     886D   D0 F5      BNE &8864
+     886F   A2 10      LDX #&10
+     8871   A8         TAY
+.WaitErr1
+     8872   88         DEY
+     8873   D0 FD      BNE &8872
+     8875   CA         DEX
+     8876   D0 FA      BNE &8872
+     8878   20 BA 88   JSR &88BA
+     887B   AD 01 01   LDA &0101
+     887E   0D 02 01   ORA &0102
+     8881   F0 03      BEQ &8886
+     8883   4C 00 01   JMP &0100
+     8886   4C E1 83   JMP &83E1
+.WaitTransfer
+     8889   C9 C0      CMP #&C0
+     888B   B0 35      BCS &88C2
+     888D   C9 A0      CMP #&A0
+     888F   B0 16      BCS &88A7
+     8891   C9 90      CMP #&90
+     8893   B0 04      BCS &8899
+     8895   4A         LSR A
+     8896   66 FF      ROR &FF
+     8898   60         RTS
+.WaitEvent
+     8899   20 25 88   JSR &8825
+     889C   A8         TAY
+     889D   20 25 88   JSR &8825
+     88A0   AA         TAX
+     88A1   20 25 88   JSR &8825
+     88A4   6C 20 02   JMP (&0220)
+.WaitEnd
+     88A7   C9 B0      CMP #&B0
+     88A9   90 0E      BCC &88B9
+     88AB   68         PLA
+     88AC   68         PLA
+     88AD   68         PLA
+     88AE   68         PLA
+     88AF   68         PLA
+     88B0   68         PLA
+     88B1   68         PLA
+     88B2   68         PLA
+.WaitExitSave
+     88B3   68         PLA
+     88B4   10 04      BPL &88BA
+     88B6   6A         ROR A
+     88B7   B0 04      BCS &88BD
+.WaitExit
+     88B9   60         RTS
+.WaitExitRelease
+     88BA   20 8D 89   JSR &898D
+.WaitExitScreen
+     88BD   A0 00      LDY #&00
+     88BF   4C 57 89   JMP &8957
+.WaitStart
+     88C2   48         PHA
+     88C3   A0 04      LDY #&04
+.WaitStartLp
+     88C5   20 25 88   JSR &8825
+     88C8   99 C5 00   STA &00C5,Y
+     88CB   88         DEY
+     88CC   D0 F7      BNE &88C5
+     88CE   68         PLA
+     88CF   C9 D0      CMP #&D0
+     88D1   90 E6      BCC &88B9
+     88D3   C9 E0      CMP #&E0
+     88D5   90 7B      BCC &8952
+     88D7   AE 7A 02   LDX &027A
+     88DA   10 05      BPL &88E1
+     88DC   A6 C9      LDX &C9
+     88DE   E8         INX
+     88DF   D0 44      BNE &8925
+.WaitTransIO
+     88E1   29 F0      AND #&F0
+     88E3   A8         TAY
+     88E4   A6 C8      LDX &C8
+     88E6   E8         INX
+     88E7   F0 12      BEQ &88FB
+     88E9   A5 D0      LDA &D0
+     88EB   E8         INX
+     88EC   F0 05      BEQ &88F3
+     88EE   E8         INX
+     88EF   D0 0A      BNE &88FB
+     88F1   A9 10      LDA #&10
+.WaitIOScreen
+     88F3   29 10      AND #&10
+     88F5   F0 04      BEQ &88FB
+     88F7   C8         INY
+     88F8   20 57 89   JSR &8957
+.WaitIOGo
+     88FB   98         TYA
+     88FC   48         PHA
+     88FD   A0 00      LDY #&00
+     88FF   C9 F0      CMP #&F0
+     8901   B0 0D      BCS &8910
+.WaitLoadIO
+     8903   20 25 88   JSR &8825
+     8906   91 C6      STA (&C6),Y
+     8908   C8         INY
+     8909   D0 F8      BNE &8903
+     890B   E6 C7      INC &C7
+     890D   4C 03 89   JMP &8903
+.WaitSaveIO
+     8910   B1 C6      LDA (&C6),Y
+     8912   20 FF 87   JSR &87FF
+     8915   20 1B 88   JSR &881B
+     8918   B0 08      BCS &8922
+     891A   C8         INY
+     891B   D0 F3      BNE &8910
+     891D   E6 C7      INC &C7
+     891F   4C 10 89   JMP &8910
+.WaitSaveExit
+     8922   4C B3 88   JMP &88B3
+.WaitTransTube
+     8925   18         CLC
+     8926   69 10      ADC #&10
+     8928   2A         ROL A
+     8929   A9 00      LDA #&00
+     892B   69 00      ADC #&00
+     892D   48         PHA
+     892E   20 7D 89   JSR &897D
+     8931   68         PLA
+     8932   48         PHA
+     8933   F0 0C      BEQ &8941
+.WaitLoadTube
+     8935   20 71 89   JSR &8971
+     8938   20 25 88   JSR &8825
+     893B   8D E5 FE   STA &FEE5
+     893E   4C 35 89   JMP &8935
+.WaitSaveTube
+     8941   AD E5 FE   LDA &FEE5
+     8944   20 FF 87   JSR &87FF
+     8947   20 1B 88   JSR &881B
+     894A   B0 D6      BCS &8922
+     894C   20 71 89   JSR &8971
+     894F   4C 41 89   JMP &8941
+.CallCode
+     8952   A9 01      LDA #&01
+     8954   6C C6 00   JMP (&00C6)
+.vramSelect
+     8957   98         TYA
+     8958   48         PHA
+     8959   29 01      AND #&01
+     895B   48         PHA
+     895C   AA         TAX
+     895D   A9 6C      LDA #&6C
+     895F   20 F4 FF   JSR &FFF4
+     8962   68         PLA
+     8963   E8         INX
+     8964   D0 08      BNE &896E
+     8966   49 01      EOR #&01
+     8968   AA         TAX
+     8969   A9 6F      LDA #&6F
+     896B   20 F4 FF   JSR &FFF4
+.vramOk
+     896E   68         PLA
+     896F   A8         TAY
+     8970   60         RTS
+.TubeDelay
+     8971   20 7A 89   JSR &897A
+     8974   20 7A 89   JSR &897A
+     8977   20 7A 89   JSR &897A
+.TubeDelay2
+     897A   60         RTS
+.TubeEnterCode
+     897B   A9 04      LDA #&04
+.TubeAction
+     897D   48         PHA
+.TubeClaim
+     897E   A9 C6      LDA #&C6
+     8980   20 06 04   JSR &0406
+     8983   90 F9      BCC &897E
+     8985   A2 C6      LDX #&C6
+     8987   A0 00      LDY #&00
+     8989   68         PLA
+     898A   4C 06 04   JMP &0406
+.TubeRelChk
+     898D   2C 7A 02   BIT &027A
+     8990   30 01      BMI &8993
+     8992   60         RTS
+.TubeRelease
+     8993   A9 86      LDA #&86
+     8995   4C 06 04   JMP &0406
+.EnterCode
+     8998   AD 7A 02   LDA &027A
+     899B   10 05      BPL &89A2
+     899D   A4 C9      LDY &C9
+     899F   C8         INY
+     89A0   D0 D9      BNE &897B
+.EnterCodeIO
+     89A2   A5 C6      LDA &C6
+     89A4   85 C0      STA &C0
+     89A6   85 C4      STA &C4
+     89A8   A5 C7      LDA &C7
+     89AA   85 C1      STA &C1
+     89AC   85 C5      STA &C5
+     89AE   A0 07      LDY #&07
+     89B0   B1 C0      LDA (&C0),Y
+     89B2   D8         CLD
+     89B3   18         CLC
+     89B4   65 C0      ADC &C0
+     89B6   85 FD      STA &FD
+     89B8   A9 00      LDA #&00
+     89BA   65 C1      ADC &C1
+     89BC   85 FE      STA &FE
+     89BE   A0 00      LDY #&00
+     89C0   B1 FD      LDA (&FD),Y
+     89C2   D0 23      BNE &89E7
+     89C4   C8         INY
+     89C5   B1 FD      LDA (&FD),Y
+     89C7   C9 28      CMP #&28
+     89C9   D0 1C      BNE &89E7
+     89CB   C8         INY
+     89CC   B1 FD      LDA (&FD),Y
+     89CE   C9 43      CMP #&43
+     89D0   D0 15      BNE &89E7
+     89D2   C8         INY
+     89D3   B1 FD      LDA (&FD),Y
+     89D5   C9 29      CMP #&29
+     89D7   D0 0E      BNE &89E7
+     89D9   A0 06      LDY #&06
+     89DB   B1 C0      LDA (&C0),Y
+     89DD   29 4F      AND #&4F
+     89DF   C9 40      CMP #&40
+     89E1   90 0A      BCC &89ED
+     89E3   29 0D      AND #&0D
+     89E5   D0 24      BNE &8A0B
+.LF8FA
+     89E7   20 52 89   JSR &8952
+     89EA   A9 00      LDA #&00
+     89EC   60         RTS
+.NotLanguage
+     89ED   20 29 8A   JSR &8A29
+     89F0   20 DD 82   JSR &82DD
+     89F3   00
+     89F4   54 68 69 ...
+     8A0A   00
+.Not6502Code
+     8A0B   20 29 8A   JSR &8A29
+     8A0E   20 DD 82   JSR &82DD
+     8A11   00
+     8A12   49 20 63 ...
+     8A28   00
+.InitError
+     8A29   A9 5D      LDA #&5D
+     8A2B   8D 02 02   STA &0202
+     8A2E   A9 84      LDA #&84
+     8A30   8D 03 02   STA &0203
+     8A33   60         RTS
+.SendData
+     8B00   48         PHA
+     8B01   49 FF      EOR #&FF
+     8B03   48         PHA
+.tx
+     8B04   78         SEI
+     8B05   AD 60 FE   LDA &FE60
+     8B08   29 02      AND #&02
+     8B0A   D0 0E      BNE &8B1A
+.rtswait
+     8B0C   AD 60 FE   LDA &FE60
+     8B0F   29 02      AND #&02
+     8B11   F0 F9      BEQ &8B0C
+     8B13   8A         TXA
+     8B14   A2 00      LDX #&00
+.postrts
+     8B16   CA         DEX
+     8B17   D0 FD      BNE &8B16
+     8B19   AA         TAX
+.txgo
+     8B1A   A9 01      LDA #&01
+     8B1C   8D 60 FE   STA &FE60
+     8B1F   EA         NOP
+     8B20   EA         NOP
+     8B21   EA         NOP
+     8B22   EA         NOP
+     8B23   EA         NOP
+     8B24   68         PLA
+     8B25   8D 60 FE   STA &FE60
+     8B28   EA         NOP
+     8B29   EA         NOP
+     8B2A   EA         NOP
+     8B2B   EA         NOP
+     8B2C   4A         LSR A
+     8B2D   8D 60 FE   STA &FE60
+     8B30   EA         NOP
+     8B31   EA         NOP
+     8B32   EA         NOP
+     8B33   EA         NOP
+     8B34   EA         NOP
+     8B35   4A         LSR A
+     8B36   8D 60 FE   STA &FE60
+     8B39   EA         NOP
+     8B3A   EA         NOP
+     8B3B   EA         NOP
+     8B3C   EA         NOP
+     8B3D   EA         NOP
+     8B3E   4A         LSR A
+     8B3F   8D 60 FE   STA &FE60
+     8B42   EA         NOP
+     8B43   EA         NOP
+     8B44   EA         NOP
+     8B45   EA         NOP
+     8B46   4A         LSR A
+     8B47   8D 60 FE   STA &FE60
+     8B4A   EA         NOP
+     8B4B   EA         NOP
+     8B4C   EA         NOP
+     8B4D   EA         NOP
+     8B4E   EA         NOP
+     8B4F   4A         LSR A
+     8B50   8D 60 FE   STA &FE60
+     8B53   EA         NOP
+     8B54   EA         NOP
+     8B55   EA         NOP
+     8B56   EA         NOP
+     8B57   EA         NOP
+     8B58   EA         NOP
+     8B59   4A         LSR A
+     8B5A   8D 60 FE   STA &FE60
+     8B5D   EA         NOP
+     8B5E   EA         NOP
+     8B5F   EA         NOP
+     8B60   EA         NOP
+     8B61   4A         LSR A
+     8B62   8D 60 FE   STA &FE60
+     8B65   EA         NOP
+     8B66   EA         NOP
+     8B67   EA         NOP
+     8B68   EA         NOP
+     8B69   EA         NOP
+     8B6A   A9 00      LDA #&00
+     8B6C   8D 60 FE   STA &FE60
+     8B6F   58         CLI
+     8B70   68         PLA
+     8B71   60         RTS
+.TestRTS
+Macro DEBUG:
+End macro DEBUG
+     8B72   AD 60 FE   LDA &FE60
+     8B75   29 02      AND #&02
+     8B77   F0 07      BEQ &8B80
+     8B79   AD 60 FE   LDA &FE60
+     8B7C   49 FF      EOR #&FF
+     8B7E   29 80      AND #&80
+.TestRTSNo
+     8B80   60         RTS
+.getbytes
+     8C00   78         SEI
+     8C01   A0 00      LDY #&00
+     8C03   A2 00      LDX #&00
+     8C05   A9 40      LDA #&40
+     8C07   8D 60 FE   STA &FE60
+.idle
+     8C0A   AD 60 FE   LDA &FE60
+     8C0D   30 FB      BMI &8C0A
+.sb
+     8C0F   AD 60 FE   LDA &FE60
+     8C12   30 3F      BMI &8C53
+     8C14   AD 60 FE   LDA &FE60
+     8C17   30 3A      BMI &8C53
+     8C19   AD 60 FE   LDA &FE60
+     8C1C   30 35      BMI &8C53
+     8C1E   AD 60 FE   LDA &FE60
+     8C21   30 30      BMI &8C53
+     8C23   AD 60 FE   LDA &FE60
+     8C26   30 2B      BMI &8C53
+     8C28   AD 60 FE   LDA &FE60
+     8C2B   30 26      BMI &8C53
+     8C2D   AD 60 FE   LDA &FE60
+     8C30   30 21      BMI &8C53
+     8C32   AD 60 FE   LDA &FE60
+     8C35   30 1C      BMI &8C53
+     8C37   AD 60 FE   LDA &FE60
+     8C3A   30 17      BMI &8C53
+     8C3C   AD 60 FE   LDA &FE60
+     8C3F   30 12      BMI &8C53
+     8C41   AD 60 FE   LDA &FE60
+     8C44   30 0D      BMI &8C53
+     8C46   AD 60 FE   LDA &FE60
+     8C49   30 08      BMI &8C53
+     8C4B   A9 00      LDA #&00
+     8C4D   8D 60 FE   STA &FE60
+     8C50   8A         TXA
+     8C51   58         CLI
+     8C52   60         RTS
+.T0
+     8C53   E0 60      CPX #&60
+     8C55   B0 04      BCS &8C5B
+     8C57   A9 40      LDA #&40
+     8C59   D0 03      BNE &8C5E
+.xcts
+     8C5B   A9 00      LDA #&00
+     8C5D   EA         NOP
+.wcts
+     8C5E   8D 60 FE   STA &FE60
+     8C61   AD 60 FE   LDA &FE60
+     8C64   0A         ASL A
+     8C65   98         TYA
+     8C66   6A         ROR A
+     8C67   E8         INX
+     8C68   EA         NOP
+     8C69   A8         TAY
+     8C6A   AD 60 FE   LDA &FE60
+     8C6D   0A         ASL A
+     8C6E   98         TYA
+     8C6F   6A         ROR A
+     8C70   EA         NOP
+     8C71   EA         NOP
+     8C72   A8         TAY
+     8C73   AD 60 FE   LDA &FE60
+     8C76   0A         ASL A
+     8C77   98         TYA
+     8C78   6A         ROR A
+     8C79   EA         NOP
+     8C7A   A8         TAY
+     8C7B   AD 60 FE   LDA &FE60
+     8C7E   0A         ASL A
+     8C7F   98         TYA
+     8C80   6A         ROR A
+     8C81   EA         NOP
+     8C82   EA         NOP
+     8C83   A8         TAY
+     8C84   AD 60 FE   LDA &FE60
+     8C87   0A         ASL A
+     8C88   98         TYA
+     8C89   6A         ROR A
+     8C8A   EA         NOP
+     8C8B   A8         TAY
+     8C8C   AD 60 FE   LDA &FE60
+     8C8F   0A         ASL A
+     8C90   98         TYA
+     8C91   6A         ROR A
+     8C92   EA         NOP
+     8C93   EA         NOP
+     8C94   A8         TAY
+     8C95   AD 60 FE   LDA &FE60
+     8C98   0A         ASL A
+     8C99   98         TYA
+     8C9A   6A         ROR A
+     8C9B   EA         NOP
+     8C9C   A8         TAY
+     8C9D   AD 60 FE   LDA &FE60
+     8CA0   0A         ASL A
+     8CA1   98         TYA
+     8CA2   6A         ROR A
+     8CA3   9D 10 0D   STA &0D10,X
+     8CA6   4C 0F 8C   JMP &8C0F
+.ReadData
+     8CA9   08         PHP
+     8CAA   84 B1      STY &B1
+     8CAC   86 B0      STX &B0
+     8CAE   A5 B5      LDA &B5
+     8CB0   D0 17      BNE &8CC9
+     8CB2   20 00 8C   JSR &8C00
+     8CB5   D0 08      BNE &8CBF
+     8CB7   20 EC 8C   JSR &8CEC
+     8CBA   20 00 8C   JSR &8C00
+     8CBD   F0 24      BEQ &8CE3
+.gb1
+     8CBF   A9 11      LDA #&11
+     8CC1   85 B8      STA &B8
+     8CC3   8A         TXA
+     8CC4   18         CLC
+     8CC5   69 10      ADC #&10
+     8CC7   85 B5      STA &B5
+.gb2
+     8CC9   A0 00      LDY #&00
+     8CCB   B1 B8      LDA (&B8),Y
+     8CCD   49 FF      EOR #&FF
+     8CCF   48         PHA
+     8CD0   A5 B5      LDA &B5
+     8CD2   C5 B8      CMP &B8
+     8CD4   D0 04      BNE &8CDA
+     8CD6   A9 00      LDA #&00
+     8CD8   85 B5      STA &B5
+.gb3
+     8CDA   68         PLA
+     8CDB   E6 B8      INC &B8
+     8CDD   28         PLP
+     8CDE   C9 7F      CMP #&7F
+     8CE0   38         SEC
+     8CE1   B0 02      BCS &8CE5
+.nodata
+     8CE3   28         PLP
+     8CE4   18         CLC
+.bcx
+     8CE5   08         PHP
+     8CE6   A6 B0      LDX &B0
+     8CE8   A4 B1      LDY &B1
+     8CEA   28         PLP
+     8CEB   60         RTS
+.wait
+     8CEC   A0 14      LDY #&14
+.wait1
+     8CEE   A2 00      LDX #&00
+.wait2
+     8CF0   CA         DEX
+     8CF1   D0 FD      BNE &8CF0
+     8CF3   88         DEY
+     8CF4   D0 F8      BNE &8CEE
+     8CF6   60         RTS
+.LFF80
+     8CF7   9F 84
+     8CF9   5D 84
+     8CFB   80 84
+     8CFD   9F 84
+     8CFF   F0 84
+     8D01   A7 85
+     8D03   42 86
+     8D05   FF 87
+     8D07   DB 84
+     8D09   88 87
+     8D0B   0E 87
+     8D0D   4A 87
+     8D0F   56 87
+     8D11   C3 87
+     8D13   6A 87
+     8D15   9F 84
+     8D17   AE 84
+     8D19   9F 84
+     8D1B   9F 84
+     8D1D   9F 84
+     8D1F   9F 84
+     8D21   9F 84
+     8D23   9F 84
+     8D25   9F 84
+     8D27   AE 84
+     8D29   AE 84
+     8D2B   AE 84
+.ummVECDEF
+     8D2D   36
+     8D2E   F7 8C
+.ummCLICOM
+     8D30   4C 0D 84   JMP &840D
+.ummOSXXXX1
+     8D33   4C 9F 84   JMP &849F
+.ummOSXXXX2
+     8D36   4C 9F 84   JMP &849F
+.ummOSXXXX3
+     8D39   4C 9F 84   JMP &849F
+.ummOSXXXX4
+     8D3C   4C 9F 84   JMP &849F
+.ummNVRDCH
+     8D3F   4C DB 84   JMP &84DB
+.ummNVWRCH
+     8D42   4C FF 87   JMP &87FF
+.ummOSFIND
+     8D45   6C 1C 02   JMP (&021C)
+.ummOSGBPB
+     8D48   6C 1A 02   JMP (&021A)
+.ummOSBPUT
+     8D4B   6C 18 02   JMP (&0218)
+.ummOSBGET
+     8D4E   6C 16 02   JMP (&0216)
+.ummOSARGS
+     8D51   6C 14 02   JMP (&0214)
+.ummOSFILE
+     8D54   6C 12 02   JMP (&0212)
+.ummOSRDCH
+     8D57   6C 10 02   JMP (&0210)
+.ummOSASCI
+     8D5A   C9 0D      CMP #&0D
+     8D5C   D0 07      BNE &8D65
+.ummOSNEWL
+     8D5E   A9 0A      LDA #&0A
+     8D60   20 65 8D   JSR &8D65
+.ummOSWRCR
+     8D63   A9 0D      LDA #&0D
+.ummOSWRCH
+     8D65   6C 0E 02   JMP (&020E)
+.ummOSWORD
+     8D68   6C 0C 02   JMP (&020C)
+.ummOSBYTE
+     8D6B   6C 0A 02   JMP (&020A)
+.ummOS_CLI
+     8D6E   6C 08 02   JMP (&0208)
+.ummNMIV
+     8D71   9E 84
+.ummRESETV
+     8D73   5D 83
+.ummIRQV
+     8D75   75 84
+.end
+Saving file 'OBJ/UPURSFS'
