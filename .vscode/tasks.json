@@ -36,7 +36,7 @@
             },           
             "args": [
                 "-0",
-                "dist/firetrack-adji.ssd",
+                "dist/ap6rtc.ssd",
                 "-b"
             ]
         }

@@ -1,0 +1,499 @@
+   10REM > SoftRTC/src
+   20REM Added module table, added some more comments
+   30:
+   40PROCassem(0):CLEAR:PROCassem(2):PROCsm_table
+   50A$="*SAVE "+fname$+" "+STR$~(mcode%+M%)+" "+STR$~O%+" FFFF0000 FFFBBC00"
+   60PRINTA$;:OSCLIA$:PRINT
+   70END
+   80:
+   90DEFPROCassem(pass%)
+  100ver$="0.10":date$="23 Nov 1992":fname$="SoftRTC"
+  110OSASCI=&FFE3:OSWRCH=&FFEE:OSNEWL=&FFE7:OSWORD=&FFF1
+  120ws=&A8:tmp=ws+7:osw14=14:osw15=osw14+1:save=&D94
+  130DIM mcode% &1000, L%-1
+  140:
+  150FOR pass%=pass% TO pass%+1
+  160opt%=FNsm_pass(pass%)+8+16
+  170[OPT opt%
+  180.ROMBase
+  190EQUB &00:EQUW RelocTable
+  200JMP Service
+  210EQUB &82:EQUB copyright-ROMBase
+  220.ROMTitle
+  230EQUB VALver$*10:EQUS "SoftRTC"
+  240EQUB &00:EQUS ver$+" ("+date$+")"
+  250.copyright
+  260EQUB &00:EQUS "(C)J.G.Harston"
+  270EQUB &00
+  280:
+  290\ SERVICE 9 - *Help
+  300\ -----------------
+  310.Serv09
+  320LDA (&F2),Y
+  330CMP #13:BNE Serv9Exit    :\ Not *Help<cr>
+  340JSR OSNEWL
+  350.Serv9a
+  360LDX #0
+  370.Serv9Lp
+  380LDA &8009,X:BNE Serv9Chk :\ Display ROM title
+  390LDA #ASC" ":BNE Serv9Char
+  400.Serv9Chk
+  410CMP #ASC" ":BEQ Serv9Done
+  420.Serv9Char
+  430JSR OSWRCH:INX:BNE Serv9Lp
+  440.Serv9Done
+  450JSR OSNEWL
+  460.Serv9Exit
+  470LDA #9:RTS
+  480:
+  490\ SERVICE 4 - *Command
+  500\ --------------------
+  510.Serv04
+  520LDX #0:TYA
+  530.Serv4a
+  540PHA
+  550.Serv4Lp
+  560LDA (&F2),Y:INY
+  570CMP #ASC".":BEQ Serv4Found
+  580CMP TimeText,X:BEQ Serv4Step
+  590EOR #32
+  600CMP TimeText,X:BNE Serv4Next
+  610.Serv4Step
+  620INX:TXA:AND #3:BNE Serv4Lp :\ Loop to match 4 characters
+  630LDA (&F2),Y:CMP #ASC"@"    :\ End of command?
+  640BCC Serv4Found             :\ TIME<cr> or TIME<spc> or TIME<nonletter>
+  650.Serv4Next
+  660PLA:TAY:CPX #4:LDX #4
+  670BCC Serv4a:TXA:RTS
+  680.Serv4Found
+  690PLA:JMP cmdTime
+  700:
+  710.Service
+  720CMP #&01:BNE P%+5:JSR RTCRestore :\ CS=Restore time
+  730CMP #&0F:BCS P%+5:JSR RTCSave    :\ CC=Save time
+  740CMP #&04:BEQ Serv04              :\ *command
+  750CMP #&08:BEQ Serv08              :\ OSWORD
+  760CMP #&09:BEQ Serv09              :\ *help
+  770RTS
+  780:
+  790\ SERVICE 8 - OSWORD
+  800\ -----------------
+  810.Serv08
+  820LDA &EF
+  830CMP #osw14:BEQ Osword14          :\ OSWORD 14 - Read RTC
+  840CMP #osw15:BNE P%+5:JMP Osword15 :\ OSWORD 15 - Write RTC
+  850.Serv08Quit
+  860LDA #8:RTS
+  870:
+  880:
+  890\ OSWORD 14 - Read Real Time Clock
+  900\ ================================
+  910\ XY?0=0 Read string         XY?0=8  Read string
+  920\ XY?0=1 Read 7-byte BCD     XY?0=9  Read 8-byte BCD
+  930\ XY?0=2 Convert 7-byte BCD  XY?0=10 Convert 8-byte BCD
+  940\ Unsupported:
+  950\ XY?0=3 Read 5-byte time    XY?0=11 Read 5-byte time
+  960.Osword14
+  970LDY #0:LDA (&F0),Y:TAX
+  980AND #&F7:CMP #3:BCS Serv08Quit
+  990LDY #tmp-ws+1
+ 1000.Osw14lp1
+ 1010LDA ws-1,Y:PHA            :\ Save workspace
+ 1020LDA (&F0),Y:STA ws-1,Y    :\ And copy control block
+ 1030DEY:BNE Osw14lp1
+ 1040TXA:PHA:AND #2:BNE Osw14_2:\ Convert BCD
+ 1050\
+ 1060\ OSWORD 14,0/1/8/9 - Read RTC
+ 1070.Osw14_01
+ 1080JSR Osw14RTC             :\ Read RTC
+ 1090PLA:LDX #7:LDY #7
+ 1100LSR A:BCC Osw14Convert   :\ XY=0/8 - return string
+ 1110BEQ Osw14lp3             :\ XY=1/9 - return BCD
+ 1120.Osw14lp2
+ 1130LDA ws,X:STA (&F0),Y:DEX :\ Copy to control block
+ 1140.Osw14lp3
+ 1150DEY:BPL Osw14lp2
+ 1160BMI Osw14Done
+ 1170:
+ 1180\ OSWORD 14,2/10 - Convert BCD to string
+ 1190.Osw14_2
+ 1200PLA:JSR RTCYear          :\ Check year
+ 1210\
+ 1220\ Convert date&time to string
+ 1230\ On entry, ws=8-byte BCD date&time
+ 1240\ On exit,  (&F0)=>string terminated with CR
+ 1250.Osw14Convert
+ 1260LDY #0
+ 1270LDA ws+4:AND #&07:JSR PutDay                :\ Day
+ 1280LDA #ASC",":JSR PutChar
+ 1290LDA ws+3:AND #&3F:JSR PutBCD:JSR PutSpace   :\ Date
+ 1300LDA ws+2:AND #&1F:JSR PutMonth:JSR PutSpace :\ Month
+ 1310LDA ws+0:JSR PutBCD:LDA ws+1:JSR PutBCD     :\ Year
+ 1320LDA #ASC".":JSR PutChar
+ 1330LDX #&FD
+ 1340.Osw14ConvLp1
+ 1350LDA 255AND(ws+5-&FD),X:AND #&7F:JSR PutBCD  :\ HH, MM, SS
+ 1360LDA #ASC":":JSR PutChar:INX:BNE Osw14ConvLp1
+ 1370DEY:LDA #13:STA (&F0),Y
+ 1380:
+ 1390.Osw14Done
+ 1400LDY #0
+ 1410.Osw14lp5
+ 1420PLA:STA ws,Y:INY:CPY #tmp-ws+1 :\ Restore workspace
+ 1430BCC Osw14lp5:LDA #0:RTS
+ 1440:
+ 1450.PutSpace                      :\ Store a space
+ 1460LDA #ASC" ":BNE PutChar
+ 1470.PutBCD
+ 1480PHA:JSR HexTopDigit:JSR PutChar
+ 1490PLA:JSR HexDigit
+ 1500.PutChar                       :\ Store a character
+ 1510STA (&F0),Y:INY:RTS
+ 1520:
+ 1530.PutDay
+ 1540ORA #&10:BNE PutDate
+ 1550.PutMonth
+ 1560CMP #16:BCC P%+4:SBC #6:AND #&0F
+ 1570.PutDate
+ 1580STA ws+4:ASL A:ADC ws+4:TAX
+ 1590LDA #3:STA ws+4
+ 1600.PutDateLp
+ 1610LDA DateText,X:STA (&F0),Y:INX:INY
+ 1620DEC ws+4:BNE PutDateLp:RTS
+ 1630:
+ 1640.DateText
+ 1650EQUS "000JanFebMarAprMayJunJul"
+ 1660EQUS "AugSepOctNovDecDDDEEEFFF"
+ 1670EQUS "000SunMonTueWedThuFriSat"
+ 1680.TimeText
+ 1690EQUS "DATE":EQUS "TIME"
+ 1700:
+ 1710\
+ 1720\ Read real-time clock
+ 1730\ Returns ws=8-byte BCD time&date
+ 1740\ This routine implements low-level RTC reading
+ 1750.Osw14RTC
+ 1760JSR RTCTimeRd                        :\ Read TIME
+ 1770LDA #&05:LDY #&7E:LDX #&40           :\ Hours
+ 1780JSR RTCDivide:CMP #&24:BCC Osw14RTCb :\ Not past midnight
+ 1790\
+ 1800\ Increment date
+ 1810JSR RTCDate                       :\ A=day, Y=month
+ 1820CMP DOWLengths,Y:BCC Osw14RTCupd4
+ 1830CPY #2:BNE Osw14notFeb:TAX        :\ Not Feb so not leap
+ 1840LDA ws+4:LSR A                    :\ Year-1980
+ 1850CMP #2100-1980:BEQ Osw14notFeb    :\ Not leap 2100
+ 1860AND #3:BNE Osw14notFeb            :\ Not leap (year AND 3)<>0
+ 1870CPX #29:BCC Osw14RTCupd4
+ 1880.Osw14notFeb
+ 1890LDA ws+3:AND #&E0         :\ Set to day=0
+ 1900CLC:ADC #&20:TAX          :\ Increment month
+ 1910LDA ws+4:ADC #0:TAY       :\ Y=year+month
+ 1920LSR A:BCC Osw14RTCupd3    :\ month<8
+ 1930CPX #&A0:BCC Osw14RTCupd3 :\ month<13
+ 1940INY:LDX #&20              :\ January next year
+ 1950.Osw14RTCupd3
+ 1960STX ws+3:STY ws+4         :\ Start of next month
+ 1970.Osw14RTCupd4
+ 1980INC ws+3                  :\ Increment day
+ 1990JSR RTCTimeWr:LDA #0      :\ Update TIME
+ 2000\
+ 2010.Osw14RTCb
+ 2020PHA                                  :\ Hours
+ 2030LDY #&17:LDX #&70:JSR RTCDivide0:PHA :\ Minutes
+ 2040LDY #&00:LDX #&64:JSR RTCDivide0:PHA :\ Seconds
+ 2050JSR RTCDate:PHA:JSR BINtoBCD:STA ws+3:\ Date
+ 2060TYA:PHA:JSR BINtoBCD:STA ws+2        :\ Month
+ 2070LDA ws+4:LSR A:CLC:ADC #80:PHA       :\ Year-1980
+ 2080LDY #18:CLC:ADC #100:SEC             :\ Calculate century
+ 2090.Osw14RTCc
+ 2100INY:SBC #100:CMP #100:BCS Osw14RTCc  :\ Convert to 0-99
+ 2110JSR BINtoBCD:STA ws+1                :\ Year
+ 2120TYA:JSR BINtoBCD:STA ws+0            :\ Save Century
+ 2130PLA:TAY:PLA:TAX:PLA:JSR DayOfWeek    :\ Get day of week
+ 2140STA ws+4:PLA:STA ws+7:PLA:STA ws+6   :\ Day, Hour, Minutes
+ 2150PLA:STA ws+5:RTS                     :\ Seconds
+ 2160:
+ 2170.RTCDate
+ 2180\ Get A=date, Y=month
+ 2190LDA ws+4:LSR A:LDA ws+3:PHA:ROR A:LSR A
+ 2200LSR A:LSR A:LSR A:TAY:PLA:AND #31:RTS
+ 2210:
+ 2220.RTCYear
+ 2230\ X<8 or X>7
+ 2240CPX #8:BCS RTCYearOk:LDX #7:\ Use 8-byte BCD
+ 2250.RTCYearLp
+ 2260LDA ws-1,X:STA ws,X:DEX    :\ Adjust BCD block
+ 2270BNE RTCYearLp
+ 2280LDX #&19:LDA ws+1:BMI P%+4 :\ Use 1980-2099/2000-2079
+ 2290LDX #&20:STX ws+0          :\ Set for 7-byte BCD
+ 2300.RTCYearOk
+ 2310RTS
+ 2320:
+ 2330.RTCTimeRd
+ 2340LDA #1
+ 2350.RTCTime
+ 2360TAX:LDA &F1:PHA:LDA &F0:PHA :\ Save CBLK
+ 2370TYA:PHA:TXA:LDX #ws:LDY #0
+ 2380JSR OSWORD:PLA:TAY
+ 2390PLA:STA &F0:PLA:STA &F1:RTS :\ Restore CBLK
+ 2400:
+ 2410.RTCTimeWr
+ 2420LDA #2:JSR RTCTime:CLC
+ 2430\ Continue to save TIME
+ 2440:
+ 2450\ Save TIME to restore on Break
+ 2460\ -----------------------------
+ 2470.RTCSave    :\CC
+ 2480.RTCRestore :\CS
+ 2490PHP:SEI:PHA:TXA:PHA:TYA:PHA
+ 2500LDY #4:LDX #&96:BIT &FFB3:\ Else=&296
+ 2510BPL RTCSaveLp:DEX        :\ Elk =&295
+ 2520.RTCSaveLp
+ 2530LDA &200,X:BCC RTCSave2
+ 2540LDA save,Y:STA &200,X:STA &205,X
+ 2550.RTCSave2
+ 2560STA save,Y
+ 2570DEX:DEY:BPL RTCSaveLp
+ 2580PLA:TAY:PLA:TAX:PLA:PLP:RTS
+ 2590:
+ 2600\ Divide time in workspace by XY
+ 2610\ On exit  A=BCD(result), ws=remainder, X=corrupted
+ 2620.RTCDivide0
+ 2630LDA #0
+ 2640.RTCDivide
+ 2650STX ws+5:STY ws+6:STA ws+7
+ 2660LDX #255:SEC
+ 2670.RTCDivideLp
+ 2680LDA ws+0:SBC ws+5:STA ws+0
+ 2690LDA ws+1:SBC ws+6:STA ws+1
+ 2700LDA ws+2:SBC ws+7:STA ws+2
+ 2710INX:BCS RTCDivideLp
+ 2720LDA ws+0:ADC ws+5:STA ws+0
+ 2730LDA ws+1:ADC ws+6:STA ws+1
+ 2740LDA ws+2:ADC ws+7:STA ws+2
+ 2750TXA :\ Continue via BCD
+ 2760:
+ 2770.BINtoBCD
+ 2780TAX:LDA #&99:SED
+ 2790.BINtoBCDlp
+ 2800CLC:ADC #1:DEX:BPL BINtoBCDlp
+ 2810CLD:RTS
+ 2820.HexTopDigit
+ 2830LSR A:LSR A:LSR A:LSR A
+ 2840.HexDigit
+ 2850AND #15:CMP #10:BCC P%+4:ADC #6
+ 2860ADC #48:RTS
+ 2870:
+ 2880\ Calculate day of week
+ 2890\ ---------------------
+ 2900\ On entry  A=day, X=month, Y=year-1900
+ 2910\ On exit   A=day of week 1..7 for Sun..Sat
+ 2920.DayOfWeek
+ 2930CPX #3:BCS DOWMarch :\ Year starts in March to bypass leap year problem
+ 2940DEY                 :\ If Jan or Feb, decrement year
+ 2950.DOWMarch
+ 2960EOR #&7F            :\ Invert A so carry works right
+ 2970CPY #200            :\ Carry will be 1 if 22nd century
+ 2980ADC DOWMonths-1,X   :\ A=day+month_offset
+ 2990STA tmp
+ 3000TYA:JSR DOWmod7     :\ Get the year MOD 7 to prevent overflow
+ 3010SBC tmp:STA tmp     :\ A=day+month_offset+year using CLC from DOWmod7
+ 3020TYA:LSR A:LSR A     :\ Get the year DIV 4
+ 3030CLC:ADC tmp         :\ A=day+month_offset+year+year/4, fall through to MOD 7
+ 3040.DOWmod7
+ 3050ADC #7:BCC DOWmod7  :\ Reduce A to A MOD 7
+ 3060ADC #0:RTS          :\ Update to 1..7 and return CLC
+ 3070.DOWMonths
+ 3080EQUB 1:EQUB 5:EQUB 6:EQUB 3 :\ Month offsets
+ 3090EQUB 1:EQUB 5:EQUB 3:EQUB 0
+ 3100EQUB 4:EQUB 2:EQUB 6:EQUB 4
+ 3110.DOWLengths
+ 3120EQUB 31:EQUB 31:EQUB 28:EQUB 31 :\ Month lengths
+ 3130EQUB 30:EQUB 31:EQUB 30:EQUB 31
+ 3140EQUB 31:EQUB 30:EQUB 31:EQUB 30
+ 3150EQUB 31:EQUB 31:EQUB 31:EQUB 31
+ 3160:
+ 3170:
+ 3180\ OSWORD 15 - Set Real Time Clock
+ 3190\ ================================
+ 3200.Osword15
+ 3210LDY #0:LDA (&F0),Y     :\ Get command
+ 3220\   #05                :\ 5-byte centisecond time
+ 3230CMP #07:BEQ Osw15a     :\ 7-byte BCD
+ 3240CMP #08:BEQ Osw15a     :\ "hh/mm/ss" or 8-byte BCD
+ 3250CMP #11:BEQ Osw15a     :\ "dd mmm yyyy"
+ 3260CMP #15:CLC:BEQ Osw15a :\ "DDD,dd mmm yyyy"
+ 3270CMP #20:BEQ Osw15a     :\ "dd mmm yyyy.hh/mm/ss"
+ 3280CMP #24:CLC:BEQ Osw15a :\ "DDD,dd mmm yyyy.hh/mm/ss"
+ 3290JMP Serv08Quit
+ 3300.Osw15a
+ 3310TAX:LDY #tmp-ws+1
+ 3320.Osw15lp1
+ 3330LDA ws-1,Y:PHA         :\ Save workspace
+ 3340LDA (&F0),Y:STA ws-1,Y :\ And copy control block
+ 3350DEY:BNE Osw15lp1
+ 3360LDY #0:BCS P%+4:LDY #4 :\ Step past day
+ 3370TXA:CMP #8:BNE Osw15c  :\ Check command
+ 3380LDA ws+2:CMP #ASC" ":TXA :\ Check for string
+ 3390.Osw15c
+ 3400BCS Osw15String        :\ Set from string
+ 3410JSR RTCYear            :\ Check year
+ 3420SED:LDY #7             :\ Convert to binary
+ 3430.Osw15BCDlp
+ 3440LDA ws,Y:LDX #&FF:SEC
+ 3450.BCDtoBINlp
+ 3460INX:SBC #1:BCS BCDtoBINlp
+ 3470TXA:PHA:DEY            :\ Stack binary data
+ 3480BPL Osw15BCDlp:CLD
+ 3490TSX:LDA #0:STA &105,X  :\ Set index=0
+ 3500PLA:TAX:PLA:JMP Osw15Date
+ 3510:
+ 3520.Osw15String
+ 3530PHA:JSR RTCTimeRd:PLA     :\ Read TIME
+ 3540CMP #11:BCC Osw15Time:PHA :\ Set time only
+ 3550JSR GetDec:AND #31:PHA    :\ Date
+ 3560LDX #0:STX tmp:INY:TYA
+ 3570.Osw15lp2
+ 3580PHA
+ 3590.Osw15lp3
+ 3600LDA (&F0),Y:CMP DateText+3,X  :\ Match month name
+ 3610BEQ Osw15Match:EOR #32
+ 3620CMP DateText+3,X:BEQ Osw15Match
+ 3630.Osw15lp4
+ 3640JSR Osw15Next:BCS Osw15lp4    :\ Step to next month
+ 3650PLA:TAY:INC tmp:CPX #13*3
+ 3660BCC Osw15lp2:BCS Osw15Quit2   :\ No match
+ 3670.Osw15Match
+ 3680INY:JSR Osw15Next:BCS Osw15lp3
+ 3690PLA:LDX tmp:INX:TXA:PHA       :\ Month
+ 3700JSR GetDec:TAX:JSR GetDec2    :\ Year
+ 3710\
+ 3720\ Write updated time&date
+ 3730\ A=year, X=century, SP=>month, date, index
+ 3740\ This code implements low-level RTC writing
+ 3750.Osw15Date
+ 3760CLC:ADC #100:DEX:CPX #19      :\ cent*100+year
+ 3770BCS Osw15Date:SBC #179        :\ Year-1980
+ 3780BMI Osw15Quit3                :\ Year<1980
+ 3790STA ws+4:PLA:CMP #8:ROL ws+4  :\ Year*2+b3
+ 3800ASL A:ASL A:ASL A:ASL A:ASL A :\ Month
+ 3810STA ws+3:PLA:ORA ws+3:STA ws+3:\ Date
+ 3820PLA:BEQ Osw15Time1            :\ Time is on stack
+ 3830CMP #20:BCC Osw15Write        :\ No time string
+ 3840\
+ 3850.Osw15Time
+ 3860JSR GetDec:STA ws+5           :\ Hour
+ 3870JSR GetDec:TAX                :\ Mins
+ 3880JSR GetDec:PHA                :\ Secs
+ 3890TXA:PHA:LDA ws+5:PHA          :\ Shuffle stack
+ 3900\
+ 3910.Osw15Time1
+ 3920LDA #0:STA ws+1:STA ws+2
+ 3930PLA:STA ws+0:JSR wsTimes60    :\ Hour
+ 3940PLA:JSR wsAdd:JSR wsTimes60   :\ Mins
+ 3950PLA:JSR wsAdd:JSR wsTimes100  :\ Secs
+ 3960\
+ 3970.Osw15Write
+ 3980JSR RTCTimeWr :\ Write TIME
+ 3990PHA:PHA:PHA   :\ Balance stack
+ 4000.Osw15Quit3
+ 4010PLA
+ 4020.Osw15Quit2
+ 4030PLA:PLA
+ 4040.Osw15Quit
+ 4050JMP Osw14Done
+ 4060:
+ 4070.Osw15Next
+ 4080INX:LDA DateText+3,X:CMP #&60:RTS
+ 4090:
+ 4100.GetDec
+ 4110INY
+ 4120.GetDec2
+ 4130JSR GetDigit:STA tmp:ASL A
+ 4140ASL A:ADC tmp:ASL A:STA tmp
+ 4150JSR GetDigit:CLC:ADC tmp:RTS
+ 4160.GetDigit
+ 4170LDA (&F0),Y:INY:AND #15:RTS
+ 4180:
+ 4190.wsTimes100
+ 4200JSR wsTimes10:BCC wsTimes10 :\ n*100
+ 4210.wsTimes60
+ 4220BIT SETV:JSR wsTimes6or10   :\ n*6
+ 4230.wsTimes10
+ 4240CLV
+ 4250.wsTimes6or10
+ 4260JSR wsTimes2                :\ n*2
+ 4270LDY ws+2:LDX ws+1:LDA ws+0  :\ n*2
+ 4280JSR wsTimes2:BVS wsTimesAdd :\ n*4
+ 4290JSR wsTimes2                :\ n*8
+ 4300.wsTimesAdd
+ 4310ADC ws+0:STA ws+0           :\    n*8+n*2 = n*10
+ 4320TXA:ADC ws+1:STA ws+1       :\ or n*4+n*2 = n*6
+ 4330TYA:ADC ws+2:STA ws+2
+ 4340.SETV
+ 4350RTS
+ 4360.wsTimes2
+ 4370ASL ws+0:ROL ws+1:ROL ws+2:RTS
+ 4380.wsAdd
+ 4390CLC:ADC ws+0:STA ws+0
+ 4400LDA #0:ADC ws+1:STA ws+1
+ 4410LDA #0:ADC ws+2:STA ws+2
+ 4420RTS
+ 4430:
+ 4440\ *TIME - Display or set RTC
+ 4450\ --------------------------
+ 4460.cmdTime
+ 4470JSR SkipSpc               :\ Skip spaces
+ 4480CMP #13:BEQ cmdTimeRd     :\ *TIME<cr>
+ 4490CMP #ASC"?":BNE TimeSet   :\ *TIME ?
+ 4500.cmdTimeRd
+ 4510LDX #0:LDY #1:STX &100    :\ OSWORD 14,0
+ 4520LDA #osw14:JSR OSWORD
+ 4530LDA &100:BEQ cmdTimeDone  :\ Nothing returned
+ 4540LDX #0
+ 4550.cmdTimeLp
+ 4560CPX #32:BCS cmdTimeDone   :\ Max. 32 characters
+ 4570LDA &100,X:JSR OSASCI:INX :\ Print string
+ 4580CMP #13:BNE cmdTimeLp
+ 4590.cmdTimeDone
+ 4600LDA #0:RTS
+ 4610:
+ 4620.TimeSet
+ 4630CMP #ASC"=":BEQ P%+3:DEY  :\ Skip '='
+ 4640JSR SkipSpc:DEY:LDX #1
+ 4650.TimeSetLp1
+ 4660LDA (&F2),Y:STA &100,X    :\ Copy to error buffer
+ 4670CMP #13:BEQ TimeSetLp2
+ 4680INY:INX:BPL TimeSetLp1
+ 4690.TimeSetLp2
+ 4700DEX:LDA &100,X:CMP #ASC" ":\ Drop trailing spaces
+ 4710BEQ TimeSetLp2
+ 4720STX &100:LDA #osw15
+ 4730LDX #0:LDY #1:JSR OSWORD  :\ OSWORD 15,len
+ 4740JSR Osword15:LDA #0:RTS   :\ Also do directly
+ 4750:
+ 4760.SkipSpc
+ 4770LDA (&F2),Y:INY
+ 4780CMP #ASC" ":BEQ SkipSpc
+ 4790RTS
+ 4800:
+ 4810]:RelocTable=P%
+ 4820NEXT:ENDPROC
+ 4830:
+ 4840DEFFNsm_pass(pass%)
+ 4850IFpass%=0:M%=0
+ 4860IFpass%=1:M%=O%-mcode%
+ 4870P%=&8100-128*(pass%AND2)
+ 4880O%=mcode%+M%*(pass%AND2)DIV2
+ 4890IFpass%=1:IF O%+M%*2.125>L%:PRINT"Code overrun":END
+ 4900=VALMID$("4647",pass%+1,1)
+ 4910:
+ 4920DEFPROCsm_table
+ 4930base80%=mcode%+M%:base81%=mcode%:byte%=0:count%=0:off%=0:REPEAT
+ 4940byte80%=base80%?off%:byte81%=base81%?off%:IF off%>=M%:byte80%=&80:byte81%=&80
+ 4950IF ((byte81%-byte80%) AND &FE)<>0 THEN PRINT "ERROR: Offset by more than one page at &";~&8000+off%
+ 4960IF (byte80% AND &C0)=&80:byte%=byte%DIV2+128*(byte81%-byte80%):count%=count%+1
+ 4970IF count%=8:?O%=byte%:O%=O%+1:byte%=0:count%=0
+ 4980off%=off%+1:UNTILoff%>=M% AND count%=0
+ 4990ENDPROC
