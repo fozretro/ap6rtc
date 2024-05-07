@@ -8,7 +8,8 @@ DEFAULT_FS = FALSE
 \ Change this if you want to move UPURS to a second user port
 \ (eg connected to the 1Mhz BUS)
 \ https://sweh.spuddy.org/Beeb/2nd_User_Port/
-USER_PORT = &FE60
+\ USER_PORT = &FE80
+USER_PORT = &FCB1
 
 BreakKey = &35  \ U
 
@@ -44,7 +45,8 @@ upacr   = (USER_PORT AND &FFFE)+&B \ Auxilliary Control Register
 \ to copy code into here, and we are a filesystem, so maybe it's safe
 \ for us as well
 serbuf = $0D10
-bufsize = $60   \ allow some overrun space
+\ bufsize = $60   \ allow some overrun space
+bufsize = $40   \ allow some overrun space
 
 \ We're a file system, so we can use memory in &C0 -> &CF
 \ Potentially &B0 -> &BF might be play space  as well
