@@ -3,19 +3,19 @@
 \	   I2C Rom Utilities	 \
 \          (c) Martin Barr 2018	 \
 \			     	 \
-\	         V3.1E	     	 \
+\	         V3.1B	     	 \
 \	        16-11-18	     	 \
 \			     	 \
-\    	 For the Acorn Electron	 \
+\    	  For the BBC Model B	 \
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 \-------------------------------------------------------------------------------
 \Notes:
 \
-\1. Assumes User Port 6522 @ $FCB0 and uses PB0=SDA , CB2=SCL
+\1. Assumes System 6522 VIA @ $FE40 and uses PB5=SDA , PB4=SCL
 \
 \2. Commands :	*I2C
-\		*I2CRESET
+		*I2CRESET
 \		*I2CQUERY (Q)
 \		*I2CTXB <addr> (#<hh>) <byte>(;)
 \		*I2CTXD <addr> (#<hh>) <no.bytes>(;)
@@ -52,7 +52,6 @@
 \
 \	a) Migrates I2C bus from User Port to Analogue Port using System
 \	   VIA @ $FE40 where SCL=PB4 and SDA=PB5 (Joystick Fire 0 & 1)
-\	   (Not applicable to Electron as it has no equivalent Analogue Port)
 \
 \6. Changes introduced in v3.1 :
 \
@@ -102,15 +101,17 @@ OSW_A	EQU	$EF		\A at time of unknown OSWORD call
 OSW_X	EQU	$F0		\X at .....
 OSW_Y	EQU	$F1		\Y at .....
 
-				\User Port 6522 Registers
-upiob	EQU	$FCB0		\I/O Register B
-upddrb	EQU	$FCB2		\Data Direction Register B
-uppcr	EQU	$FCBC		\Peripheral Control Register
-upifr	EQU	$FCBD		\Interrupt Flag Register
+				\System VIA (6522) Registers
+upiob	EQU	$FE40		\I/O Register B
+upddrb	EQU	$FE42		\Data Direction Register B
+ 
+xsdahi 	EQU	$DF		\upddrb AND #xsdahi=b5 reset=data hi
+xsdalo	EQU	$20		\upddrb OR #xsdalo=b5 set=data lo
+getsda	EQU	$20		\upiob AND #getsda to read data
 
-xsdahi	EQU	$FE		\AND #xsdahi = bit 0 reset = data hi
-xsdalo	EQU	$01		\OR #xsdalo = bit 0 set = data lo
-getsda	EQU	$01		\upiob AND #getsda to read data
+xsclhi	EQU	$EF		\upddrb AND #xsclhi=b4 reset=clock hi
+xscllo	EQU	$10		\upddrb OR #xscllo=b4 set=clock lo
+getscl	EQU	$10		\upiob AND #getscl to read clock
 
 COMVEC	EQU	$0234		\command execution vector (IND3V)
 cli	EQU	$F2		\command line pointer - use (cli),Y
@@ -184,60 +185,50 @@ lower	EQU	$20		\upper to lower case mask (b5=1 on ORA)
 \-------------------------------------------------------------------------------
 \*** Macro definitions ***
 \-------------------------------------------------------------------------------
-\Allows SCL (clock) to float hi by setting VIA PCR CB2 control bits 7-5 to 011
-\which is Input +ve Edge with Interrupt.
+\Allows SCL (clock) to float hi by setting VIA DDRB b4 to 0=input
 \Checks for clock-stretch from slave where SCL is held lo by slave by polling
-\IFR until bit 3 becomes set. 
-\Allows user to <Escape> from slave clock stretch in the event of a hang.
+\DIOB until b4 becomes clear.
 
 sclhi	MACRO
-	LDA	upifr		\first clear any CB2 flag in IFR
-	ORA	#$08
-	STA	upifr
-
-	LDA	uppcr		\set CB2 to input in 6522 PCR
-	AND	#$1F
-	ORA	#$60		\011x xxxx
-	STA	uppcr
-
-cstr@$MC	LDA	upifr		\wait for CB2 to transit high
-	AND	#$08
-	BNE	sclx@$MC		\clock hi, exit immediately
-	LDA	$FF		\else slave is clock stretching so..
-	AND	#&80		\test for user <Esc> press
-	BEQ	cstr@$MC		\no <Esc> so re-test clock status
-	LDA	#$7C		\<Esc> pressed - process and exit
-	JSR	OSBYTE
-sclx@$MC	NOP			\either clock gone hi or <Esc> pressed
+	LDA	upddrb		\set SCL to input (0 = float hi/read)
+	AND	#xsclhi		\only clear b4 of DDR
+	STA	upddrb
+cstr@$MC	LDA	upiob		\wait for b4 to transit high
+	AND	#getscl
+	BEQ	cstr@$MC		\clock lo, wait...
+sclx@$MC	NOP			\clock hi, continue
 	ENDM
-	
+
 \-------------------------------------------------------------------------------
-\SCL (clock) driven lo by setting VIA PCR CB2 control bits 7-5 to 110
+\SCL (clock) driven lo by setting VIA DDRB b4 to 1=output and DIOB b4 to 0
 
 scllo	MACRO
-	LDA	uppcr		\6522 PCR
-	AND	#$1F
-	ORA	#$C0		\110x xxxx
-	STA	uppcr
-	ENDM
-
-\-------------------------------------------------------------------------------
-\Allows SDA (data) to float hi by setting VIA DDRB data bit to 0=input
-
-sdahi	MACRO
+	LDA	upiob
+	AND	#xsclhi		\only clear b4 of DIO
+	STA	upiob
 	LDA	upddrb
-	AND	#xsdahi
+	ORA	#xscllo		\only set b4 of DDR
 	STA	upddrb
 	ENDM
 
 \-------------------------------------------------------------------------------
-\SDA (data) driven lo by setting VIA DDRB data bit to 1=output and DIOB to 0
+\Allows SDA (data) to float hi by setting VIA DDRB bit 5 (only) to 0=input
+
+sdahi	MACRO
+	LDA	upddrb
+	AND	#xsdahi		\only clear b5 of DDR
+	STA	upddrb
+	ENDM
+
+\-------------------------------------------------------------------------------
+\SDA (data) driven lo by setting VIA DDRB b5 to 1=output and DIOB b5 to 0
 
 sdalo	MACRO
-	LDA	#0
+	LDA	upiob
+	AND	#xsdahi		\only clear b5 of DIO
 	STA	upiob
 	LDA	upddrb
-	ORA	#xsdalo
+	ORA	#xsdalo		\only set b5 of DDR
 	STA	upddrb
 	ENDM
 
@@ -304,7 +295,7 @@ romstart	DFB	0,0,0		\no language entry (3 nulls)
 title	DFB	0		\version
 	ASC	'I2C'		\title string
 	DFB	0		\..and null terminator
-	ASC	'3.1E'		\version string with CR and..
+	ASC	'3.1B'		\version string with CR and..
 copyr	DFB	0		\copyright string..
 	ASC	'(C) M.P.Barr 2018'
 	DFB	0		\..'framed' by nulls
@@ -583,7 +574,7 @@ xosxx	RTS			\and return flagging command untaken
 \------------------------------------------------------------------------------
 \OSWORD call &0E Type 1 emulation - requests BCD output of the RTC into a
 \parameter block specified by XY (little-endian). Normally a Master series
-\only call but can be implemented on an Elk with an RTC. This implementation
+\only call but can be implemented on a BBC B with an RTC. This implementation
 \faithfully reproduces the returned parameter block of OSWORD &0E Type 1 
 
 OSW$0E1	JSR	getrtc		\first fetch rtc data block and then
@@ -2411,7 +2402,7 @@ dec_print PHA			\save a copy of A
 \Messages are selected via A = <message number> in the max. range 0-15
 \Note 1 : exits A = 0 and thus caller can branch always via BEQ on return
 
-txt0	ASC	'I2C 3.1E 161118#'
+txt0	ASC	'I2C 3.1B 161118#'
 txt1	ASC	'ACK Rx'
 txt1a	DFB	$27
 txt1b	ASC	'd from :}'
@@ -2501,7 +2492,7 @@ cmd16	DFB	$EA,$8A,$48,$98,$48,$4C	\I2C	($BFF8)
 \-------------------------------------------------------------------------------
 \*** End of I2C Rom ***
 \
-\Checksum32 = $????????
+\Checksum32 = $00091985
 
 
 

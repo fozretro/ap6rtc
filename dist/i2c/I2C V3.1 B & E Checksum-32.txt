@@ -1,0 +1,4 @@
+I2C (4 U) V3.1B (Beeb etc) ROM 25-11-18 Checksum-32 : $00091906
+
+I2C (4 U) V3.1E (Electron) ROM 25-11-18 Checksum-32 : $0009C486
+
