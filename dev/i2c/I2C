@@ -3,19 +3,19 @@
 \	   I2C Rom Utilities	 \
 \          (c) Martin Barr 2018	 \
 \			     	 \
-\	         V3.1E	     	 \
+\	         V3.2EAP6	     	 \
 \	        16-11-18	     	 \
 \			     	 \
-\    	 For the Acorn Electron	 \
+\    	 For the Acorn Electron (AP6)	 \
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 \-------------------------------------------------------------------------------
 \Notes:
 \
-\1. Assumes User Port 6522 @ $FCB0 and uses PB0=SDA , CB2=SCL
+\1. Assumes Electron with Plus 1 and AP6 expansion
 \
 \2. Commands :	*I2C
-		*I2CRESET
+\		*I2CRESET
 \		*I2CQUERY (Q)
 \		*I2CTXB <addr> (#<hh>) <byte>(;)
 \		*I2CTXD <addr> (#<hh>) <no.bytes>(;)
@@ -88,6 +88,10 @@
 \
 \	e) Adds a further blank line during *HELP or *HELP I2C but now after
 \	   the end of rom print dialogue.
+\
+\7. Changes introduced in v3.2
+\
+\   a) Support for Electron Plus 1 with AP6 expansion
 \
 \-------------------------------------------------------------------------------
 \Constants etc. defined here
@@ -304,7 +308,7 @@ romstart	DFB	0,0,0		\no language entry (3 nulls)
 title	DFB	0		\version
 	ASC	'I2C'		\title string
 	DFB	0		\..and null terminator
-	ASC	'3.1E'		\version string with CR and..
+	ASC	'3.2EAP6'		\version string with CR and..
 copyr	DFB	0		\copyright string..
 	ASC	'(C) M.P.Barr 2018'
 	DFB	0		\..'framed' by nulls
