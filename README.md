@@ -13,3 +13,9 @@ Various reference resources, forum posts etc..
 - [OSWORD 14 & 15 numbers for real-time clocks](https://www.stardot.org.uk/forums/viewtopic.php?t=28743)
 - [Userport RTC](https://stardot.org.uk/forums/viewtopic.php?f=3&t=26270)
 - [Setting a real-time clock to centi-second accuracy](https://www.stardot.org.uk/forums/viewtopic.php?p=419313#p419313)
+
+Notes
+-----
+
+*I2CRXB 50 #10 A%
+*I2CRXB 50 #02 A%

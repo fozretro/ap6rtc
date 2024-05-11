@@ -106,15 +106,12 @@ OSW_A	EQU	$EF		\A at time of unknown OSWORD call
 OSW_X	EQU	$F0		\X at .....
 OSW_Y	EQU	$F1		\Y at .....
 
-				\User Port 6522 Registers
-upiob	EQU	$FCB0		\I/O Register B
-upddrb	EQU	$FCB2		\Data Direction Register B
-uppcr	EQU	$FCBC		\Peripheral Control Register
-upifr	EQU	$FCBD		\Interrupt Flag Register
-
-xsdahi	EQU	$FE		\AND #xsdahi = bit 0 reset = data hi
-xsdalo	EQU	$01		\OR #xsdalo = bit 0 set = data lo
-getsda	EQU	$01		\upiob AND #getsda to read data
+				\ AP6 Interface
+ap6reg	EQU 	$FCD6
+xsdahi	EQU 	&80		\ TODO Explain bitmask
+xsdalo	EQU 	&7F		\ TODO Explain bitmask
+xsclhi	EQU 	&40		\ TODO Explain bitmask
+xscllo	EQU 	&BF		\ TODO Explain bitmask
 
 COMVEC	EQU	$0234		\command execution vector (IND3V)
 cli	EQU	$F2		\command line pointer - use (cli),Y
@@ -127,7 +124,7 @@ bufloc	EQU	$CE		\zp,y pointer to i2c buffer for RxB..
 i2cbuf	EQU	$0A00		\i2c Tx and Rx data buffer (to $0AFF)
 eeplo	EQU	$60		\24C32 target address lo-byte for r/w
 eephi	EQU	$61		\24C32 target address hi-byte for r/w
-spare	EQU	$62		\not used 
+ap6regc	EQU	$62		\last written value to AP6 control reg
 bcdt	EQU	$63		\temporary for bcd tens
 bcdu	EQU	$64		\temporary for bcd units
 i2cslot	EQU	$65		\sideways rom slot id of i2c rom
@@ -181,6 +178,7 @@ dash	EQU	45		\<->
 bkspc	EQU	8		\<backspace> (ascii 'BS')
 upper	EQU	$DF		\lower to upper case mask (b5=0 on AND)
 lower	EQU	$20		\upper to lower case mask (b5=1 on ORA)
+ap6idle	EQU 	$11		\idle value of AP6 ctrl reg
 
 
 \end of declarations
@@ -188,61 +186,43 @@ lower	EQU	$20		\upper to lower case mask (b5=1 on ORA)
 \-------------------------------------------------------------------------------
 \*** Macro definitions ***
 \-------------------------------------------------------------------------------
-\Allows SCL (clock) to float hi by setting VIA PCR CB2 control bits 7-5 to 011
-\which is Input +ve Edge with Interrupt.
-\Checks for clock-stretch from slave where SCL is held lo by slave by polling
-\IFR until bit 3 becomes set. 
-\Allows user to <Escape> from slave clock stretch in the event of a hang.
+\ TODO: Explain further about how AP6 interface at &FCD6 is used to control I2C
 
 sclhi	MACRO
-	LDA	upifr		\first clear any CB2 flag in IFR
-	ORA	#$08
-	STA	upifr
-
-	LDA	uppcr		\set CB2 to input in 6522 PCR
-	AND	#$1F
-	ORA	#$60		\011x xxxx
-	STA	uppcr
-
-cstr@$MC	LDA	upifr		\wait for CB2 to transit high
-	AND	#$08
-	BNE	sclx@$MC		\clock hi, exit immediately
-	LDA	$FF		\else slave is clock stretching so..
-	AND	#&80		\test for user <Esc> press
-	BEQ	cstr@$MC		\no <Esc> so re-test clock status
-	LDA	#$7C		\<Esc> pressed - process and exit
-	JSR	OSBYTE
-sclx@$MC	NOP			\either clock gone hi or <Esc> pressed
+	LDA 	ap6regc
+	ORA 	#(xsclhi)
+	STA 	ap6regc
+	STA 	ap6reg
 	ENDM
 	
 \-------------------------------------------------------------------------------
-\SCL (clock) driven lo by setting VIA PCR CB2 control bits 7-5 to 110
+\SCL (clock) driven lo by ... TODO
 
 scllo	MACRO
-	LDA	uppcr		\6522 PCR
-	AND	#$1F
-	ORA	#$C0		\110x xxxx
-	STA	uppcr
+	LDA 	ap6regc
+	AND 	#(xscllo)
+	STA 	ap6regc
+	STA 	ap6reg
 	ENDM
 
 \-------------------------------------------------------------------------------
-\Allows SDA (data) to float hi by setting VIA DDRB data bit to 0=input
+\Allows SDA (data) to float hi by ... TODO
 
 sdahi	MACRO
-	LDA	upddrb
-	AND	#xsdahi
-	STA	upddrb
+	LDA	ap6regc
+	ORA	#(xsdahi)
+	STA	ap6regc
+	STA	ap6reg
 	ENDM
 
 \-------------------------------------------------------------------------------
-\SDA (data) driven lo by setting VIA DDRB data bit to 1=output and DIOB to 0
+\SDA (data) driven lo by ... TODO
 
 sdalo	MACRO
-	LDA	#0
-	STA	upiob
-	LDA	upddrb
-	ORA	#xsdalo
-	STA	upddrb
+	LDA	ap6regc
+	AND	#(xsdalo)
+	STA	ap6regc
+	STA	ap6reg
 	ENDM
 
 \-------------------------------------------------------------------------------
@@ -289,6 +269,9 @@ i2cstop	MACRO
 \Sets idle state (both hi) first.
 
 i2cstart	MACRO
+	LDA #ap6idle		\idle value for AP6
+	STA ap6reg		\set AP6 reg (write only) to known state
+	STA ap6regc		\maintain a copy of the last written value
 	i2cidle
 	sdalo
 	scllo
@@ -320,7 +303,8 @@ copyr	DFB	0		\copyright string..
 
 service	CMP	#1		\A=1, autoboot? ('Break' or switch on)
 	BNE	serv_a1		\no, next check
-	JMP	boot		\else goto boot handler (print time)
+	\ JMP	boot		\else goto boot handler (print time)
+	RTS
 serv_a1	CMP	#4		\A=4, unknown command?
 	BNE	serv_a2		\no, next check
 	JMP	command		\else goto command handler
@@ -1450,8 +1434,8 @@ adloop	ASL			\shift top bit into C
 
 i2crxack	sclhi
 	sdahi
-	LDA	upiob		\get response
-	AND	#getsda
+	LDA	ap6reg		\ read from AP6 reg 
+	AND	#(xsdahi)		\ bit 7 mask
 	CLC			\Carry mirrors RxACK
 	BEQ	rxax
 	SEC
@@ -1479,8 +1463,8 @@ i2crxbyte	TXA			\preserve X & Y
 	LDX	#0		\build rx byte in X
 	LDY	#8		\8 bits to receive
 rxloop	sclhi			\clock hi
-	LDA	upiob		\read a data bit (sent MS to LS)
-	AND	#getsda
+	LDA	ap6reg		\read a data bit (sent MS to LS)
+	AND	#xsdahi
 	CLC
 	BEQ	rxby1
 	SEC
