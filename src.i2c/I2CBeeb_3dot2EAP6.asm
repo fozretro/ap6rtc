@@ -143,7 +143,7 @@ devidlo	EQU	$08		\lowest i2c device id to interrogate
 devidhi	EQU	$77		\highest i2c device id to interrogate
 
 EEP32	EQU	$57		\AT24C32 eeprom I2C slave address
-RTC	EQU	$A0		\RTC I2C Slave Address
+RTC	EQU	$50		\AP6 RTC I2C Slave Address 
 cs	EQU	$7F		\seconds	  :	Bits 6-0 Mask $7F
 cm	EQU	$7F		\minutes	  :	Bits 6-0 Mask $7F
 ch	EQU	$3F		\hours	  :	Bits 5-0 Mask $3F
@@ -1888,24 +1888,43 @@ xxnow	LDX	#$FF		\this will signal no <cr> after time
 \-------------------------------------------------------------------------------
 \Gets time and date parameters from RTC into buffer buf00-buf07 @ $0380
 
-getrtc	LDA	#>buf00		\re-direct i2c buffer to buf00
-	STA	bufloc		\($0380)
-	LDA	#<buf00
-	STA	bufloc+1
+getrtc
+	LDX	#>i2cbuf		\set I2C buffer to $0A00
+	STX	bufloc
+	LDX	#<i2cbuf
+	STX	bufloc+1
 				\set up rxd call to fetch all RTC data
-	LDA	#RTC		\DS3231 RTC device id
+	LDA	#RTC		\PCF8583 RTC device id
 	STA	$68
-	LDA	#0		\register number - start at 0 (secs)
+	LDA	#0		\register number - start at 0 (control)
 	STA	$69
-	LDA	#19		\number of bytes to fetch (addr $00-$12)
+	LDA	#6		\number of bytes to fetch (addr $00-$06)
 	STA	$6A
 	STA	$6C		\reg-valid flag to non-zero
 	JSR	cmd6		\and make the rxd(go) call
 
-	LDA	#>i2cbuf		\reset I2C buffer to $0A00
-	STA	bufloc
-	LDA	#<i2cbuf
-	STA	bufloc+1
+				\ TODO Map $&A00 to $&360
+	LDA	&A02		\ PCF8583 - Seconds
+	STA 	buf00		\ > DS3231 - Seconds
+	LDA 	&A03		\ PCF8583 - Minutes
+	STA	buf01		\ > DS3231 - Minutes
+	LDA	&A04		\ PCF8583 - Hours
+	STA	buf02		\ > DS3231 - Hours
+	LDA	#0		\ ?
+	STA	buf03		\ > DS3231 - Day
+	LDA 	#0
+	STA	buf04		\ > DS3231 - Date
+	LDA 	#0
+	STA	buf05		\ > DS3231 - Month
+	LDA 	#0
+	STA	buf06		\ > DS3231 - Year		
+	LDA 	#0
+	STA 	buf07		\ > DS3231 - Zero for now
+	STA	buf08		\ > DS3231 - Zero for now
+	STA	buf09		\ > DS3231 - Zero for now
+	STA	buf12		\ > DS3231 - Zero for now
+	STA	buf17		\ > DS3231 - Zero for now
+	STA	buf18		\ > DS3231 - Zero for now
 
 	RTS			\and return
 

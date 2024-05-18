@@ -19,3 +19,22 @@ Notes
 
 *I2CRXB 50 #10 A%
 *I2CRXB 50 #02 A%
+*I2CTXB 50 #10 66
+
+$&A00="HELLO"
+*I2CTXD 50 #10 06
+*I2CRXD 50 #10 06
+P.$&A00
+
+writetd - copies from buf00-buf06 (7 bytes) to &A00 and writes to RTC
+- here I could do the transform from DS3231 to PCF8583 format
+- i can transform into $A00 before the write
+gettd - reads diretly into buf00-buf12
+- here I could do the transform from PCF8583 to DS3231 format
+- i can read directoy into $A00 then transform into buf00-buf12 
+
+Maybe some kind of fancy mapping thing?
+PCT8583 > DS3231
+00 > 01, 7F > 35  \ Seconds
+... \ Hours
+... etc
