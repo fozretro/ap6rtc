@@ -1898,26 +1898,49 @@ getrtc
 	STA	$68
 	LDA	#0		\register number - start at 0 (control)
 	STA	$69
-	LDA	#6		\number of bytes to fetch (addr $00-$06)
+	LDA	#7		\number of bytes to fetch (addr $00-$06)
 	STA	$6A
 	STA	$6C		\reg-valid flag to non-zero
 	JSR	cmd6		\and make the rxd(go) call
 
-				\ TODO Map $&A00 to $&360
+	\ Seconds
 	LDA	&A02		\ PCF8583 - Seconds
 	STA 	buf00		\ > DS3231 - Seconds
+	\ Minutes
 	LDA 	&A03		\ PCF8583 - Minutes
 	STA	buf01		\ > DS3231 - Minutes
+	\ Hours
 	LDA	&A04		\ PCF8583 - Hours
 	STA	buf02		\ > DS3231 - Hours
-	LDA	#0		\ ?
+	\ Day of Week
+	LDA	&A06		\ PCF8583 - Weekdays/Months
+	LSR A
+	LSR A
+	LSR A
+	LSR A
+	LSR A
+	CLC
+	ADC 	#1
 	STA	buf03		\ > DS3231 - Day
-	LDA 	#0
+	\ Day of Month
+	LDA 	&A05		\ PCF8583 - Year/Date
+	AND	#$3F		\ Mask bits 7,6 (Year)
 	STA	buf04		\ > DS3231 - Date
-	LDA 	#0
+	\ Month
+	LDA 	&A06		\ PCF8583 - Weekdays/Months
+	AND 	#$1F 		\ Mask bits 7,6 and 5 (Weekdays)
 	STA	buf05		\ > DS3231 - Month
-	LDA 	#0
+	\ Year
+	LDA 	&A05		\ PCF8583 - Year/Date
+	LSR A
+	LSR A
+	LSR A
+	LSR A
+	LSR A
+	LSR A
+	\ TODO: Need to add some offset
 	STA	buf06		\ > DS3231 - Year		
+	\ Other
 	LDA 	#0
 	STA 	buf07		\ > DS3231 - Zero for now
 	STA	buf08		\ > DS3231 - Zero for now
@@ -2212,13 +2235,15 @@ dp_x	RTS			\and return
 \First copies the 7 t&d bytes across to the main I2C buffer at $0A00 and then
 \performs the write using an internal txd call.
 
-writetd	LDX	#0		\copy t&d data to I2C buffer
-wtd_a1	LDA	buf00,X
-	STA	i2cbuf,X
-	INX
-	CPX	#7		\copying 7 bytes
-	BNE	wtd_a1
-	
+writetd				\copy t&d data to I2C buffer
+	\ Hours
+	\ Minutes
+	\ Seconds
+	\ Day of Week
+	\ Day of Month
+	\ Month
+	\ Year
+
 	LDA	#RTC		\set up txd call
 	STA	$68		\slave address
 	LDA	#0
