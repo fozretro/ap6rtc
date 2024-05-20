@@ -1904,30 +1904,32 @@ getrtc
 	JSR	cmd6		\and make the rxd(go) call
 
 	\ Seconds
-	LDA	&A02		\ PCF8583 - Seconds
+	LDA	&A02		\ PCF8583 - Seconds (02h reg)
 	STA 	buf00		\ > DS3231 - Seconds
 	\ Minutes
-	LDA 	&A03		\ PCF8583 - Minutes
+	LDA 	&A03		\ PCF8583 - Minutes (03h reg)
 	STA	buf01		\ > DS3231 - Minutes
 	\ Hours
-	LDA	&A04		\ PCF8583 - Hours
+	LDA	&A04		\ PCF8583 - Hours (04h reg)
 	STA	buf02		\ > DS3231 - Hours
 	\ Day of Week
-	LDA	&A06		\ PCF8583 - Weekdays/Months
+	LDA	&A06		\ PCF8583 - Weekdays/Months (06h reg)
 	LSR A
 	LSR A
 	LSR A
 	LSR A
 	LSR A
+	SED			\ Enable BCD mode
 	CLC
-	ADC 	#1
+	ADC 	#1		\ PCF8583 Day of week is base 0, S3231 is base 1
+	CLD			\ Clear BCD mode
 	STA	buf03		\ > DS3231 - Day
 	\ Day of Month
-	LDA 	&A05		\ PCF8583 - Year/Date
+	LDA 	&A05		\ PCF8583 - Year/Date (05h reg)
 	AND	#$3F		\ Mask bits 7,6 (Year)
 	STA	buf04		\ > DS3231 - Date
 	\ Month
-	LDA 	&A06		\ PCF8583 - Weekdays/Months
+	LDA 	&A06		\ PCF8583 - Weekdays/Months (06h reg)
 	AND 	#$1F 		\ Mask bits 7,6 and 5 (Weekdays)
 	STA	buf05		\ > DS3231 - Month
 	\ Year
@@ -1938,8 +1940,7 @@ getrtc
 	LSR A
 	LSR A
 	LSR A
-	CLC 
-	ADC 	#1
+	\ TODO: Need to add some offset
 	STA	buf06		\ > DS3231 - Year		
 	\ Other
 	LDA 	#0
@@ -2232,24 +2233,53 @@ dp_err	LDA	#-1		\flag -ve error to dset
 dp_x	RTS			\and return
 
 \------------------------------------------------------------------------------
-\Writes the 7-byte time and date data set at buf00-buf06 to the DS3231 RTC
-\First copies the 7 t&d bytes across to the main I2C buffer at $0A00 and then
+\Writes the time and date data set at buf00-buf06 to the RTC
+\First copies t&d bytes across to the main I2C buffer at $0A00 and then
 \performs the write using an internal txd call.
 
-writetd	LDX	#0		\copy t&d data to I2C buffer
-wtd_a1	LDA	buf00,X
-	STA	i2cbuf,X
-	INX
-	CPX	#7		\copying 7 bytes
-	BNE	wtd_a1
-	
+writetd				\copy t&d data to I2C buffer
+	\ Seconds
+	LDA 	buf00		\ DS3231
+	STA	&A02		\ > PCF8583 - Seconds (02h reg)
+	\ Minutes
+	LDA	buf01		\ DS3231
+	STA	&A03		\ > PCF8583 - Minutes (03h reg)
+	\ Hours
+	LDA 	buf02		\ DS3231
+	STA	&A04		\ > PCF8583 - Hours (04h reg)
+	\ Day of Week
+	LDA	buf03		\ DS3231
+	SED			\ Enable BCD mode
+	SEC
+	SBC 	#1		\ PCF8583 Day of week is base 0
+	CLD
+	ASL 	A		
+	ASL 	A
+	ASL 	A
+	ASL 	A
+	ASL 	A		\ > PCF8583 - Weeekdays (bits 7-5, 06h reg)
+	\ Month
+	ORA	buf05		\ DS3231
+	STA	&A06		\ > PCF8583 - Month (bits 4-0, 06h reg)
+	\ Year
+	LDA	buf06
+	ASL 	A		
+	ASL 	A
+	ASL 	A
+	ASL 	A
+	ASL 	A
+	ASL 	A		\ > PCF8583 - Year/Date (bits 7-6, 05h reg)
+	\ Day of Month
+	ORA	buf04		\ DS3231
+	STA	&A05		\ > PCF8583 - Year/Date (bits 5-0, 05h reg)
+
 	LDA	#RTC		\set up txd call
 	STA	$68		\slave address
-	LDA	#0
+	LDA	#0		\start from 02h (seconds) reg in PCF8583
 	STA	$69		\start register
 	STA	$6D		\no stop inhibit
 	LDA	#7
-	STA	$6A		\7 bytes to tx
+	STA	$6A		\5 bytes to tx (from 02h>06h)
 	STA	$6C		\non-zero = $69 register valid
 	JSR	cmd4		\perform the write via txd(go)
 
