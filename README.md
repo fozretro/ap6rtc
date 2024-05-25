@@ -39,6 +39,12 @@ PCT8583 > DS3231
 ... \ Hours
 ... etc
 
+Handling year...
+https://github.com/xoseperez/pcf8583/blob/master/src/PCF8583.cpp 
+https://github.com/xoseperez/pcf8583/blob/master/src/PCF8583.cpp#L162 
+
+https://github.com/pciebiera/rtc-philips-pcf8583/blob/master/rtc-philips-pcf8583.c 
+
 Testing writing
 ---------------
 

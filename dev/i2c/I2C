@@ -1898,7 +1898,7 @@ getrtc
 	STA	$68
 	LDA	#0		\register number - start at 0 (control)
 	STA	$69
-	LDA	#7		\number of bytes to fetch (addr $00-$06)
+	LDA	#17		\number of bytes to fetch (addr $00-$11)
 	STA	$6A
 	STA	$6C		\reg-valid flag to non-zero
 	JSR	cmd6		\and make the rxd(go) call
@@ -1940,8 +1940,13 @@ getrtc
 	LSR A
 	LSR A
 	LSR A
-	\ TODO: Need to add some offset
-	STA	buf06		\ > DS3231 - Year		
+	SED			\ Enabled BCD mode
+	CLC			\ Explicitly clear carry
+	\ADC	#12		\ Base year (must also be leap year, e.g. 2012)	
+	ADC 	&A10		\ Add offset (must be a leap year)
+	CLD			\ Disabled BCD mode
+	\ TODO: Check previosuly written year incase overflow and adjust offset
+	STA	buf06		\ > DS3231 - Year (0-99 value)
 	\ Other
 	LDA 	#0
 	STA 	buf07		\ > DS3231 - Zero for now
@@ -2262,12 +2267,23 @@ writetd				\copy t&d data to I2C buffer
 	ORA	buf05		\ DS3231
 	STA	&A06		\ > PCF8583 - Month (bits 4-0, 06h reg)
 	\ Year
-	LDA	buf06
-	ASL 	A		
-	ASL 	A
-	ASL 	A
-	ASL 	A
-	ASL 	A
+	LDA	buf06		\ DS3231 (0-99 in BCD format)
+	SED			\ Enable BCD mode
+	\ SEC			\ Good pracice to set before SBC
+	\ SBC 	#12		\ Base year has to be leap year (for example 2012)
+	PHA			\ Store, year with base year substracted
+	AND 	#&FC		\ Leap year offset is simply year with bits 1-0 removed
+	STA	&A10		\ Store offset in PCF8583 RAM
+	PLA			\ Restore, year with base year substracted
+	SEC			\ Good practice to set before SBC
+	SBC	&A10		\ Subtract offset, reminder is for bits 7-6, 05h reg
+	STA	&A11		\ Store copy of last written year for check on read
+	CLD			\ Disable BCD mode
+	ASL 	A		\ Shift bits 1-0 until they are in 7-6 of 05h reg
+	ASL 	A		\ This is because PCF8583 only stores 0-3 years
+	ASL 	A		\ however corectly storing at least part of the year
+	ASL 	A		\ is important for its leap year handling
+	ASL 	A		\ the rest of the year (per above) is stored in &A10
 	ASL 	A		\ > PCF8583 - Year/Date (bits 7-6, 05h reg)
 	\ Day of Month
 	ORA	buf04		\ DS3231
@@ -2275,11 +2291,11 @@ writetd				\copy t&d data to I2C buffer
 
 	LDA	#RTC		\set up txd call
 	STA	$68		\slave address
-	LDA	#0		\start from 02h (seconds) reg in PCF8583
+	LDA	#0		\start from 0h reg in PCF8583
 	STA	$69		\start register
 	STA	$6D		\no stop inhibit
-	LDA	#7
-	STA	$6A		\5 bytes to tx (from 02h>06h)
+	LDA	#17
+	STA	$6A		\17 bytes to tx (from 00h>11h)
 	STA	$6C		\non-zero = $69 register valid
 	JSR	cmd4		\perform the write via txd(go)
 
