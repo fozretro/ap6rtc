@@ -1584,6 +1584,7 @@ i2r_a2	LDX	zpreg		\restore X
 	INY
 	STA	(OSW_X),Y
 	
+	IF 	RTC_TEMP		\conditional compile if RTC supports temp
 	LDA	buf17		\get hex temperature
 	AND	#deg		\mask
 	JSR	hexbcd		\convert to BCD
@@ -1601,6 +1602,7 @@ i2r_a2	LDX	zpreg		\restore X
 	ADC	#$30
 	INY
 	STA	(OSW_X),Y		\temp units = $0A17
+	FI
 
 	LDA	#cr		\finish full string with <cr> ($0D)
 	INY
@@ -1731,12 +1733,17 @@ xtemp	JSR	getrtc		\get rtc time & date to buffer
 xxtemp	TXA			\save X to later test whether this is..
 	PHA			\..a direct *TEMP or an indirect call
 
+	IF 	RTC_TEMP		\conditional compile if RTC temp supported
 	LDA	buf17		\get temp upper bits, lsb=1
 	AND	#deg		\mask
 	JSR	hexbcd		\convert hex degrees to bcd
 	JSR	dec_print		\and print the BCD temperature
 	LDA	#4		\followed by units text
 	JSR	xmess
+	ELSE
+	LDA	#7		\display not implemented
+	JSR	xmess
+	FI
 	
 	PLA			\get entry X which is $FF if this is..
 	BMI	temp_ax		\..an indirect call from elsewhere..
@@ -1767,6 +1774,7 @@ xxnow	LDX	#$FF		\this will signal no <cr> after time
 	LDA	#spc		\delimit time & date with two spaces
 	JSR	OSASCI
 	JSR	OSASCI
+	IF 	RTC_TEMP
 	LDX	#$FF		\also no <cr> after date
 	JSR	xxdate		\print date
 	LDA	#spc		\delimit date and temp with two spaces
@@ -1774,6 +1782,10 @@ xxnow	LDX	#$FF		\this will signal no <cr> after time
 	JSR	OSASCI
 	LDX	#0		\<cr> after temperature
 	JSR	xxtemp		\print temperature
+	ELSE
+	LDX	#0		\<cr> after date
+	JSR	xxdate		\print date
+	FI
 
 	RTS			\and return
 
@@ -2254,6 +2266,7 @@ txt4a	DFB	$7F,$7F,$7F
 txt4b	ASC	'     }'
 txt5	ASC	'Off            #'
 txt6	ASC	'On             #'
+txt7	ASC	'Not Available  }'
 
 
 xmess	ASL			\multiply message number by 16

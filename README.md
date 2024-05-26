@@ -22,8 +22,8 @@ Notes
 *I2CTXB 50 #10 66
 
 $&A00="HELLO"
-*I2CTXD 50 #10 06
-*I2CRXD 50 #10 06
+*I2CTXD 50 #12 06
+*I2CRXD 50 #12 06
 P.$&A00
 
 writetd - copies from buf00-buf06 (7 bytes) to &A00 and writes to RTC

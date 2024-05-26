@@ -1,4 +1,5 @@
 RTC	EQU	$50		\AP6 RTC I2C Slave Address (PCF8583 Build) 
+RTC_TEMP	EQU	0		\no temp support for this RTC
 
 \-------------------------------------------------------------------------------
 \Gets time and date parameters from RTC into buffer buf00-buf07 @ $0380
