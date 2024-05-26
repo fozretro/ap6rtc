@@ -1,3 +1,15 @@
+				
+ap6reg	EQU 	$FCD6		\AP6 Interface
+xsdahi	EQU 	&80		\TODO Explain bitmask
+xsdalo	EQU 	&7F		\TODO Explain bitmask
+xsclhi	EQU 	&40		\TODO Explain bitmask
+xscllo	EQU 	&BF		\TODO Explain bitmask
+ap6regc	EQU	$62		\last written value to AP6 control reg
+ap6idle	EQU 	$11		\idle value of AP6 ctrl reg
+
+upiob	EQU	ap6reg		\alias
+getsda	EQU 	xsdahi		\alias
+
 \-------------------------------------------------------------------------------
 \*** Macro definitions ***
 \-------------------------------------------------------------------------------

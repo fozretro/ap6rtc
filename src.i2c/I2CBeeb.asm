@@ -3,16 +3,16 @@
 \	   I2C Rom Utilities	 \
 \          (c) Martin Barr 2018	 \
 \			     	 \
-\	         V3.2EAP6	     	 \
+\	         V3.1E	     	 \
 \	        16-11-18	     	 \
 \			     	 \
-\    	 For the Acorn Electron (AP6)	 \
+\    	 For the Acorn Electron	 \
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 \-------------------------------------------------------------------------------
 \Notes:
 \
-\1. Assumes Electron with Plus 1 and AP6 expansion
+\1. Assumes User Port 6522 @ $FCB0 and uses PB0=SDA , CB2=SCL
 \
 \2. Commands :	*I2C
 \		*I2CRESET
@@ -89,10 +89,6 @@
 \	e) Adds a further blank line during *HELP or *HELP I2C but now after
 \	   the end of rom print dialogue.
 \
-\7. Changes introduced in v3.2
-\
-\   a) Support for Electron Plus 1 with AP6 expansion
-\
 \-------------------------------------------------------------------------------
 \Constants etc. defined here
 
@@ -105,12 +101,6 @@ OSRDCH	EQU	$FFE0		\read character from input stream
 OSW_A	EQU	$EF		\A at time of unknown OSWORD call
 OSW_X	EQU	$F0		\X at .....
 OSW_Y	EQU	$F1		\Y at .....
-				
-ap6reg	EQU 	$FCD6		\ AP6 Interface
-xsdahi	EQU 	&80		\ TODO Explain bitmask
-xsdalo	EQU 	&7F		\ TODO Explain bitmask
-xsclhi	EQU 	&40		\ TODO Explain bitmask
-xscllo	EQU 	&BF		\ TODO Explain bitmask
 
 COMVEC	EQU	$0234		\command execution vector (IND3V)
 cli	EQU	$F2		\command line pointer - use (cli),Y
@@ -123,7 +113,7 @@ bufloc	EQU	$CE		\zp,y pointer to i2c buffer for RxB..
 i2cbuf	EQU	$0A00		\i2c Tx and Rx data buffer (to $0AFF)
 eeplo	EQU	$60		\24C32 target address lo-byte for r/w
 eephi	EQU	$61		\24C32 target address hi-byte for r/w
-ap6regc	EQU	$62		\last written value to AP6 control reg
+spare	EQU	$62		\not used 
 bcdt	EQU	$63		\temporary for bcd tens
 bcdu	EQU	$64		\temporary for bcd units
 i2cslot	EQU	$65		\sideways rom slot id of i2c rom
@@ -176,11 +166,10 @@ dash	EQU	45		\<->
 bkspc	EQU	8		\<backspace> (ascii 'BS')
 upper	EQU	$DF		\lower to upper case mask (b5=0 on AND)
 lower	EQU	$20		\upper to lower case mask (b5=1 on ORA)
-ap6idle	EQU 	$11		\idle value of AP6 ctrl reg
 
 \end of declarations
 
-	INCLUDE 	I2CIO		\include I2C IO marcos
+	INCLUDE 	I2CBUS		\include I2C bus marcos
 
 	ORG	$8000		\sideways rom address start (to $BFFF)
 
@@ -192,7 +181,7 @@ romstart	DFB	0,0,0		\no language entry (3 nulls)
 title	DFB	0		\version
 	ASC	'I2C'		\title string
 	DFB	0		\..and null terminator
-	ASC	'3.2EAP6'		\version string with CR and..
+	ASC	'3.1E'		\version string with CR and..
 copyr	DFB	0		\copyright string..
 	ASC	'(C) M.P.Barr 2018'
 	DFB	0		\..'framed' by nulls
@@ -1335,8 +1324,8 @@ adloop	ASL			\shift top bit into C
 
 i2crxack	sclhi
 	sdahi
-	LDA	ap6reg		\ read from AP6 reg 
-	AND	#(xsdahi)		\ bit 7 mask
+	LDA	upiob		\get response
+	AND	#getsda
 	CLC			\Carry mirrors RxACK
 	BEQ	rxax
 	SEC
@@ -1364,8 +1353,8 @@ i2crxbyte	TXA			\preserve X & Y
 	LDX	#0		\build rx byte in X
 	LDY	#8		\8 bits to receive
 rxloop	sclhi			\clock hi
-	LDA	ap6reg		\read a data bit (sent MS to LS)
-	AND	#xsdahi
+	LDA	upiob		\read a data bit (sent MS to LS)
+	AND	#getsda
 	CLC
 	BEQ	rxby1
 	SEC
@@ -1612,6 +1601,7 @@ i2r_a2	LDX	zpreg		\restore X
 	ADC	#$30
 	INY
 	STA	(OSW_X),Y		\temp units = $0A17
+
 	LDA	#cr		\finish full string with <cr> ($0D)
 	INY
 	STA	(OSW_X),Y
@@ -1722,6 +1712,7 @@ date_a3	RTS			\and return
 \------------------------------------------------------------------------------
 \*TEMP
 \Prints temperature at current cursor position formatted as <t>"<units>" (tbd)
+
 xtemp	JSR	getrtc		\get rtc time & date to buffer
 	LDX	#0		\direct '*' call so end with <cr>
 	JSR	xxtemp		\call temperature output
