@@ -105,9 +105,8 @@ OSRDCH	EQU	$FFE0		\read character from input stream
 OSW_A	EQU	$EF		\A at time of unknown OSWORD call
 OSW_X	EQU	$F0		\X at .....
 OSW_Y	EQU	$F1		\Y at .....
-
-				\ AP6 Interface
-ap6reg	EQU 	$FCD6
+				
+ap6reg	EQU 	$FCD6		\ AP6 Interface
 xsdahi	EQU 	&80		\ TODO Explain bitmask
 xsdalo	EQU 	&7F		\ TODO Explain bitmask
 xsclhi	EQU 	&40		\ TODO Explain bitmask
@@ -143,7 +142,6 @@ devidlo	EQU	$08		\lowest i2c device id to interrogate
 devidhi	EQU	$77		\highest i2c device id to interrogate
 
 EEP32	EQU	$57		\AT24C32 eeprom I2C slave address
-RTC	EQU	$50		\AP6 RTC I2C Slave Address 
 cs	EQU	$7F		\seconds	  :	Bits 6-0 Mask $7F
 cm	EQU	$7F		\minutes	  :	Bits 6-0 Mask $7F
 ch	EQU	$3F		\hours	  :	Bits 5-0 Mask $3F
@@ -180,106 +178,9 @@ upper	EQU	$DF		\lower to upper case mask (b5=0 on AND)
 lower	EQU	$20		\upper to lower case mask (b5=1 on ORA)
 ap6idle	EQU 	$11		\idle value of AP6 ctrl reg
 
-
 \end of declarations
 
-\-------------------------------------------------------------------------------
-\*** Macro definitions ***
-\-------------------------------------------------------------------------------
-\ TODO: Explain further about how AP6 interface at &FCD6 is used to control I2C
-
-sclhi	MACRO
-	LDA 	ap6regc
-	ORA 	#(xsclhi)
-	STA 	ap6regc
-	STA 	ap6reg
-	ENDM
-	
-\-------------------------------------------------------------------------------
-\SCL (clock) driven lo by ... TODO
-
-scllo	MACRO
-	LDA 	ap6regc
-	AND 	#(xscllo)
-	STA 	ap6regc
-	STA 	ap6reg
-	ENDM
-
-\-------------------------------------------------------------------------------
-\Allows SDA (data) to float hi by ... TODO
-
-sdahi	MACRO
-	LDA	ap6regc
-	ORA	#(xsdahi)
-	STA	ap6regc
-	STA	ap6reg
-	ENDM
-
-\-------------------------------------------------------------------------------
-\SDA (data) driven lo by ... TODO
-
-sdalo	MACRO
-	LDA	ap6regc
-	AND	#(xsdalo)
-	STA	ap6regc
-	STA	ap6reg
-	ENDM
-
-\-------------------------------------------------------------------------------
-\i2cdbit - sets SDA hi or lo to mirror Carry flag
-
-i2cdbit	MACRO
-	BCC	dblo@$MC
-	sdahi			\C=1, SDA=1
-	BCS	dbx@$MC
-dblo@$MC	sdalo			\C=0, SDA=0
-dbx@$MC	NOP
-	ENDM
-
-\-------------------------------------------------------------------------------
-\i2clock - generates a single positive pulse on SCL
-
-i2clock	MACRO
-	sclhi
-	scllo
-	ENDM
-
-\-------------------------------------------------------------------------------
-\Sets Clock and Data lines high - the I2C idle state
-
-i2cidle	MACRO
-	scllo
-	sdahi
-	sclhi
-	ENDM
-
-\-------------------------------------------------------------------------------
-\i2cstop - issues an I2C STOP by a sequence of SCL>lo, SDA>lo, SCL>hi, SDA>hi.
-\This puts the bus into the I2C IDLE state.
-
-i2cstop	MACRO
-	scllo
-	sdalo
-	sclhi
-	sdahi			\SCL & SDA now high
-	ENDM
-
-\-------------------------------------------------------------------------------
-\i2cstart - issues an I2C START by a sequence of SDA>lo, <delay>, SCL>lo.
-\Sets idle state (both hi) first.
-
-i2cstart	MACRO
-	LDA #ap6idle		\idle value for AP6
-	STA ap6reg		\set AP6 reg (write only) to known state
-	STA ap6regc		\maintain a copy of the last written value
-	i2cidle
-	sdalo
-	scllo
-	ENDM
-
-\-------------------------------------------------------------------------------
-\*** End of Macro definitions ***
-\-------------------------------------------------------------------------------
+	INCLUDE 	I2CIO		\include I2C IO marcos
 
 	ORG	$8000		\sideways rom address start (to $BFFF)
 
@@ -1525,6 +1426,8 @@ txloop	TXA
 \Calls xxi2crtc which is implemented for OSWORD #14 and so this call sets up
 \OSW_X and OS_Y to point to &0A00 as if derived from an OSWORD call.
 
+	INCLUDE 	I2CRTC
+
 xi2crtc	LDA	#>i2cbuf		\set up OSW_X and OSW_Y to &0A00
 	STA	OSW_X
 	LDA	#<i2cbuf
@@ -1709,7 +1612,6 @@ i2r_a2	LDX	zpreg		\restore X
 	ADC	#$30
 	INY
 	STA	(OSW_X),Y		\temp units = $0A17
-
 	LDA	#cr		\finish full string with <cr> ($0D)
 	INY
 	STA	(OSW_X),Y
@@ -1820,7 +1722,6 @@ date_a3	RTS			\and return
 \------------------------------------------------------------------------------
 \*TEMP
 \Prints temperature at current cursor position formatted as <t>"<units>" (tbd)
-
 xtemp	JSR	getrtc		\get rtc time & date to buffer
 	LDX	#0		\direct '*' call so end with <cr>
 	JSR	xxtemp		\call temperature output
@@ -1882,78 +1783,6 @@ xxnow	LDX	#$FF		\this will signal no <cr> after time
 	JSR	OSASCI
 	LDX	#0		\<cr> after temperature
 	JSR	xxtemp		\print temperature
-
-	RTS			\and return
-
-\-------------------------------------------------------------------------------
-\Gets time and date parameters from RTC into buffer buf00-buf07 @ $0380
-
-getrtc
-	LDX	#>i2cbuf		\set I2C buffer to $0A00
-	STX	bufloc
-	LDX	#<i2cbuf
-	STX	bufloc+1
-				\set up rxd call to fetch all RTC data
-	LDA	#RTC		\PCF8583 RTC device id
-	STA	$68
-	LDA	#0		\register number - start at 0 (control)
-	STA	$69
-	LDA	#17		\number of bytes to fetch (addr $00-$11)
-	STA	$6A
-	STA	$6C		\reg-valid flag to non-zero
-	JSR	cmd6		\and make the rxd(go) call
-
-	\ Seconds
-	LDA	&A02		\ PCF8583 - Seconds (02h reg)
-	STA 	buf00		\ > DS3231 - Seconds
-	\ Minutes
-	LDA 	&A03		\ PCF8583 - Minutes (03h reg)
-	STA	buf01		\ > DS3231 - Minutes
-	\ Hours
-	LDA	&A04		\ PCF8583 - Hours (04h reg)
-	STA	buf02		\ > DS3231 - Hours
-	\ Day of Week
-	LDA	&A06		\ PCF8583 - Weekdays/Months (06h reg)
-	LSR A
-	LSR A
-	LSR A
-	LSR A
-	LSR A
-	SED			\ Enable BCD mode
-	CLC
-	ADC 	#1		\ PCF8583 Day of week is base 0, S3231 is base 1
-	CLD			\ Clear BCD mode
-	STA	buf03		\ > DS3231 - Day
-	\ Day of Month
-	LDA 	&A05		\ PCF8583 - Year/Date (05h reg)
-	AND	#$3F		\ Mask bits 7,6 (Year)
-	STA	buf04		\ > DS3231 - Date
-	\ Month
-	LDA 	&A06		\ PCF8583 - Weekdays/Months (06h reg)
-	AND 	#$1F 		\ Mask bits 7,6 and 5 (Weekdays)
-	STA	buf05		\ > DS3231 - Month
-	\ Year
-	LDA 	&A05		\ PCF8583 - Year/Date
-	LSR A
-	LSR A
-	LSR A
-	LSR A
-	LSR A
-	LSR A
-	SED			\ Enabled BCD mode
-	CLC			\ Explicitly clear carry
-	ADC 	&A10		\ Add offset (must be a leap year)
-	CLD			\ Disabled BCD mode
-	\ TODO: Check previosuly written year incase overflow and adjust offset
-	STA	buf06		\ > DS3231 - Year (0-99 value)
-	\ Other
-	LDA 	#0
-	STA 	buf07		\ > DS3231 - Zero for now
-	STA	buf08		\ > DS3231 - Zero for now
-	STA	buf09		\ > DS3231 - Zero for now
-	STA	buf12		\ > DS3231 - Zero for now
-	STA	buf17		\ > DS3231 - Zero for now
-	STA	buf18		\ > DS3231 - Zero for now
 
 	RTS			\and return
 
@@ -2235,68 +2064,6 @@ dp_match	TXA			\X is now table day index * 4 - 1
 
 dp_err	LDA	#-1		\flag -ve error to dset
 dp_x	RTS			\and return
-
-\------------------------------------------------------------------------------
-\Writes the time and date data set at buf00-buf06 to the RTC
-\First copies t&d bytes across to the main I2C buffer at $0A00 and then
-\performs the write using an internal txd call.
-
-writetd				\copy t&d data to I2C buffer
-	\ Seconds
-	LDA 	buf00		\ DS3231
-	STA	&A02		\ > PCF8583 - Seconds (02h reg)
-	\ Minutes
-	LDA	buf01		\ DS3231
-	STA	&A03		\ > PCF8583 - Minutes (03h reg)
-	\ Hours
-	LDA 	buf02		\ DS3231
-	STA	&A04		\ > PCF8583 - Hours (04h reg)
-	\ Day of Week
-	LDA	buf03		\ DS3231
-	SED			\ Enable BCD mode
-	SEC
-	SBC 	#1		\ PCF8583 Day of week is base 0
-	CLD
-	ASL 	A		
-	ASL 	A
-	ASL 	A
-	ASL 	A
-	ASL 	A		\ > PCF8583 - Weeekdays (bits 7-5, 06h reg)
-	\ Month
-	ORA	buf05		\ DS3231
-	STA	&A06		\ > PCF8583 - Month (bits 4-0, 06h reg)
-	\ Year
-	LDA	buf06		\ DS3231 (0-99 in BCD format)
-	PHA			\ Store, year with base year substracted
-	AND 	#&FC		\ Leap year offset is simply year with bits 1-0 removed
-	STA	&A10		\ Store offset in PCF8583 RAM
-	PLA			\ Restore, year with base year substracted
-	SED			\ Enable BCD mode
-	SEC			\ Good practice to set before SBC
-	SBC	&A10		\ Subtract offset, reminder is for bits 7-6, 05h reg
-	STA	&A11		\ Store copy of last written year for check on read
-	CLD			\ Disable BCD mode
-	ASL 	A		\ Shift bits 1-0 until they are in 7-6 of 05h reg
-	ASL 	A		\ This is because PCF8583 only stores 0-3 years
-	ASL 	A		\ however corectly storing at least part of the year
-	ASL 	A		\ is important for its leap year handling
-	ASL 	A		\ the rest of the year (per above) is stored in &A10
-	ASL 	A		\ > PCF8583 - Year/Date (bits 7-6, 05h reg)
-	\ Day of Month
-	ORA	buf04		\ DS3231
-	STA	&A05		\ > PCF8583 - Year/Date (bits 5-0, 05h reg)
-
-	LDA	#RTC		\set up txd call
-	STA	$68		\slave address
-	LDA	#0		\start from 0h reg in PCF8583
-	STA	$69		\start register
-	STA	$6D		\no stop inhibit
-	LDA	#17
-	STA	$6A		\17 bytes to tx (from 00h>11h)
-	STA	$6C		\non-zero = $69 register valid
-	JSR	cmd4		\perform the write via txd(go)
-
-	RTS			\and return
 
 \------------------------------------------------------------------------------
 \Generic RTC 24C32 read routine. On entry, eeprom start address is held in
