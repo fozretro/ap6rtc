@@ -2402,7 +2402,7 @@ dec_print PHA			\save a copy of A
 \Messages are selected via A = <message number> in the max. range 0-15
 \Note 1 : exits A = 0 and thus caller can branch always via BEQ on return
 
-txt0	ASC	'I2C 3.1B 161118#'
+txt0	ASC	'I2C 3.1B 121118#'
 txt1	ASC	'ACK Rx'
 txt1a	DFB	$27
 txt1b	ASC	'd from :}'
