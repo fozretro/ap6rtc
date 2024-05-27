@@ -3,16 +3,18 @@
 \	   I2C Rom Utilities	 \
 \          (c) Martin Barr 2018	 \
 \			     	 \
-\	         V3.1E	     	 \
+\	         V3.1	     	 \
 \	        16-11-18	     	 \
 \			     	 \
-\    	 For the Acorn Electron	 \
+\    	 For the BBC Micro             \ 
+\                  Acorn Electron AP5	 \
+\                  Acorn Electron AP6	 \
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 \-------------------------------------------------------------------------------
 \Notes:
 \
-\1. Assumes User Port 6522 @ $FCB0 and uses PB0=SDA , CB2=SCL
+\1. Rom can be built to support BBC Micr, Electron+AP5 or Electron+AP6
 \
 \2. Commands :	*I2C
 \		*I2CRESET
@@ -91,6 +93,8 @@
 \
 \-------------------------------------------------------------------------------
 \Constants etc. defined here
+
+		INCLUDE I2CVER
 
 OSASCI	EQU	$FFE3		\print A to screen
 OSWRCH	EQU	$FFEE		\write A to output stream
@@ -181,7 +185,7 @@ romstart	DFB	0,0,0		\no language entry (3 nulls)
 title	DFB	0		\version
 	ASC	'I2C'		\title string
 	DFB	0		\..and null terminator
-	ASC	'3.1E'		\version string with CR and..
+	version
 copyr	DFB	0		\copyright string..
 	ASC	'(C) M.P.Barr 2018'
 	DFB	0		\..'framed' by nulls
@@ -194,7 +198,6 @@ copyr	DFB	0		\copyright string..
 service	CMP	#1		\A=1, autoboot? ('Break' or switch on)
 	BNE	serv_a1		\no, next check
 	JMP	boot		\else goto boot handler (print time)
-	RTS
 serv_a1	CMP	#4		\A=4, unknown command?
 	BNE	serv_a2		\no, next check
 	JMP	command		\else goto command handler
@@ -2247,7 +2250,7 @@ dec_print PHA			\save a copy of A
 \Messages are selected via A = <message number> in the max. range 0-15
 \Note 1 : exits A = 0 and thus caller can branch always via BEQ on return
 
-txt0	ASC	'I2C 3.1E 161118#'
+txt0	versionl
 txt1	ASC	'ACK Rx'
 txt1a	DFB	$27
 txt1b	ASC	'd from :}'

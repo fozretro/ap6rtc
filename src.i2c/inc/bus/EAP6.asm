@@ -1,5 +1,10 @@
-				
-ap6reg	EQU 	$FCD6		\AP6 Interface
+\-------------------------------------------------------------------------------
+\ The marcos below assume the AP6 control register is the I2C bus interface
+\ The AP6 is an expansion fitted to the Acorn Electron Plus 1 and includes the 
+\ PCF8583 RTS clock built into it, along with pin headers for additional devices
+
+				\AP6 interface registers
+ap6reg	EQU 	$FCD6		\AP6 control register
 xsdahi	EQU 	&80		\TODO Explain bitmask
 xsdalo	EQU 	&7F		\TODO Explain bitmask
 xsclhi	EQU 	&40		\TODO Explain bitmask

@@ -1,75 +1,66 @@
 \-------------------------------------------------------------------------------
-\ The marcos below assume the Acorn Electron AP5 I2C bus interface
-\ The AP5 is an port expansion cartridge for the Acorn Electron Plus 1 
-\ Assumes User Port 6522 @ $FCB0 and uses PB0=SDA , CB2=SCL
+\ The marcos below assume the BBC Micro analog port is the I2C bus interface
+\ Assumes System 6522 VIA @ $FE40 and uses PB5=SDA , PB4=SCL
 
-				\User Port 6522 Registers
-upiob	EQU	$FCB0		\I/O Register B
-upddrb	EQU	$FCB2		\Data Direction Register B
-uppcr	EQU	$FCBC		\Peripheral Control Register
-upifr	EQU	$FCBD		\Interrupt Flag Register
+				\System VIA (6522) Registers
+upiob	EQU	$FE40		\I/O Register B
+upddrb	EQU	$FE42		\Data Direction Register B
+ 
+xsdahi 	EQU	$DF		\upddrb AND #xsdahi=b5 reset=data hi
+xsdalo	EQU	$20		\upddrb OR #xsdalo=b5 set=data lo
+getsda	EQU	$20		\upiob AND #getsda to read data
 
-xsdahi	EQU	$FE		\AND #xsdahi = bit 0 reset = data hi
-xsdalo	EQU	$01		\OR #xsdalo = bit 0 set = data lo
-getsda	EQU	$01		\upiob AND #getsda to read data
+xsclhi	EQU	$EF		\upddrb AND #xsclhi=b4 reset=clock hi
+xscllo	EQU	$10		\upddrb OR #xscllo=b4 set=clock lo
+getscl	EQU	$10		\upiob AND #getscl to read clock
 
 \-------------------------------------------------------------------------------
 \*** Macro definitions ***
 \-------------------------------------------------------------------------------
-\Allows SCL (clock) to float hi by setting VIA PCR CB2 control bits 7-5 to 011
-\which is Input +ve Edge with Interrupt.
+\Allows SCL (clock) to float hi by setting VIA DDRB b4 to 0=input
 \Checks for clock-stretch from slave where SCL is held lo by slave by polling
-\IFR until bit 3 becomes set. 
-\Allows user to <Escape> from slave clock stretch in the event of a hang.
+\DIOB until b4 becomes clear.
 
 sclhi	MACRO
-	LDA	upifr		\first clear any CB2 flag in IFR
-	ORA	#$08
-	STA	upifr
-
-	LDA	uppcr		\set CB2 to input in 6522 PCR
-	AND	#$1F
-	ORA	#$60		\011x xxxx
-	STA	uppcr
-
-cstr@$MC	LDA	upifr		\wait for CB2 to transit high
-	AND	#$08
-	BNE	sclx@$MC		\clock hi, exit immediately
-	LDA	$FF		\else slave is clock stretching so..
-	AND	#&80		\test for user <Esc> press
-	BEQ	cstr@$MC		\no <Esc> so re-test clock status
-	LDA	#$7C		\<Esc> pressed - process and exit
-	JSR	OSBYTE
-sclx@$MC	NOP			\either clock gone hi or <Esc> pressed
+	LDA	upddrb		\set SCL to input (0 = float hi/read)
+	AND	#xsclhi		\only clear b4 of DDR
+	STA	upddrb
+cstr@$MC	LDA	upiob		\wait for b4 to transit high
+	AND	#getscl
+	BEQ	cstr@$MC		\clock lo, wait...
+sclx@$MC	NOP			\clock hi, continue
 	ENDM
-	
+
 \-------------------------------------------------------------------------------
-\SCL (clock) driven lo by setting VIA PCR CB2 control bits 7-5 to 110
+\SCL (clock) driven lo by setting VIA DDRB b4 to 1=output and DIOB b4 to 0
 
 scllo	MACRO
-	LDA	uppcr		\6522 PCR
-	AND	#$1F
-	ORA	#$C0		\110x xxxx
-	STA	uppcr
-	ENDM
-
-\-------------------------------------------------------------------------------
-\Allows SDA (data) to float hi by setting VIA DDRB data bit to 0=input
-
-sdahi	MACRO
+	LDA	upiob
+	AND	#xsclhi		\only clear b4 of DIO
+	STA	upiob
 	LDA	upddrb
-	AND	#xsdahi
+	ORA	#xscllo		\only set b4 of DDR
 	STA	upddrb
 	ENDM
 
 \-------------------------------------------------------------------------------
-\SDA (data) driven lo by setting VIA DDRB data bit to 1=output and DIOB to 0
+\Allows SDA (data) to float hi by setting VIA DDRB bit 5 (only) to 0=input
+
+sdahi	MACRO
+	LDA	upddrb
+	AND	#xsdahi		\only clear b5 of DDR
+	STA	upddrb
+	ENDM
+
+\-------------------------------------------------------------------------------
+\SDA (data) driven lo by setting VIA DDRB b5 to 1=output and DIOB b5 to 0
 
 sdalo	MACRO
-	LDA	#0
+	LDA	upiob
+	AND	#xsdahi		\only clear b5 of DIO
 	STA	upiob
 	LDA	upddrb
-	ORA	#xsdalo
+	ORA	#xsdalo		\only set b5 of DDR
 	STA	upddrb
 	ENDM
 
