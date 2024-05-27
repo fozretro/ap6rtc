@@ -1,3 +1,11 @@
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\ THIS IS MODIFIED VERSION OF MARTINS    \
+\ CODE TO REPEAT MY CHANGES AND COMPARE  \ 
+\ BINARY OUTPUT WITH THAT OF THIS AND    \
+\ AND THE NEW BUILD SYSTEM - BOTH MATCH! \
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \	   *** I2C Beeb ***	     	 \
 \	   I2C Rom Utilities	 \

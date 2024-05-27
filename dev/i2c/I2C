@@ -2261,7 +2261,7 @@ txt4a	DFB	$7F,$7F,$7F
 txt4b	ASC	'     }'
 txt5	ASC	'Off            #'
 txt6	ASC	'On             #'
-\ txt7	ASC	'Not Available  }'
+txt7	ASC	'Not Available  }'
 
 
 xmess	ASL			\multiply message number by 16

@@ -1,76 +1,60 @@
 \-------------------------------------------------------------------------------
-\ The marcos below assume the Acorn Electron AP5 I2C bus interface
-\ The AP5 is an port expansion cartridge for the Acorn Electron Plus 1 
-\ Assumes User Port 6522 @ $FCB0 and uses PB0=SDA , CB2=SCL
+\ The marcos below assume the AP6 control register is the I2C bus interface
+\ The AP6 is an expansion fitted to the Acorn Electron Plus 1 and includes the 
+\ PCF8583 RTS clock built into it, along with pin headers for additional devices
 
-				\User Port 6522 Registers
-upiob	EQU	$FCB0		\I/O Register B
-upddrb	EQU	$FCB2		\Data Direction Register B
-uppcr	EQU	$FCBC		\Peripheral Control Register
-upifr	EQU	$FCBD		\Interrupt Flag Register
+				\AP6 interface registers
+ap6reg	EQU 	$FCD6		\AP6 control register
+xsdahi	EQU 	&80		\TODO Explain bitmask
+xsdalo	EQU 	&7F		\TODO Explain bitmask
+xsclhi	EQU 	&40		\TODO Explain bitmask
+xscllo	EQU 	&BF		\TODO Explain bitmask
+ap6regc	EQU	$62		\last written value to AP6 control reg
+ap6idle	EQU 	$11		\idle value of AP6 ctrl reg
 
-xsdahi	EQU	$FE		\AND #xsdahi = bit 0 reset = data hi
-xsdalo	EQU	$01		\OR #xsdalo = bit 0 set = data lo
-getsda	EQU	$01		\upiob AND #getsda to read data
+upiob	EQU	ap6reg		\alias
+getsda	EQU 	xsdahi		\alias
 
 \-------------------------------------------------------------------------------
 \*** Macro definitions ***
 \-------------------------------------------------------------------------------
-\Allows SCL (clock) to float hi by setting VIA PCR CB2 control bits 7-5 to 011
-\which is Input +ve Edge with Interrupt.
-\Checks for clock-stretch from slave where SCL is held lo by slave by polling
-\IFR until bit 3 becomes set. 
-\Allows user to <Escape> from slave clock stretch in the event of a hang.
+\ TODO: Explain further about how AP6 interface at &FCD6 is used to control I2C
 
 sclhi	MACRO
-	LDA	upifr		\first clear any CB2 flag in IFR
-	ORA	#$08
-	STA	upifr
-
-	LDA	uppcr		\set CB2 to input in 6522 PCR
-	AND	#$1F
-	ORA	#$60		\011x xxxx
-	STA	uppcr
-
-cstr@$MC	LDA	upifr		\wait for CB2 to transit high
-	AND	#$08
-	BNE	sclx@$MC		\clock hi, exit immediately
-	LDA	$FF		\else slave is clock stretching so..
-	AND	#&80		\test for user <Esc> press
-	BEQ	cstr@$MC		\no <Esc> so re-test clock status
-	LDA	#$7C		\<Esc> pressed - process and exit
-	JSR	OSBYTE
-sclx@$MC	NOP			\either clock gone hi or <Esc> pressed
+	LDA 	ap6regc
+	ORA 	#(xsclhi)
+	STA 	ap6regc
+	STA 	ap6reg
 	ENDM
 	
 \-------------------------------------------------------------------------------
-\SCL (clock) driven lo by setting VIA PCR CB2 control bits 7-5 to 110
+\SCL (clock) driven lo by ... TODO
 
 scllo	MACRO
-	LDA	uppcr		\6522 PCR
-	AND	#$1F
-	ORA	#$C0		\110x xxxx
-	STA	uppcr
+	LDA 	ap6regc
+	AND 	#(xscllo)
+	STA 	ap6regc
+	STA 	ap6reg
 	ENDM
 
 \-------------------------------------------------------------------------------
-\Allows SDA (data) to float hi by setting VIA DDRB data bit to 0=input
+\Allows SDA (data) to float hi by ... TODO
 
 sdahi	MACRO
-	LDA	upddrb
-	AND	#xsdahi
-	STA	upddrb
+	LDA	ap6regc
+	ORA	#(xsdahi)
+	STA	ap6regc
+	STA	ap6reg
 	ENDM
 
 \-------------------------------------------------------------------------------
-\SDA (data) driven lo by setting VIA DDRB data bit to 1=output and DIOB to 0
+\SDA (data) driven lo by ... TODO
 
 sdalo	MACRO
-	LDA	#0
-	STA	upiob
-	LDA	upddrb
-	ORA	#xsdalo
-	STA	upddrb
+	LDA	ap6regc
+	AND	#(xsdalo)
+	STA	ap6regc
+	STA	ap6reg
 	ENDM
 
 \-------------------------------------------------------------------------------
@@ -117,6 +101,9 @@ i2cstop	MACRO
 \Sets idle state (both hi) first.
 
 i2cstart	MACRO
+	LDA #ap6idle		\idle value for AP6
+	STA ap6reg		\set AP6 reg (write only) to known state
+	STA ap6regc		\maintain a copy of the last written value
 	i2cidle
 	sdalo
 	scllo

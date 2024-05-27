@@ -66,14 +66,16 @@ Things Remaining
 ----------------
 
 - Make the repo private and upload this to GitHub for safe keeping
-- Fix banner positioning on hard reset / boot, see tip from Dave in stardot
-     - https://mdfs.net/Software/BBC/SROM/AP6Count.bas - this manipulates &267 to supress
-     - https://mdfs.net/Software/BBC/SROM/Plus1/ 
 - Implement remaining year handling
 - Look for comment TODO's and fix
 - Add comments to notes in I2CBeeb.asm on mapping /bus, /rtc and /targets to beeb files
-- Write Dave H some test scripts/code
-- Test build system results in binary identical versions of original 3.1 ROMs
+- Write Dave H some test scripts/code for AP6
+
+- Done - Fix banner positioning on hard reset / boot, see tip from Dave in stardot
+     - https://mdfs.net/Software/BBC/SROM/AP6Count.bas - this manipulates &267 to supress
+     - https://mdfs.net/Software/BBC/SROM/Plus1/ 
+     - Looks like this was in from the start - reproduced with orignal ROM - revist separatly
+- Done - Test build system results in binary identical versions of original 3.1 ROMs
 
 Next Project
 ------------
