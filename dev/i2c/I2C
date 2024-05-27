@@ -646,15 +646,8 @@ xtbrk	JSR	getrtc		\fetch rtc data block
 xtb1	LDA	#1		\currently off, turn on
 
 xtb2	STA	$6A		\tx byte (1 or 0 ToB flag)
-	LDA	#RTC		\target i2c device id (here rtc)
-	STA	$68
-	STA	$6C		\$6C<>0 mean register specified in $69
-	LDA	#12		\start register = 12 = Alarm 2 Hours
-	STA	$69
-	LDA	#0
-	STA	$6D		\$6D=0 means Stop after txb
+	JSR	wtbrk		\store state in RTC ram (see /inc/rtc)
 
-	JSR	cmd3		\and send the byte via txb(go)
 	LDA	$6A		\report On or Off
 	BEQ	xtb3		\0 SO goto 'Off'
 	LDA	#6		\else 1 so 'On'
@@ -1922,6 +1915,48 @@ getrtc	LDA	#>buf00		\re-direct i2c buffer to buf00
 	RTS			\and return
 
 \------------------------------------------------------------------------------
+\Writes the 7-byte time and date data set at buf00-buf06 to the DS3231 RTC
+\First copies the 7 t&d bytes across to the main I2C buffer at $0A00 and then
+\performs the write using an internal txd call.
+
+writetd	LDX	#0		\copy t&d data to I2C buffer
+wtd_a1	LDA	buf00,X
+	STA	i2cbuf,X
+	INX
+	CPX	#7		\copying 7 bytes
+	BNE	wtd_a1
+	
+	LDA	#RTC		\set up txd call
+	STA	$68		\slave address
+	LDA	#0
+	STA	$69		\start register
+	STA	$6D		\no stop inhibit
+	LDA	#7
+	STA	$6A		\7 bytes to tx
+	STA	$6C		\non-zero = $69 register valid
+	JSR	cmd4		\perform the write via txd(go)
+
+	RTS			\and return
+
+\------------------------------------------------------------------------------
+\ writes the toggle state for *TBRK
+\ the PCF8583 has free ram, and so we can use some of that to store the toggle state
+\ in this case in reg 11h, this contains last written year and the toggle state
+\ On calling this subscrounte &6A arrives with (bit 0) 0 or 1 depending on toggle state
+\ On returning the caller expects &6A to be untouched
+
+wtbrk	
+	LDA	#RTC		\target i2c device id (here rtc)
+	STA	$68
+	STA	$6C		\$6C<>0 mean register specified in $69
+	LDA	#12		\start register = 12 = Alarm 2 Hours
+	STA	$69
+	LDA	#0
+	STA	$6D		\$6D=0 means Stop after txb
+	JSR	cmd3		\and send the byte via txb(go)
+	RTS
+
+\------------------------------------------------------------------------------
 \*TSET
 \Allows user to set the time by typing *TSET hh:mm:ss (must be exact format)
 
@@ -2199,30 +2234,6 @@ dp_match	TXA			\X is now table day index * 4 - 1
 
 dp_err	LDA	#-1		\flag -ve error to dset
 dp_x	RTS			\and return
-
-\------------------------------------------------------------------------------
-\Writes the 7-byte time and date data set at buf00-buf06 to the DS3231 RTC
-\First copies the 7 t&d bytes across to the main I2C buffer at $0A00 and then
-\performs the write using an internal txd call.
-
-writetd	LDX	#0		\copy t&d data to I2C buffer
-wtd_a1	LDA	buf00,X
-	STA	i2cbuf,X
-	INX
-	CPX	#7		\copying 7 bytes
-	BNE	wtd_a1
-	
-	LDA	#RTC		\set up txd call
-	STA	$68		\slave address
-	LDA	#0
-	STA	$69		\start register
-	STA	$6D		\no stop inhibit
-	LDA	#7
-	STA	$6A		\7 bytes to tx
-	STA	$6C		\non-zero = $69 register valid
-	JSR	cmd4		\perform the write via txd(go)
-
-	RTS			\and return
 
 \------------------------------------------------------------------------------
 \Generic RTC 24C32 read routine. On entry, eeprom start address is held in
