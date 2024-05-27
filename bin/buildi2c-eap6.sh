@@ -1,3 +1,4 @@
+# Biulds the I2C31EAP6 ROM
 # Auto launch b-em with /dev/i2c - assumes VDFS configured to point to /dev/i2c
 cp ./src.i2c/I2CBeeb.asm ./dev/i2c/I2C
 cp ./src.i2c/inc/bus/EAP6.asm ./dev/i2c/I2CBUS
