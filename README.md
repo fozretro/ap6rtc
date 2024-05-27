@@ -61,3 +61,21 @@ After *NOW that gives
 0A00 02 35 16 32 16 10 42 00
 
      00 01 02 03 04 05 06
+
+Things Remaining
+----------------
+
+- Make the repo private and upload this to GitHub for safe keeping
+- Fix banner positioning on hard reset / boot, see tip from Dave in stardot
+     - https://mdfs.net/Software/BBC/SROM/AP6Count.bas - this manipulates &267 to supress
+     - https://mdfs.net/Software/BBC/SROM/Plus1/ 
+- Implement remaining year handling
+- Look for comment TODO's and fix
+- Add comments to notes in I2CBeeb.asm on mapping /bus, /rtc and /targets to beeb files
+- Write Dave H some test scripts/code
+- Test build system results in binary identical versions of original 3.1 ROMs
+
+Next Project
+------------
+- https://mdfs.net/Info/Comp/BBC/SROMs/JoinROM.htm - ROM joining thing
+- https://mdfs.net/Software/BBC/SROM/Tools/MiniROM.src - Base ROM code
