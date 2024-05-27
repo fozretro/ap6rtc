@@ -193,7 +193,7 @@ copyr	DFB	0		\copyright string..
 
 service	CMP	#1		\A=1, autoboot? ('Break' or switch on)
 	BNE	serv_a1		\no, next check
-	\ JMP	boot		\else goto boot handler (print time)
+	JMP	boot		\else goto boot handler (print time)
 	RTS
 serv_a1	CMP	#4		\A=4, unknown command?
 	BNE	serv_a2		\no, next check
@@ -509,10 +509,9 @@ OSW$0E4	JSR	xxi2crtc		\duplicate *NOW$ function
 	RTS			\simple RTS, registers not preserved
 
 \------------------------------------------------------------------------------
-\Command to toggle Time-on-Break (ToB) function. Uses RTC 'Alarm 2 Hour' field
+\Command to toggle Time-on-Break (ToB) function. Uses storage in the RTC
 \to enumerate the ToB flag which is initially a simple non-zero/zero On/Off
-\switch. At each call, toggles the ToB flag at Bit0 of Alarm2 Hours, RTC
-\module address $0C.
+\switch. At each call, toggles the ToB flag stored in the RTC per /inc/rtc
  
 				\read existing flag state..
 xtbrk	JSR	getrtc		\fetch rtc data block
@@ -524,15 +523,8 @@ xtbrk	JSR	getrtc		\fetch rtc data block
 xtb1	LDA	#1		\currently off, turn on
 
 xtb2	STA	$6A		\tx byte (1 or 0 ToB flag)
-	LDA	#RTC		\target i2c device id (here rtc)
-	STA	$68
-	STA	$6C		\$6C<>0 mean register specified in $69
-	LDA	#12		\start register = 12 = Alarm 2 Hours
-	STA	$69
-	LDA	#0
-	STA	$6D		\$6D=0 means Stop after txb
+	JSR	wtbrk		\store state in RTC ram (see /inc/rtc)
 
-	JSR	cmd3		\and send the byte via txb(go)
 	LDA	$6A		\report On or Off
 	BEQ	xtb3		\0 SO goto 'Off'
 	LDA	#6		\else 1 so 'On'
