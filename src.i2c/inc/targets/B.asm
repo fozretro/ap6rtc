@@ -1,3 +1,11 @@
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\ Special note for this v3.1 AP6 Variant \
+\ Please read the README on GitHub       \
+\ https://github.com/fozretro/ap6rtc     \
+\ This contains more information on this \
+\ variant Martins code and intend usage  \
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
 \version strings, short and long (with biuld)
 \this target should include
 \ inc\bus\B.asm               I2CBUS

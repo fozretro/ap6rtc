@@ -1,3 +1,12 @@
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\ Special note for this v3.1 AP6 Variant \
+\ Please read the README on GitHub       \
+\ https://github.com/fozretro/ap6rtc     \
+\ This contains more information on this \
+\ variant Martins code and intend usage  \
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+
 \-------------------------------------------------------------------------------
 \ The marcos below assume the Acorn Electron AP5 I2C bus interface
 \ The AP5 is an port expansion cartridge for the Acorn Electron Plus 1 

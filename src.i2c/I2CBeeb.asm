@@ -5,10 +5,20 @@
 \			     	 \
 \	         V3.1	     	 \
 \	        16-11-18	     	 \
+\	  v3.1 AP6 Variant Beta        \
+\	     !FOZ!, 27-05-24           \
 \			     	 \
 \    	 For the BBC Micro             \ 
 \                  Acorn Electron AP5	 \
 \                  Acorn Electron AP6	 \
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\ Special note for this v3.1 AP6 Variant \
+\ Please read the README on GitHub       \
+\ https://github.com/fozretro/ap6rtc     \
+\ This contains more information on this \
+\ variant Martins code and intend usage  \
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 \-------------------------------------------------------------------------------

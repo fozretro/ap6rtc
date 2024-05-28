@@ -1,3 +1,12 @@
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\ Special note for this v3.1 AP6 Variant \
+\ Please read the README on GitHub       \
+\ https://github.com/fozretro/ap6rtc     \
+\ This contains more information on this \
+\ variant Martins code and intend usage  \
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+
 \-------------------------------------------------------------------------------
 \ The marcos below assume the BBC Micro analog port is the I2C bus interface
 \ Assumes System 6522 VIA @ $FE40 and uses PB5=SDA , PB4=SCL

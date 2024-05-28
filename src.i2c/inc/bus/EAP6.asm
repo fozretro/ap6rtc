@@ -1,3 +1,11 @@
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\ Special note for this v3.1 AP6 Variant \
+\ Please read the README on GitHub       \
+\ https://github.com/fozretro/ap6rtc     \
+\ This contains more information on this \
+\ variant Martins code and intend usage  \
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
 \-------------------------------------------------------------------------------
 \ The marcos below assume the AP6 control register is the I2C bus interface
 \ The AP6 is an expansion fitted to the Acorn Electron Plus 1 and includes the 
