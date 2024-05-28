@@ -1,5 +1,5 @@
-I2CBeeb ROM and Support for RTC within the Electron AP6
-========================================================
+I2CBeeb for Acorn Electron Plus 1 and AP6
+=========================================
 
 This project got started as a means to explore and implement RTC commands and others that make use of the RTC (a `PCF8583`) within the Electron **AP6** by Dave Hitchens. StarDot forum discussion [here](https://www.stardot.org.uk/forums/viewtopic.php?t=28720). 
 
