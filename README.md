@@ -8,6 +8,22 @@ This project got started as a means to explore and implement RTC commands and ot
 This repository is only for development and testing purposes, a final 
 distribution means for this AP6 version of the **I2CBeeb** ROM is still being considered. Please continue to use the official I2CBeeb ROMs [thread](https://stardot.org.uk/forums/viewtopic.php?t=10966) for other variants. Looking forward, since this repo supports building all variants of the ROM, one option is this repository may become the main I2CBeeb repository in the future, or it may reside some other place. Currently the source code is only shared by Martin as attachments on StarDot and in this repository per his kind permission. 
 
+Usage
+-----
+
+You need a Plus 1 with the AP6 expansion board fitted and a battery installed for the RTC chip to retain time and data. Download and install/load the ROM above. All the commands are as per  documentation on Martins [thread](https://stardot.org.uk/forums/viewtopic.php?t=10966) with the notable exception that the `*TEMP` command outputs `Not Available`, because the PCF8583 RTC in the AP6 does not have this feature. 
+
+What the PCF8583 does have though is storage! Meaning you can do things like this to store information and have it retained. Note that the PCF8583 free ram starts at 10h, however the ROM uses 10h and 11h locations so please avoid using those, anything above 12h is fine! 
+
+    *I2CRXB 50 #12 A%
+    *I2CRXB 50 #02 A%
+    *I2CTXB 50 #12 66
+
+    $&A00="HELLO"
+    *I2CTXD 50 #12 06
+    *I2CRXD 50 #12 06
+    P.$&A00
+
 Building
 --------
 
@@ -85,17 +101,3 @@ Various reference resources, forum posts etc..
 - [Interesting base code for ROMS](https://mdfs.net/Software/BBC/SROM/Tools/MiniROM.src)
 - [Source code AP6Count useful ref](https://mdfs.net/Software/BBC/SROM/AP6Count.bas)
 - [Source code AP6 Plus 1 ROM](https://mdfs.net/Software/BBC/SROM/Plus1/)
-
-Some Test Commands
-------------------
-
-The use of the I2CBeeb ROM is as per Martin's instructions. Accept that the ***TEMP** command is not implemented, though does return a message.
-
-    *I2CRXB 50 #10 A%
-    *I2CRXB 50 #02 A%
-    *I2CTXB 50 #10 66
-
-    $&A00="HELLO"
-    *I2CTXD 50 #12 06
-    *I2CRXD 50 #12 06
-    P.$&A00
