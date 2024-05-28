@@ -14,7 +14,15 @@
 \-------------------------------------------------------------------------------
 \Notes:
 \
-\1. Rom can be built to support BBC Micr, Electron+AP5 or Electron+AP6
+\1. ROM can be built to support BBC Micro, Electron+AP5 or Electron+AP6
+\
+\	a) Compile natively on a BBC Micro via Lancs Assembler (see /bin)
+\	b) Compose source files on the BBC Micro to build one of three targets
+\		I2C	Copy of \I2CBeeb.asm
+\		I2CVER	Copy of \targets\X.asm
+\		I2CRTC	Copy of \rtc\X.asm
+\		I2CBUS	Copy of \bus\X.asm
+\	c) Run the *COMPILE command with I2C as the source
 \
 \2. Commands :	*I2C
 \		*I2CRESET
