@@ -1,7 +1,7 @@
 I2CBeeb ROM and Support for RTC within the Electron AP6
 ========================================================
 
-This project got started as a means to explore and implement RTC commands and others that make use of the RTC (a `PCF8583`) within the Electron **AP6** by Dave Hitchens. More discussion [here](https://www.stardot.org.uk/forums/viewtopic.php?t=28720). Currenty status is that the I2C ROM by MartinB is working! See `/dist/i2c/I2C31EAP6.rom` and known issues below. 
+This project got started as a means to explore and implement RTC commands and others that make use of the RTC (a `PCF8583`) within the Electron **AP6** by Dave Hitchens. More discussion [here](https://www.stardot.org.uk/forums/viewtopic.php?t=28720). Currenty status is that the I2C ROM by MartinB is working with a reasonble level of testing. It can be downloaded from here `/dist/i2c/I2C31EAP6.rom`. See known issues below. 
 
 **IMPORTANT NOTE**: This reposotiry is only for development purposes a final 
 distribution means for this has is still being considered. One option is this repository may become the main I2CBeeb repository in the future, or it may reside some other place. Currently the source code is only shared by Martin as attachments on StarDot.
