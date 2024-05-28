@@ -1,29 +1,31 @@
-
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\ THIS IS MODIFIED VERSION OF MARTINS    \
-\ CODE TO REPEAT MY CHANGES AND COMPARE  \ 
-\ BINARY OUTPUT WITH THAT OF THIS AND    \
-\ AND THE NEW BUILD SYSTEM - BOTH MATCH! \
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \	   *** I2C Beeb ***	     	 \
 \	   I2C Rom Utilities	 \
 \          (c) Martin Barr 2018	 \
 \			     	 \
-\	         V3.1E	     	 \
+\	         V3.1	     	 \
 \	        16-11-18	     	 \
 \			     	 \
-\    	 For the Acorn Electron	 \
+\    	 For the BBC Micro             \ 
+\                  Acorn Electron AP5	 \
+\                  Acorn Electron AP6	 \
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 \-------------------------------------------------------------------------------
 \Notes:
 \
-\1. Assumes User Port 6522 @ $FCB0 and uses PB0=SDA , CB2=SCL
+\1. ROM can be built to support BBC Micro, Electron+AP5 or Electron+AP6
+\
+\	a) Compile natively on a BBC Micro via Lancs Assembler (see /bin)
+\	b) Compose source files on the BBC Micro to build one of three targets
+\		I2C	Copy of \I2CBeeb.asm
+\		I2CVER	Copy of \targets\X.asm
+\		I2CRTC	Copy of \rtc\X.asm
+\		I2CBUS	Copy of \bus\X.asm
+\	c) Run the *COMPILE command with I2C as the source
 \
 \2. Commands :	*I2C
-		*I2CRESET
+\		*I2CRESET
 \		*I2CQUERY (Q)
 \		*I2CTXB <addr> (#<hh>) <byte>(;)
 \		*I2CTXD <addr> (#<hh>) <no.bytes>(;)
@@ -100,6 +102,8 @@
 \-------------------------------------------------------------------------------
 \Constants etc. defined here
 
+		INCLUDE I2CVER
+
 OSASCI	EQU	$FFE3		\print A to screen
 OSWRCH	EQU	$FFEE		\write A to output stream
 OSNEWL	EQU	$FFE7		\print new line
@@ -109,16 +113,6 @@ OSRDCH	EQU	$FFE0		\read character from input stream
 OSW_A	EQU	$EF		\A at time of unknown OSWORD call
 OSW_X	EQU	$F0		\X at .....
 OSW_Y	EQU	$F1		\Y at .....
-
-				\User Port 6522 Registers
-upiob	EQU	$FCB0		\I/O Register B
-upddrb	EQU	$FCB2		\Data Direction Register B
-uppcr	EQU	$FCBC		\Peripheral Control Register
-upifr	EQU	$FCBD		\Interrupt Flag Register
-
-xsdahi	EQU	$FE		\AND #xsdahi = bit 0 reset = data hi
-xsdalo	EQU	$01		\OR #xsdalo = bit 0 set = data lo
-getsda	EQU	$01		\upiob AND #getsda to read data
 
 COMVEC	EQU	$0234		\command execution vector (IND3V)
 cli	EQU	$F2		\command line pointer - use (cli),Y
@@ -150,7 +144,6 @@ devidlo	EQU	$08		\lowest i2c device id to interrogate
 devidhi	EQU	$77		\highest i2c device id to interrogate
 
 EEP32	EQU	$57		\AT24C32 eeprom I2C slave address
-RTC	EQU	$68		\RTC I2C Slave Address
 cs	EQU	$7F		\seconds	  :	Bits 6-0 Mask $7F
 cm	EQU	$7F		\minutes	  :	Bits 6-0 Mask $7F
 ch	EQU	$3F		\hours	  :	Bits 5-0 Mask $3F
@@ -186,121 +179,9 @@ bkspc	EQU	8		\<backspace> (ascii 'BS')
 upper	EQU	$DF		\lower to upper case mask (b5=0 on AND)
 lower	EQU	$20		\upper to lower case mask (b5=1 on ORA)
 
-
 \end of declarations
 
-\-------------------------------------------------------------------------------
-\*** Macro definitions ***
-\-------------------------------------------------------------------------------
-\Allows SCL (clock) to float hi by setting VIA PCR CB2 control bits 7-5 to 011
-\which is Input +ve Edge with Interrupt.
-\Checks for clock-stretch from slave where SCL is held lo by slave by polling
-\IFR until bit 3 becomes set. 
-\Allows user to <Escape> from slave clock stretch in the event of a hang.
-
-sclhi	MACRO
-	LDA	upifr		\first clear any CB2 flag in IFR
-	ORA	#$08
-	STA	upifr
-
-	LDA	uppcr		\set CB2 to input in 6522 PCR
-	AND	#$1F
-	ORA	#$60		\011x xxxx
-	STA	uppcr
-
-cstr@$MC	LDA	upifr		\wait for CB2 to transit high
-	AND	#$08
-	BNE	sclx@$MC		\clock hi, exit immediately
-	LDA	$FF		\else slave is clock stretching so..
-	AND	#&80		\test for user <Esc> press
-	BEQ	cstr@$MC		\no <Esc> so re-test clock status
-	LDA	#$7C		\<Esc> pressed - process and exit
-	JSR	OSBYTE
-sclx@$MC	NOP			\either clock gone hi or <Esc> pressed
-	ENDM
-	
-\-------------------------------------------------------------------------------
-\SCL (clock) driven lo by setting VIA PCR CB2 control bits 7-5 to 110
-
-scllo	MACRO
-	LDA	uppcr		\6522 PCR
-	AND	#$1F
-	ORA	#$C0		\110x xxxx
-	STA	uppcr
-	ENDM
-
-\-------------------------------------------------------------------------------
-\Allows SDA (data) to float hi by setting VIA DDRB data bit to 0=input
-
-sdahi	MACRO
-	LDA	upddrb
-	AND	#xsdahi
-	STA	upddrb
-	ENDM
-
-\-------------------------------------------------------------------------------
-\SDA (data) driven lo by setting VIA DDRB data bit to 1=output and DIOB to 0
-
-sdalo	MACRO
-	LDA	#0
-	STA	upiob
-	LDA	upddrb
-	ORA	#xsdalo
-	STA	upddrb
-	ENDM
-
-\-------------------------------------------------------------------------------
-\i2cdbit - sets SDA hi or lo to mirror Carry flag
-
-i2cdbit	MACRO
-	BCC	dblo@$MC
-	sdahi			\C=1, SDA=1
-	BCS	dbx@$MC
-dblo@$MC	sdalo			\C=0, SDA=0
-dbx@$MC	NOP
-	ENDM
-
-\-------------------------------------------------------------------------------
-\i2clock - generates a single positive pulse on SCL
-
-i2clock	MACRO
-	sclhi
-	scllo
-	ENDM
-
-\-------------------------------------------------------------------------------
-\Sets Clock and Data lines high - the I2C idle state
-
-i2cidle	MACRO
-	scllo
-	sdahi
-	sclhi
-	ENDM
-
-\-------------------------------------------------------------------------------
-\i2cstop - issues an I2C STOP by a sequence of SCL>lo, SDA>lo, SCL>hi, SDA>hi.
-\This puts the bus into the I2C IDLE state.
-
-i2cstop	MACRO
-	scllo
-	sdalo
-	sclhi
-	sdahi			\SCL & SDA now high
-	ENDM
-
-\-------------------------------------------------------------------------------
-\i2cstart - issues an I2C START by a sequence of SDA>lo, <delay>, SCL>lo.
-\Sets idle state (both hi) first.
-
-i2cstart	MACRO
-	i2cidle
-	sdalo
-	scllo
-	ENDM
-
-\-------------------------------------------------------------------------------
-\*** End of Macro definitions ***
-\-------------------------------------------------------------------------------
+	INCLUDE 	I2CBUS		\include I2C bus marcos
 
 	ORG	$8000		\sideways rom address start (to $BFFF)
 
@@ -312,7 +193,7 @@ romstart	DFB	0,0,0		\no language entry (3 nulls)
 title	DFB	0		\version
 	ASC	'I2C'		\title string
 	DFB	0		\..and null terminator
-	ASC	'3.1E'		\version string with CR and..
+	version
 copyr	DFB	0		\copyright string..
 	ASC	'(C) M.P.Barr 2018'
 	DFB	0		\..'framed' by nulls
@@ -639,10 +520,9 @@ OSW$0E4	JSR	xxi2crtc		\duplicate *NOW$ function
 	RTS			\simple RTS, registers not preserved
 
 \------------------------------------------------------------------------------
-\Command to toggle Time-on-Break (ToB) function. Uses RTC 'Alarm 2 Hour' field
+\Command to toggle Time-on-Break (ToB) function. Uses storage in the RTC
 \to enumerate the ToB flag which is initially a simple non-zero/zero On/Off
-\switch. At each call, toggles the ToB flag at Bit0 of Alarm2 Hours, RTC
-\module address $0C.
+\switch. At each call, toggles the ToB flag stored in the RTC per /inc/rtc
  
 				\read existing flag state..
 xtbrk	JSR	getrtc		\fetch rtc data block
@@ -1524,72 +1404,6 @@ txloop	TXA
 	TAX
 	RTS
 
-\-------------------------------------------------------------------------------
-\Gets time and date parameters from RTC into buffer buf00-buf07 @ $0380
-
-getrtc	LDA	#>buf00		\re-direct i2c buffer to buf00
-	STA	bufloc		\($0380)
-	LDA	#<buf00
-	STA	bufloc+1
-				\set up rxd call to fetch all RTC data
-	LDA	#RTC		\DS3231 RTC device id
-	STA	$68
-	LDA	#0		\register number - start at 0 (secs)
-	STA	$69
-	LDA	#19		\number of bytes to fetch (addr $00-$12)
-	STA	$6A
-	STA	$6C		\reg-valid flag to non-zero
-	JSR	cmd6		\and make the rxd(go) call
-
-	LDA	#>i2cbuf		\reset I2C buffer to $0A00
-	STA	bufloc
-	LDA	#<i2cbuf
-	STA	bufloc+1
-
-	RTS			\and return
-
-\------------------------------------------------------------------------------
-\Writes the 7-byte time and date data set at buf00-buf06 to the DS3231 RTC
-\First copies the 7 t&d bytes across to the main I2C buffer at $0A00 and then
-\performs the write using an internal txd call.
-
-writetd	LDX	#0		\copy t&d data to I2C buffer
-wtd_a1	LDA	buf00,X
-	STA	i2cbuf,X
-	INX
-	CPX	#7		\copying 7 bytes
-	BNE	wtd_a1
-	
-	LDA	#RTC		\set up txd call
-	STA	$68		\slave address
-	LDA	#0
-	STA	$69		\start register
-	STA	$6D		\no stop inhibit
-	LDA	#7
-	STA	$6A		\7 bytes to tx
-	STA	$6C		\non-zero = $69 register valid
-	JSR	cmd4		\perform the write via txd(go)
-
-	RTS			\and return
-
-\------------------------------------------------------------------------------
-\ writes the toggle state for *TBRK
-\ the PCF8583 has free ram, and so we can use some of that to store the toggle state
-\ in this case in reg 11h, this contains last written year and the toggle state
-\ On calling this subscrounte &6A arrives with (bit 0) 0 or 1 depending on toggle state
-\ On returning the caller expects &6A to be untouched
-
-wtbrk	
-	LDA	#RTC		\target i2c device id (here rtc)
-	STA	$68
-	STA	$6C		\$6C<>0 mean register specified in $69
-	LDA	#12		\start register = 12 = Alarm 2 Hours
-	STA	$69
-	LDA	#0
-	STA	$6D		\$6D=0 means Stop after txb
-	JSR	cmd3		\and send the byte via txb(go)
-	RTS
-
 \------------------------------------------------------------------------------
 \
 \RTC time and date functions
@@ -1603,6 +1417,8 @@ wtbrk
 \e.g rtc$=$&A00 : CLK$=LEFT$(rtc$,8)
 \Calls xxi2crtc which is implemented for OSWORD #14 and so this call sets up
 \OSW_X and OS_Y to point to &0A00 as if derived from an OSWORD call.
+
+	INCLUDE 	I2CRTC
 
 xi2crtc	LDA	#>i2cbuf		\set up OSW_X and OSW_Y to &0A00
 	STA	OSW_X
@@ -1771,6 +1587,7 @@ i2r_a2	LDX	zpreg		\restore X
 	INY
 	STA	(OSW_X),Y
 	
+	IF 	RTC_TEMP		\conditional compile if RTC supports temp
 	LDA	buf17		\get hex temperature
 	AND	#deg		\mask
 	JSR	hexbcd		\convert to BCD
@@ -1788,6 +1605,7 @@ i2r_a2	LDX	zpreg		\restore X
 	ADC	#$30
 	INY
 	STA	(OSW_X),Y		\temp units = $0A17
+	FI
 
 	LDA	#cr		\finish full string with <cr> ($0D)
 	INY
@@ -1918,12 +1736,17 @@ xtemp	JSR	getrtc		\get rtc time & date to buffer
 xxtemp	TXA			\save X to later test whether this is..
 	PHA			\..a direct *TEMP or an indirect call
 
+	IF 	RTC_TEMP		\conditional compile if RTC temp supported
 	LDA	buf17		\get temp upper bits, lsb=1
 	AND	#deg		\mask
 	JSR	hexbcd		\convert hex degrees to bcd
 	JSR	dec_print		\and print the BCD temperature
 	LDA	#4		\followed by units text
 	JSR	xmess
+	ELSE
+	LDA	#7		\display not implemented
+	JSR	xmess
+	FI
 	
 	PLA			\get entry X which is $FF if this is..
 	BMI	temp_ax		\..an indirect call from elsewhere..
@@ -1954,6 +1777,7 @@ xxnow	LDX	#$FF		\this will signal no <cr> after time
 	LDA	#spc		\delimit time & date with two spaces
 	JSR	OSASCI
 	JSR	OSASCI
+	IF 	RTC_TEMP
 	LDX	#$FF		\also no <cr> after date
 	JSR	xxdate		\print date
 	LDA	#spc		\delimit date and temp with two spaces
@@ -1961,6 +1785,10 @@ xxnow	LDX	#$FF		\this will signal no <cr> after time
 	JSR	OSASCI
 	LDX	#0		\<cr> after temperature
 	JSR	xxtemp		\print temperature
+	ELSE
+	LDX	#0		\<cr> after date
+	JSR	xxdate		\print date
+	FI
 
 	RTS			\and return
 
@@ -2430,7 +2258,7 @@ dec_print PHA			\save a copy of A
 \Messages are selected via A = <message number> in the max. range 0-15
 \Note 1 : exits A = 0 and thus caller can branch always via BEQ on return
 
-txt0	ASC	'I2C 3.1E 121118#'
+txt0	versionl
 txt1	ASC	'ACK Rx'
 txt1a	DFB	$27
 txt1b	ASC	'd from :}'
@@ -2441,6 +2269,7 @@ txt4a	DFB	$7F,$7F,$7F
 txt4b	ASC	'     }'
 txt5	ASC	'Off            #'
 txt6	ASC	'On             #'
+txt7	ASC	'Not Available  }'
 
 
 xmess	ASL			\multiply message number by 16

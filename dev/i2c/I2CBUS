@@ -18,7 +18,6 @@ getsda	EQU 	xsdahi		\alias
 \-------------------------------------------------------------------------------
 \*** Macro definitions ***
 \-------------------------------------------------------------------------------
-\ TODO: Explain further about how AP6 interface at &FCD6 is used to control I2C
 
 sclhi	MACRO
 	LDA 	ap6regc
@@ -28,7 +27,7 @@ sclhi	MACRO
 	ENDM
 	
 \-------------------------------------------------------------------------------
-\SCL (clock) driven lo by ... TODO
+\SCL (clock) driven lo by adjusting the AP6 control register, see AP6 manual
 
 scllo	MACRO
 	LDA 	ap6regc
@@ -38,7 +37,7 @@ scllo	MACRO
 	ENDM
 
 \-------------------------------------------------------------------------------
-\Allows SDA (data) to float hi by ... TODO
+\Allows SDA (data) to float hi by adjusting the AP6 control register, see AP6 manual
 
 sdahi	MACRO
 	LDA	ap6regc
@@ -48,7 +47,7 @@ sdahi	MACRO
 	ENDM
 
 \-------------------------------------------------------------------------------
-\SDA (data) driven lo by ... TODO
+\SDA (data) driven lo by adjusting the AP6 control register, see AP6 manual
 
 sdalo	MACRO
 	LDA	ap6regc
