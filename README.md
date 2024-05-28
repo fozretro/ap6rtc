@@ -18,7 +18,7 @@ Usage with AP6
 
 You need a Plus 1 with the AP6 expansion board fitted and a battery installed for the RTC chip to retain time and data. Download and install/load the ROM above. All the commands, `*TSET, *DSET, *NOW, *DATE, *TIME` etc work as per documentation on Martins [thread](https://stardot.org.uk/forums/viewtopic.php?t=10966). There is one notable exception that the `*TEMP` command outputs `Not Available`, because the PCF8583 RTC does not support this.
 
-What the PCF8583 does have though is storage! Meaning you can do things like this to store information and have it retained. Note that the PCF8583 free ram starts at 10h, however the ROM uses 10h and 11h locations so please avoid using those, anything above 12h is fine! Note that, `50` used in the commands below is the device ID for the installed PCF8583.
+What the PCF8583 does have though is storage! Meaning you can do things like this to store information and have it retained. Note that the PCF8583 free ram starts at address `10h`, however the ROM uses `10h` and `11h` locations so please consider these reserved, anything above `12h` is fine! Note that, `50` used in the commands below is the device ID for the installed PCF8583.
 
     *I2CQUERY
     *I2CRXB 50 #12 A%
