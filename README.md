@@ -6,7 +6,7 @@ This project got started as a means to explore and implement RTC commands and ot
 **IMPORTANT DISTRIBUTION NOTE**
 
 This repository is only for development and testing purposes, a final 
-distribution means for this AP6 version of the **I2CBeeb** ROM has is still being considered. Please continue to use the official I2CBeeb ROMs [thread](https://stardot.org.uk/forums/viewtopic.php?t=10966) for other variants. Looking forward, since this repo actually supports building all variants of the ROM, one option is this repository may become the main I2CBeeb repository in the future, or it may reside some other place. Currently the source code is only shared by Martin as attachments on StarDot and in this repository per his kind permission. 
+distribution means for this AP6 version of the **I2CBeeb** ROM is still being considered. Please continue to use the official I2CBeeb ROMs [thread](https://stardot.org.uk/forums/viewtopic.php?t=10966) for other variants. Looking forward, since this repo supports building all variants of the ROM, one option is this repository may become the main I2CBeeb repository in the future, or it may reside some other place. Currently the source code is only shared by Martin as attachments on StarDot and in this repository per his kind permission. 
 
 Building
 --------
