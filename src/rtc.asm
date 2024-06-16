@@ -1,33 +1,28 @@
 ; Test code to establish how to read and write from the RTC in the AP6 
-ORG &900
+ORG &1900
 
-; OS Routines and Locations
-OSWORD=&FFF1
 OSWRCH=&FFEE
-OSBYTE=&FFF4
-OSARGS=&FFDA
-ACCCON=&FE34
-ROMSEL=&FE30
-
 RTCADDR=&A0
-I2CBUS=&FCD6
-SCTL=&11
-SCLHIGH=&40
-SCLLOW=&BF
-SDAHIGH=&80
-SDALOW=&7F
-sctl=&70
+ap6reg=&FCD6
+ap6idle = $11
+xsdahi = &80
+xsdalo = &7F
+xsclhi = &40
+xscllo = &BF
+ap6regc=&70
 byte=&71
 ackNak=&72
 rtcAddr=&73
 
 .begin
 .exec
-      LDA #65
-      LDX #&10
+      \ Basic test code writes X and reads it from free RAM
+      LDA #'X'
+      LDX #&12
       JSR writeByte
-      LDX #&10
+      LDX #&12
       JSR readByte
+      JSR OSWRCH
       RTS
 
 .writeByte
@@ -67,24 +62,24 @@ rtcAddr=&73
       PHA
       LDX #8
 .writeValueLoop
-      JSR setClkLow
+      JSR scllo
       ASL byte
       BCC writeValueLow
-      JSR setSdaHi
+      JSR sdahi
       BNE writeValueDone
 .writeValueLow
-      JSR setSdaLow
+      JSR sdalo
 .writeValueDone
-      JSR setClkHi
+      JSR sclhi
       DEX
       BNE writeValueLoop
-      JSR setClkLow
-      JSR setSdaHi
-      JSR setClkHi
-      LDA I2CBUS
-      AND #SDAHIGH
+      JSR scllo
+      JSR sdahi
+      JSR sclhi
+      LDA ap6reg
+      AND #xsdahi
       STA ackNak
-      JSR setClkLow
+      JSR scllo
       PLA
       TAX
       RTS
@@ -96,80 +91,81 @@ rtcAddr=&73
       STA byte
       LDX #8
 .readValueLoop
-      JSR setClkLow
-      JSR setClkHi
-      LDA I2CBUS
-      AND #SDAHIGH
-      CMP #SDAHIGH
+      JSR scllo
+      JSR sclhi
+      LDA ap6reg
+      AND #xsdahi
+      CMP #xsdahi
       ROL byte
       DEX
       BNE readValueLoop
-      JSR setClkLow
-      JSR setSdaHi
-      JSR setClkHi
-      JSR setClkLow
+      JSR scllo
+      JSR sdahi
+      JSR sclhi
+      JSR scllo
       PLA
       TAX
       LDA byte
       RTS
- 
-.off
-      LDA sctl
-      AND #(SCLLOW AND SDALOW)
-      STA sctl
-      STA I2CBUS
+      
+.sclhi
+	LDA 	ap6regc
+	ORA 	#(xsclhi)
+	STA 	ap6regc
+	STA 	ap6reg
       RTS
- 
-.setClkHi
-      LDA sctl
-      ORA #(SCLHIGH)
-      STA sctl
-      STA I2CBUS
+
+.scllo
+	LDA 	ap6regc
+	AND 	#(xscllo)
+	STA 	ap6regc
+	STA 	ap6reg
       RTS
- 
-.setClkLow
-      LDA sctl
-      AND #(SCLLOW)
-      STA sctl
-      STA I2CBUS
+
+.sdahi
+	LDA	ap6regc
+	ORA	#(xsdahi)
+	STA	ap6regc
+	STA	ap6reg
+	RTS
+
+.sdalo
+	LDA	ap6regc
+	AND	#(xsdalo)
+	STA	ap6regc
+	STA	ap6reg
+	RTS
+
+.i2clock
+	JSR sclhi
+	JSR scllo
       RTS
- 
-.setSdaHi
-      LDA sctl
-      ORA #(SDAHIGH)
-      STA sctl
-      STA I2CBUS
+
+.i2cidle
+	JSR scllo
+	JSR sdahi
+	JSR sclhi
       RTS
- 
-.setSdaLow
-      LDA sctl
-      AND #(SDALOW)
-      STA sctl
-      STA I2CBUS
-      RTS
- 
-.start
-      SEI
-      LDA #SCTL
-      STA sctl
-      STA I2CBUS
-      JSR setSdaHi
-      JSR setClkHi
-      JSR setSdaLow
-      JSR setClkLow
-      RTS
- 
+
 .stop
-      JSR setClkLow
-      JSR setSdaLow
-      JSR setClkHi
-      JSR setSdaHi
-      JSR setClkLow
-      JSR off
-      CLI
-      RTS
+	JSR scllo
+	JSR sdalo
+	JSR sclhi
+	JSR sdahi
+	RTS
+
+.start
+	LDA #ap6idle
+	STA ap6reg
+	STA ap6regc
+	JSR i2cidle
+	JSR sdalo
+	JSR scllo
+	RTS
 
 .end
  
 PUTFILE "dev/ap6rtc/!BOOT", "!BOOT", &0000
+PUTFILE "dist/i2c/I2C31EAP6.rom", "I2CROM", &8000
+PUTBASIC "src/rtc.bas", "RTCTEST"
 SAVE "RTC", begin, end, exec 
