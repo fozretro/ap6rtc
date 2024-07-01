@@ -1,3 +1,11 @@
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\ Special note for this v3.1 AP6 Variant \
+\ Please read the README on GitHub       \
+\ https://github.com/fozretro/ap6rtc     \
+\ This contains more information on this \
+\ variant Martins code and intend usage  \
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
 \-------------------------------------------------------------------------------
 \ These implementations of 'getrtc', 'writetd' and 'wtbrk' are PFC8583 compatible 
 \ The code below respects DS3231 data layout assumptions in the main code so there is
@@ -191,3 +199,29 @@ toPCF8583
 	ORA	buf04		\ now apply DS3231 value for date (bits 5-0)
 	STA	&A05		\ > PCF8583 - Year/Date (bits 5-0, 05h reg)
 	RTS
+
+\------------------------------------------------------------------------------
+\Additional command line validation for I2CTXB
+\routine needs to output its own error message and return carry set if in error state
+\in this case we are perventing the user overwriting to regsiters below h11
+txbval    
+          LDA       i2cdev              \ Validation only applies when writing to PCF8583
+          CMP       #RTC
+          BNE       etxbval             \ skip if device is not PCF8583
+          LDA       i2creg
+          CMP       #&12                \ check if byte is within reserved range
+          BCS       etxbval             \ ok if greater than or equal h12
+          LDA       #8                  \ otherwise emit 'Reserved' error 
+          JSR	xmess
+          SEC                           \ confirm we are in error to caller
+          RTS
+etxbval   CLC                           \ no error
+          RTS
+
+\------------------------------------------------------------------------------
+\Additional command line validation for I2CTXD
+\routine needs to output its own error message and return carry set if in error state
+\in this case we are perventing the user overwriting free ram used by this ROM when using PCF8583
+txdval    
+          JSR       txbval              \ regards of bytes written check start register
+          RTS          

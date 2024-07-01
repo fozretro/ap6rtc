@@ -79,3 +79,12 @@ wtbrk
 	STA	$6D		\$6D=0 means Stop after txb
 	JSR	cmd3		\and send the byte via txb(go)
 	RTS
+
+\------------------------------------------------------------------------------
+\Additional command line validation for I2CTXB
+\routine needs to output its own error message and return carry set if in error state
+txbval    RTS       \ no additional validation for DS3231
+
+\Additional command line validation for I2CTXD
+\routine needs to output its own error message and return carry set if in error state
+txdval    RTS       \ no additional validation for DS3231

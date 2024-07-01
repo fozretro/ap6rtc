@@ -89,9 +89,7 @@ I like to collect all the files when working on a project for ease of use and fu
 
 Known Issues
 ------------
-- There is no validation to prevent overwriting 10h and 11h registers / free memory locations in the PCF8583 using the I2C data write commands. As mentioned above these are used by the logic in the ROM, so are reserved. For now the user must remmber to avoid these. Corruprting these is not a disaster, it will, until the year logic is introduced, at worst turn on the break message depending on the value. These are reset when either `*TSET`,`*DSET` or `*TBRK` are used.
 - The AP6 uses the RTC chip PCF8583, which only holds years 0-3. A full year depends on some additional logic and storage of an offset when the year is set. This has been implemented, though the logic to update it automatically has not as yet. This means that the year will fall out of sync every 4 years without manual changes. There is partially provision to fix this in the code, it just needs some additional code to compare on read the last year stored with current and take action - this is shown in the C code examples linked below.
-- Minor issue, per StarDot thread, there is a missing blank line when displaying the date/time on power on. This is possibly due to the placement of the ROM in my testing which is ROM 1. Will do more testing in other slots.
 
 Other (Useful) Stuff
 --------------------

@@ -824,6 +824,8 @@ txbp2	STA	i2cbyte		\save txbyte
 	LDA	(cli),Y		\last chr now must be <Return>
 txbp3	CMP	#cr
 	BNE	txbperr		\error
+          JSR       txbval              \perform additional validation unique to the underlying RTC
+          BCS       txbpx               \additional validation does its own error ouptut
 	CLC			\else flag cl good
 	BCC	txbpx		\and exit
 
@@ -939,6 +941,8 @@ txdp2	STA	i2cbyte		\save number of tx bytes
 	LDA	(cli),Y		\last chr now must be <Return>
 txdp3	CMP	#cr
 	BNE	txdperr		\error
+          JSR       txdval              \perform additional validation unique to the underlying RTC
+          BCS       txdpx               \additional validation does its own error ouptut
 	CLC			\flag cl good
 	BCC	txdpx		\and exit
 
@@ -2280,6 +2284,7 @@ txt4b	ASC	'     }'
 txt5	ASC	'Off            #'
 txt6	ASC	'On             #'
 txt7	ASC	'Not Available  }'
+txt8	ASC	'Reserved       #'
 
 
 xmess	ASL			\multiply message number by 16
