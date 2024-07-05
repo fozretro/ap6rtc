@@ -450,6 +450,9 @@ boot	TYA			\save registers
 	AND	#$0F		\isolate bits 3-0
 	BEQ	boot_x		\if zero, skip header
 	JSR	xxnow		\else do the header printing
+          LDA       &28D                \type of reset                
+          BEQ       boot_x              \softreset
+          JSR       OSNEWL              \additional new line on hard resets
 
 boot_x	PLA			\restore the registers
 	TAX
@@ -1790,8 +1793,8 @@ xxnow	LDX	#$FF		\this will signal no <cr> after time
 	JSR	xxtime		\print time
 	LDA	#spc		\delimit time & date with two spaces
 	JSR	OSASCI
-	JSR	OSASCI
 	IF 	RTC_TEMP
+	JSR	OSASCI
 	LDX	#$FF		\also no <cr> after date
 	JSR	xxdate		\print date
 	LDA	#spc		\delimit date and temp with two spaces
