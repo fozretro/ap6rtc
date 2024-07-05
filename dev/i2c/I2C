@@ -450,9 +450,6 @@ boot	TYA			\save registers
 	AND	#$0F		\isolate bits 3-0
 	BEQ	boot_x		\if zero, skip header
 	JSR	xxnow		\else do the header printing
-          LDA       &28D                \type of reset                
-          BEQ       boot_x              \not softreset
-          JSR       OSNEWL              \additional new line on hard resets
 
 boot_x	PLA			\restore the registers
 	TAX
