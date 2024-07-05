@@ -92,6 +92,8 @@ wtbrk
 \-------------------------------------------------------------------------------
 \Copies from PCF8583 data in &A00 to DS3231 bufXX
 fromPCF8583
+          \ Check for a year change
+          JSR       checkYearChange
 	\ Seconds
 	LDA	&A02		\ PCF8583 - Seconds (02h reg)
 	STA 	buf00		\ > DS3231 - Seconds
@@ -133,7 +135,6 @@ fromPCF8583
 	CLC			\ Explicitly clear carry
 	ADC 	&A10		\ Add offset (must be a leap year)
 	CLD			\ Disabled BCD mode
-	\ TODO: Compare current year (in &A05/5h bits 7-6) with previosuly written year (in &A11/11h bits 7-6) incase overflow then, update last year and adjust offset + 4
 	STA	buf06		\ > DS3231 - Year (0-99 value)
 	\ Display time/date on boot
 	LDA	&A11		\ PCF8583 - Use bit 0 of 11h free ram for boot message toggle
@@ -146,7 +147,63 @@ fromPCF8583
 	STA	buf09		\ > DS3231 - Zero for now
 	STA	buf17		\ > DS3231 - Zero for now
 	STA	buf18		\ > DS3231 - Zero for now
-	RTS
+          RTS
+
+\------------------------------------------------------------------------------
+\ Following logic is ported from getYear https://github.com/xoseperez/pcf8583/blob/master/src/PCF8583.cpp          
+\ This routine deals with software support needed by PCF8583 as it only stores 0-3 years
+\ Refer to the above C++ code for more information
+checkYearChange
+
+          \ On read keep the last year set in sync with current device year by comparing the two values
+          LDA       &A11                \ Read byte with last set year in
+          AND       #192                \ Only intersted bits 7-6
+          STA       &A12                \ Store in temp storage for compare
+          LDA       &A05                \ Read byte with current clock year in
+          AND       #192                \ Only intersted bits 7-6
+          STA       &A13                \ Store in temp storage for compare
+          LDA       &A12                \ Load extracted last set year (bits 7-6 only)
+          CMP       &A13                \ Compare with extracted current clock year (bits 7-6 only)
+          BEQ       noChange            \ Nothing to do, no new year since clock last read/written
+	LDA	&A11		\ Get the current toggle state for the break message
+	AND	#1		\ Only interested in bit 0 this time
+          ORA       &A13                \ Combine with the current clock year (bits 7-6)
+          STA       &A11                \ Store back the updated last year and toggle state value
+          
+          \ Send updated 11h register storing Last Year + Boot Message Toggle to device
+	STA	&6A		\ To new single byte value to be written
+	LDA	#RTC		\ Target i2c device id
+	STA	$68
+	STA	$6C		\ $6C<>0 mean register specified in $69
+	LDA	#17		\ Start register = 17 (11h) free frame 
+	STA	$69
+	LDA	#0
+	STA	$6D		\ $6D=0 means Stop after txb
+	JSR	cmd3		\ Send the byte via txb(go)
+
+          \ The year changed, so check for 4 year overlfow, by checking if the last year is now greater than current year?
+          LDA       &A12                \ Load extracted last set year (bits 7-6 only)
+          CMP       &A13                \ Compare with extracted current clock year (bits 7-6 only)
+          BCC       noChange            \ Last year less than current year?
+          SED			\ Enable BCD mode
+          CLC                           \ Clear carry
+          LDA       &A10                \ If greater than more than 4 years passed and we need to update offset
+          ADC       #4                  \ Adjust offset + 4 to compensate
+          STA       &A10                \ Store updated offset
+          CLD			\ Disabled BCD mode
+
+          \ Send updated 10h register storing Year Offset to device
+	STA	&6A		\ To new single byte value to be written
+	LDA	#RTC		\ Target i2c device id
+	STA	$68
+	STA	$6C		\ $6C<>0 mean register specified in $69
+	LDA	#16		\ Start register = 16 (10h) free frame 
+	STA	$69
+	LDA	#0
+	STA	$6D		\ $6D=0 means Stop after txb
+	JSR	cmd3		\ Send the byte via txb(go)
+
+nochange  RTS
 
 \------------------------------------------------------------------------------
 \Copies from DS3231 data in bufXX to PCF8583 data in $A00
@@ -204,7 +261,7 @@ toPCF8583
 \Additional command line validation for I2CTXB
 \routine needs to output its own error message and return carry set if in error state
 \in this case we are perventing the user overwriting to regsiters below h11
-txbval    
+txbval
           LDA       i2cdev              \ Validation only applies when writing to PCF8583
           CMP       #RTC
           BNE       etxbval             \ skip if device is not PCF8583

@@ -41,6 +41,107 @@ Compilation is done natively on a BBC Micro using the **Lancs Assembler ROM** (s
 
 This project uses **B-em** with **VDFS** pointing to `/dev/i2c` folder. This is also a subfolder visible to `/bin/startTubeHost.sh` used to enable the use of **UPURSFS** on real target machine (BBC or Electron). This combination allows a local (Mac in my case) workflow to compile by using the emulator (at top speed) the resulting ROM file is visible immediatly (thanks to VDFS) to the connected computer via `UPURSFS`. Its crazy but works very well once setup!
 
+Some Year Testing
+-----------------
+
+The year logic is funky! Meaning there is software workarounds to the fact the PCF8583 only stores 2 bit years, max 4 years basically. So some shadow year and offset values are also stored to get to the year value. There is some management of these each time the date/time is read. As I did not want to wait for years to pass to complete my test some poking is required to emulate the conditions the code applies to.
+
+**Note:** These tests actually require the validation logic *I2CTXB commenting out (the `JSR txbval` and `BCS txbpx` in `txbparse`) as the I2CRXB normally does not allow the reserved storage to be written.
+
+**Test 1** - Last year sync properly with the current year (*TBRK off)
+
+    Step 1
+    *DSET Mon 01-01-20
+    *NOW
+    Assert &A10=32 (offset)
+    Assert &A11=0  (last year and boot toggle)
+
+    Step 2
+    *DSET Mon 01-01-22
+    *NOW
+    Assert &A10=32  (offset)
+    Assert &A11=128 (last year and boot toggle)
+
+    Step 3 - This emulates the machine not having been powered up since 2020
+    A%=0
+    *I2CTXB 50 #11 A%
+    A%=42
+    *I2CRXB 50 #11 A%
+    Assert A%=0
+
+    Step 4
+    *NOW
+    Assert: Year is still 22
+    Assert: &A11=128
+
+    Step 5
+    A%=42
+    *I2CRXB 50 #11 A%
+    Assert A%=128
+
+**Test 2** - Last year sync properly with the current year (*TBRK on)
+
+    Step 1
+    *DSET Mon 01-01-20
+    *NOW
+    Assert &A10=32 (offset)
+    Assert &A11=1  (last year and boot toggle)
+
+    Step 2
+    *DSET Mon 01-01-22
+    *NOW
+    Assert &A10=32  (offset)
+    Assert &A11=129 (last year and boot toggle)
+
+    Step 3 - This emulates the machine not having been powered up since 2020
+    A%=1
+    *I2CTXB 50 #11 A%
+    A%=42
+    *I2CRXB 50 #11 A%
+    Assert A%=1
+
+    Step 4
+    *NOW
+    Assert: Year is still 22
+    Assert: &A11=129
+
+    Step 5
+    A%=42
+    *I2CRXB 50 #11 A%
+    Assert A%=129
+
+**Test 3** - Check it adjusts for wrap around of year in RTC (*TBRK off)
+
+    Step 1
+    *DSET Mon 01-01-22
+    *NOW
+    Assert &A10=32  (offset)
+    Assert &A11=128 (last year and boot toggle)
+
+    Step 2
+    *DSET Mon 01-01-25
+    *NOW
+    Assert &A10=36  (offset)
+    Assert &A11=64  (last year and boot toggle)
+
+    Step 3 - This emulates the machine not having been powered up since 2022
+    A%=32
+    *I2CTXB 50 #10 A%
+    A%=42
+    *I2CRXB 50 #10 A%
+    Assert A%=10
+    A%=128
+    *I2CTXB 50 #11 A%
+    A%=42
+    *I2CRXB 50 #11 A%
+    Assert A%=128
+
+    Step 4
+    *NOW
+    Assert year is 25
+    Assert &A10=36
+    Assert &A11=64
+
 Source Files and Copying to a BBC Micro
 ---------------------------------------
 
@@ -89,7 +190,7 @@ I like to collect all the files when working on a project for ease of use and fu
 
 Known Issues
 ------------
-- The AP6 uses the RTC chip PCF8583, which only holds years 0-3. A full year depends on some additional logic and storage of an offset when the year is set. This has been implemented, though the logic to update it automatically has not as yet. This means that the year will fall out of sync every 4 years without manual changes. There is partially provision to fix this in the code, it just needs some additional code to compare on read the last year stored with current and take action - this is shown in the C code examples linked below.
+- None at present
 
 Other (Useful) Stuff
 --------------------
