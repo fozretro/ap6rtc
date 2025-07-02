@@ -466,7 +466,10 @@ xosword	LDA	OSW_A		\get unknown OSWORD call
 	BNE	xosw_a2		\not RTC read, try next
 	LDY	#0		\else test OWORD 14 function
 	LDA	(OSW_X),Y		\Type is provided by caller at XY+0
-	CMP	#4		\is it our new time$ call?
+	CMP	#0		\is it function 0? (Compact *TIME/TIME$)
+	BNE	xosw_a0
+	JMP	OSW$0E0		\handle function 0
+xosw_a0	CMP	#4		\is it our new time$ call?
 	BNE	xosw_a1		\not a Type 4, try next type
 	JMP	OSW$0E4		\else jump to our OSWORD &0E Type 4
 xosw_a1	CMP	#1		\Type 1? 
@@ -528,6 +531,15 @@ OSW$0E4	JSR	xxi2crtc		\duplicate *NOW$ function
 
 	LDA	#0		\claim call and return to MOS
 	RTS			\simple RTS, registers not preserved
+
+\------------------------------------------------------------------------------
+\OSWORD call &0E Type 0 - returns an ASCII BCD time and date string as per
+\the new *NOW$ function of this rom. This is needed for Master Compact *TIME/TIME$.
+
+OSW$0E0:
+    JSR xxi2crtc   ; create the time string at (OSW_X),Y
+    LDA #0         ; claim call and return to MOS
+    RTS
 
 \------------------------------------------------------------------------------
 \Command to toggle Time-on-Break (ToB) function. Uses storage in the RTC

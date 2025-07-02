@@ -11,8 +11,8 @@
 \ inc\bus\E.asm               I2CBUS
 \ inc\rtc\DS3231.asm          I2CRTC
 version	MACRO
-          ASC	'3.1E'		\version string with CR and..	
+          ASC	'3.2E'		\version string with CR and..	
           ENDM
 versionl  MACRO
-          ASC	'I2C 3.1E 121118#'
+          ASC	'I2C 3.2E 121118#'
           ENDM          

@@ -6,7 +6,7 @@ This project got started as a means to explore and implement RTC commands and ot
 Status - Beta
 -------------
 
-Current status is this variant of the **I2CBeeb ROM by MartinB** is working with a reasonble level of testing with an AP6. However it is currently labelled as **Beta**, so please expect some bugs and report on the thread. It can be downloaded from here `/dist/i2c/I2C31EAP6.rom`. See known issues below. 
+Current status is this variant of the **I2CBeeb ROM by MartinB** is working with a reasonble level of testing with an AP6. However it is currently labelled as **Beta**, so please expect some bugs and report on the thread. It can be downloaded from here `/dist/i2c/I2C32EAP6.rom`. See known issues below. 
 
 **IMPORTANT DISTRIBUTION NOTE**
 
@@ -150,15 +150,15 @@ As mentioned above, while the source files in `/src.i2c` look like they can be c
 The `/src.i2c` folder structure contains the main ROM source code in `/src.i2c/I2CBeeb.asm` which leverages some include files to allow conditional compilation to result in three flavors of the ROM, supporting a BBC Micro and Acorn Electron with AP5 and AP6 interfaces. 
 
 - Copy `/src.i2c/I2CBeeb.asm` to `I2C`
-- To build `I2C31B` ROM for the BBC Micro
+- To build `I2C32B` ROM for the BBC Micro
   - Copy `/src.i2c/inc/bus/B.asm` to `I2CBUS`
   - Copy `/src.i2c/inc/rtc/DS3231.asm` to `I2CRTC` 
   - Copy `/src.i2c/inc/targets/B.asm` to `I2CVER`
-- To build `I2C31E` ROM for the Acorn Electron AP5
+- To build `I2C32E` ROM for the Acorn Electron AP5
   - Copy `/src.i2c/inc/bus/E.asm` to `I2CBUS`
   - Copy `/src.i2c/inc/rtc/DS3231.asm` to `I2CRTC` 
   - Copy `/src.i2c/inc/targets/E.asm` to `I2CVER`
-- To build `I2C31EAP6` ROM for the Acorn Electron AP6
+- To build `I2C32EAP6` ROM for the Acorn Electron AP6
   - Copy `/src.i2c/inc/bus/EAP6.asm` to `I2CBUS`
   - Copy `/src.i2c/inc/rtc/PCF8583.asm` to `I2CRTC` 
   - Copy `/src.i2c/inc/targets/EAP6.asm` to `I2CVER`
@@ -172,7 +172,7 @@ How do I increment the ROM version?
 
 I maintained the **v3.1** version from Martin, despite adding AP6 support. This was because the existing Beeb and Electron (AP5) versions really have not changed, nor has any core new functionality been added for those users. 
 
-If in the future a new version is needed the version is stored firstly in `/src.i2c/inc/target/X,asm` this will change the version in the compiled ROMs. However, please be aware, the filenames and other references to 3.1 are still hardcoded in a few places, especially if you are using the shell scripts in `/bin`. 
+If in the future a new version is needed the version is stored firstly in `/src.i2c/inc/target/X,asm` this will change the version in the compiled ROMs. However, please be aware, the filenames and other references to 3.1 are still hardcoded in a few places, especially for the original builds or if you are using the shell scripts in `/bin` for legacy versions.
 
 Where did the Source code come from?
 ------------------------------------
