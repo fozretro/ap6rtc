@@ -568,7 +568,7 @@ comp_day_end
     ; Date (DD)
     LDA buf04      ; get BCD date
     AND #cdd       ; mask
-    JSR byte2hex   ; convert to hex string
+    JSR bcd2dec    ; convert BCD to decimal string
     LDA #' '       ; space after date
     STA (OSW_X),Y
     INY
@@ -618,7 +618,7 @@ comp_century21	LDA #'2'	; 20xx
 	INY
 comp_year_ok
     PLA            ; restore year
-    JSR byte2hex   ; convert to hex string
+    JSR bcd2dec    ; convert BCD to decimal string
     
     ; Add "." after year
     LDA #'.'
@@ -628,19 +628,19 @@ comp_year_ok
     ; Time (HH:MM:SS)
     LDA buf02      ; get BCD hours
     AND #ch        ; mask
-    JSR byte2hex   ; convert to hex string
+    JSR bcd2dec    ; convert BCD to decimal string
     LDA #':'       ; colon after hours
     STA (OSW_X),Y
     INY
     LDA buf01      ; get BCD minutes
     AND #cm        ; mask
-    JSR byte2hex   ; convert to hex string
+    JSR bcd2dec    ; convert BCD to decimal string
     LDA #':'       ; colon after minutes
     STA (OSW_X),Y
     INY
     LDA buf00      ; get BCD seconds
     AND #cs        ; mask
-    JSR byte2hex   ; convert to hex string
+    JSR bcd2dec    ; convert BCD to decimal string
     
     ; End with <cr>
     LDA #cr
@@ -650,8 +650,8 @@ comp_year_ok
     LDA #0         ; claim call and return to MOS
     RTS
 
-; Helper routine to convert byte to hex string (00-99)
-byte2hex	PHA		\save original value
+; Helper routine to convert BCD to decimal ASCII string (00-99)
+bcd2dec	PHA		\save original value
 	LSR A		\get high nibble
 	LSR A
 	LSR A
