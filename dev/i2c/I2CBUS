@@ -6,71 +6,62 @@
 \ variant Martins code and intend usage  \
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-
 \-------------------------------------------------------------------------------
-\ The marcos below assume the BBC Micro analog port is the I2C bus interface
-\ Assumes System 6522 VIA @ $FE40 and uses PB5=SDA , PB4=SCL
+\ The marcos below assume the AP6 control register is the I2C bus interface
+\ The AP6 is an expansion fitted to the Acorn Electron Plus 1 and includes the 
+\ PCF8583 RTS clock built into it, along with pin headers for additional devices
 
-				\System VIA (6522) Registers
-upiob	EQU	$FE40		\I/O Register B
-upddrb	EQU	$FE42		\Data Direction Register B
- 
-xsdahi 	EQU	$DF		\upddrb AND #xsdahi=b5 reset=data hi
-xsdalo	EQU	$20		\upddrb OR #xsdalo=b5 set=data lo
-getsda	EQU	$20		\upiob AND #getsda to read data
+				\AP6 interface registers
+ap6reg	EQU 	$FCD6		\AP6 control register
+xsdahi	EQU 	&80		\TODO Explain bitmask
+xsdalo	EQU 	&7F		\TODO Explain bitmask
+xsclhi	EQU 	&40		\TODO Explain bitmask
+xscllo	EQU 	&BF		\TODO Explain bitmask
+ap6regc	EQU	$62		\last written value to AP6 control reg
+ap6idle	EQU 	$11		\idle value of AP6 ctrl reg
 
-xsclhi	EQU	$EF		\upddrb AND #xsclhi=b4 reset=clock hi
-xscllo	EQU	$10		\upddrb OR #xscllo=b4 set=clock lo
-getscl	EQU	$10		\upiob AND #getscl to read clock
+upiob	EQU	ap6reg		\alias
+getsda	EQU 	xsdahi		\alias
 
 \-------------------------------------------------------------------------------
 \*** Macro definitions ***
 \-------------------------------------------------------------------------------
-\Allows SCL (clock) to float hi by setting VIA DDRB b4 to 0=input
-\Checks for clock-stretch from slave where SCL is held lo by slave by polling
-\DIOB until b4 becomes clear.
 
 sclhi	MACRO
-	LDA	upddrb		\set SCL to input (0 = float hi/read)
-	AND	#xsclhi		\only clear b4 of DDR
-	STA	upddrb
-cstr@$MC	LDA	upiob		\wait for b4 to transit high
-	AND	#getscl
-	BEQ	cstr@$MC		\clock lo, wait...
-sclx@$MC	NOP			\clock hi, continue
+	LDA 	ap6regc
+	ORA 	#(xsclhi)
+	STA 	ap6regc
+	STA 	ap6reg
 	ENDM
-
+	
 \-------------------------------------------------------------------------------
-\SCL (clock) driven lo by setting VIA DDRB b4 to 1=output and DIOB b4 to 0
+\SCL (clock) driven lo by adjusting the AP6 control register, see AP6 manual
 
 scllo	MACRO
-	LDA	upiob
-	AND	#xsclhi		\only clear b4 of DIO
-	STA	upiob
-	LDA	upddrb
-	ORA	#xscllo		\only set b4 of DDR
-	STA	upddrb
+	LDA 	ap6regc
+	AND 	#(xscllo)
+	STA 	ap6regc
+	STA 	ap6reg
 	ENDM
 
 \-------------------------------------------------------------------------------
-\Allows SDA (data) to float hi by setting VIA DDRB bit 5 (only) to 0=input
+\Allows SDA (data) to float hi by adjusting the AP6 control register, see AP6 manual
 
 sdahi	MACRO
-	LDA	upddrb
-	AND	#xsdahi		\only clear b5 of DDR
-	STA	upddrb
+	LDA	ap6regc
+	ORA	#(xsdahi)
+	STA	ap6regc
+	STA	ap6reg
 	ENDM
 
 \-------------------------------------------------------------------------------
-\SDA (data) driven lo by setting VIA DDRB b5 to 1=output and DIOB b5 to 0
+\SDA (data) driven lo by adjusting the AP6 control register, see AP6 manual
 
 sdalo	MACRO
-	LDA	upiob
-	AND	#xsdahi		\only clear b5 of DIO
-	STA	upiob
-	LDA	upddrb
-	ORA	#xsdalo		\only set b5 of DDR
-	STA	upddrb
+	LDA	ap6regc
+	AND	#(xsdalo)
+	STA	ap6regc
+	STA	ap6reg
 	ENDM
 
 \-------------------------------------------------------------------------------
@@ -117,6 +108,9 @@ i2cstop	MACRO
 \Sets idle state (both hi) first.
 
 i2cstart	MACRO
+	LDA #ap6idle		\idle value for AP6
+	STA ap6reg		\set AP6 reg (write only) to known state
+	STA ap6regc		\maintain a copy of the last written value
 	i2cidle
 	sdalo
 	scllo
