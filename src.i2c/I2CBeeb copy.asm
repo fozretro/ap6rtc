@@ -466,18 +466,14 @@ xosword	LDA	OSW_A		\get unknown OSWORD call
 	BNE	xosw_a2		\not RTC read, try next
 	LDY	#0		\else test OWORD 14 function
 	LDA	(OSW_X),Y		\Type is provided by caller at XY+0
-	CMP	#0		\is it function 0? (Compact *TIME/TIME$)
-	BNE	xosw_a0
-	JMP	OSW$0E0		\handle function 0
-xosw_a0	CMP	#4		\is it our new time$ call?
+	CMP	#4		\is it our new time$ call?
 	BNE	xosw_a1		\not a Type 4, try next type
 	JMP	OSW$0E4		\else jump to our OSWORD &0E Type 4
 xosw_a1	CMP	#1		\Type 1? 
 	BNE	xosw_a2		\no, test next OSWORD call
 	JMP	OSW$0E1		\else jump to our OSWORD &0E Type 1
 				
-xosw_a2	LDA	OSW_A		\get unknown OSWORD call
-	NOP			\further OSWORD tests go here
+xosw_a2	JMP	OSW$0E0		\jump to Type 0 handler (patched ROM approach)
 
 xosx	LDA	#8		\not an RTC call so restore A
 xosxx	RTS			\and return flagging command untaken
@@ -535,8 +531,14 @@ OSW$0E4	JSR	xxi2crtc		\duplicate *NOW$ function
 \------------------------------------------------------------------------------
 \OSWORD call &0E Type 0 - returns an ASCII BCD time and date string in Compact format
 \This is needed for Master Compact *TIME/TIME$. Format: "Day, DD MMM YYYY.HH:MM:SS"
+\This handler also serves as the fallback for unknown OSWORD calls (patched ROM approach)
 
 OSW$0E0:
+    CMP #0         ; is it function 0? (Compact *TIME/TIME$) - A already contains Type
+    BEQ time       ; yes, handle Type 0
+    JMP xosx       ; no, jump to original fallback (not an RTC call)
+    
+time:
     JSR getrtc     ; get RTC time & date to buffer
     LDY #0         ; start at beginning of output buffer
     
@@ -557,10 +559,13 @@ comp_day_loop	LDA days,X	; get a day chr
 	BNE comp_day_loop	; and loop for next day chr
 comp_day_end
     
-    ; Add "," after day
+    ; Add ", " after day
     LDA #','
     STA (OSW_X),Y
     INY
+    ; LDA #' '
+    ; STA (OSW_X),Y
+    ; INY
     
     ; Date (DD)
     LDA buf04      ; get BCD date
@@ -642,8 +647,13 @@ comp_year_ok
     ; End with <cr>
     LDA #cr
     STA (OSW_X),Y
-    INY
     
+	LDA &F0
+	STA &70
+	LDA &F1
+	STA &71	
+	STY &72
+
     LDA #0         ; claim call and return to MOS
     RTS
 

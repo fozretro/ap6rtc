@@ -557,11 +557,8 @@ comp_day_loop	LDA days,X	; get a day chr
 	BNE comp_day_loop	; and loop for next day chr
 comp_day_end
     
-    ; Add ", " after day
+    ; Add "," after day
     LDA #','
-    STA (OSW_X),Y
-    INY
-    LDA #' '
     STA (OSW_X),Y
     INY
     
