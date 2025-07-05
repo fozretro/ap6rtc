@@ -3,8 +3,13 @@ I2CBeeb for Acorn Electron Plus 1 and AP6
 
 This project got started as a means to explore and implement RTC commands and others that make use of the RTC (a `PCF8583`) within the Electron **AP6** by Dave Hitchens. StarDot forum discussion [here](https://www.stardot.org.uk/forums/viewtopic.php?t=28720). 
 
-Status - Beta
--------------
+Status - v3.2 Release
+---------------------
+
+This adds support for type 0 OSWORD 14 handling to ensure `*TIME` and `PRINT $TIME` on the BBC Master Compact work - when using the I2CB ROM. This is based on the patch shared [here](https://www.stardot.org.uk/forums/viewtopic.php?p=371328#p371328). I have not tested as yet on the Electron or Electon AP6 targets, but plan to, in theory they have not changed since v3.1 behavior as this was a purely additional change... An ssd with the roms in is under `\dist` and the roms under `\dist\i2c`. Also of note is that `TIME="bla..."` is not supported yet - more fun later (remind to check `\src.softrc`)
+
+Status - AP6 Target Beta
+------------------------
 
 Current status is this variant of the **I2CBeeb ROM by MartinB** is working with a reasonble level of testing with an AP6. However it is currently labelled as **Beta**, so please expect some bugs and report on the thread. It can be downloaded from here `/dist/i2c/I2C32EAP6.rom`. See known issues below. 
 
@@ -170,7 +175,7 @@ Martin, and indeed myself, really value lots of comments. So if you want to know
 How do I increment the ROM version?
 -----------------------------------
 
-I maintained the **v3.1** version from Martin, despite adding AP6 support. This was because the existing Beeb and Electron (AP5) versions really have not changed, nor has any core new functionality been added for those users. 
+Note for the AP6 release I maintained the **v3.1** version from Martin, despite adding AP6 support. This was because the existing Beeb and Electron (AP5) versions really have not changed, nor has any core new functionality been added for those users. 
 
 If in the future a new version is needed the version is stored firstly in `/src.i2c/inc/target/X,asm` this will change the version in the compiled ROMs. However, please be aware, the filenames and other references to 3.1 are still hardcoded in a few places, especially for the original builds or if you are using the shell scripts in `/bin` for legacy versions.
 

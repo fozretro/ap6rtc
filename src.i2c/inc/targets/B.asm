@@ -14,5 +14,5 @@ version	MACRO
           ASC	'3.2B'		\version string with CR and..	
           ENDM
 versionl  MACRO
-          ASC	'I2C 3.2B 121118#'
+          ASC	'I2C 3.2B 050625' \ DDMMYY
           ENDM          
