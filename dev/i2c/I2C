@@ -533,13 +533,154 @@ OSW$0E4	JSR	xxi2crtc		\duplicate *NOW$ function
 	RTS			\simple RTS, registers not preserved
 
 \------------------------------------------------------------------------------
-\OSWORD call &0E Type 0 - returns an ASCII BCD time and date string as per
-\the new *NOW$ function of this rom. This is needed for Master Compact *TIME/TIME$.
+\OSWORD call &0E Type 0 - returns an ASCII BCD time and date string in Compact format
+\This is needed for Master Compact *TIME/TIME$. Format: "Day, DD MMM YYYY.HH:MM:SS"
 
 OSW$0E0:
-    JSR xxi2crtc   ; create the time string at (OSW_X),Y
+    JSR getrtc     ; get RTC time & date to buffer
+    LDY #0         ; start at beginning of output buffer
+    
+    ; Day of week (e.g., "Fri")
+    LDA buf03      ; get 1-7 weekday number
+    AND #cwd       ; mask
+    SEC            ; subtract 1 to index days as 0..6
+    SBC #1
+    ASL            ; multiply by 4 (days are 3 chr + <cr>)
+    ASL
+    TAX            ; index days array with X
+comp_day_loop	LDA days,X	; get a day chr
+	CMP #cr		; <cr> and end of day?
+	BEQ comp_day_end	; yes, day string finished
+	STA (OSW_X),Y	; store day chr in buffer
+	INY
+	INX		; incr day chr read pointer
+	BNE comp_day_loop	; and loop for next day chr
+comp_day_end
+    
+    ; Add ", " after day
+    LDA #','
+    STA (OSW_X),Y
+    INY
+    LDA #' '
+    STA (OSW_X),Y
+    INY
+    
+    ; Date (DD)
+    LDA buf04      ; get BCD date
+    AND #cdd       ; mask
+    JSR bcd2dec    ; convert BCD to decimal string
+    LDA #' '       ; space after date
+    STA (OSW_X),Y
+    INY
+    
+    ; Month name (MMM)
+    LDA buf05      ; get BCD month
+    AND #cmm       ; mask
+    CMP #$10       ; is it >= 10?
+    BCC comp_month_adj	; no, skip adjustment
+    SBC #$06       ; adjust for BCD
+comp_month_adj	SEC		; subtract 1 to index months as 0..11
+	SBC #1
+	ASL		; multiply by 4 (months are 3 chr + <cr>)
+	ASL
+	TAX		; index months array with X
+comp_month_loop	LDA months,X	; get a month chr
+	CMP #cr		; <cr> and end of month?
+	BEQ comp_month_end	; yes, month string finished
+	STA (OSW_X),Y	; store month chr in buffer
+	INY
+	INX		; incr month chr read pointer
+	BNE comp_month_loop	; and loop for next month chr
+comp_month_end
+    
+    ; Space after month
+    LDA #' '
+    STA (OSW_X),Y
+    INY
+    
+    ; Year (YYYY) with century detection
+    LDA buf06      ; get year
+    PHA            ; save for later
+    CMP #$80       ; is it >= 80? (20th century)
+    BCC comp_century21	; no, assume 21st century
+    LDA #'1'       ; 19xx
+    STA (OSW_X),Y
+    INY
+    LDA #'9'
+    STA (OSW_X),Y
+    INY
+    BNE comp_year_ok
+comp_century21	LDA #'2'	; 20xx
+	STA (OSW_X),Y
+	INY
+	LDA #'0'
+	STA (OSW_X),Y
+	INY
+comp_year_ok
+    PLA            ; restore year
+    JSR bcd2dec    ; convert BCD to decimal string
+    
+    ; Add "." after year
+    LDA #'.'
+    STA (OSW_X),Y
+    INY
+    
+    ; Time (HH:MM:SS)
+    LDA buf02      ; get BCD hours
+    AND #ch        ; mask
+    JSR bcd2dec    ; convert BCD to decimal string
+    LDA #':'       ; colon after hours
+    STA (OSW_X),Y
+    INY
+    LDA buf01      ; get BCD minutes
+    AND #cm        ; mask
+    JSR bcd2dec    ; convert BCD to decimal string
+    LDA #':'       ; colon after minutes
+    STA (OSW_X),Y
+    INY
+    LDA buf00      ; get BCD seconds
+    AND #cs        ; mask
+    JSR bcd2dec    ; convert BCD to decimal string
+    
+    ; End with <cr>
+    LDA #cr
+    STA (OSW_X),Y
+    INY
+    
     LDA #0         ; claim call and return to MOS
     RTS
+
+; Helper routine to convert BCD to decimal ASCII string (00-99)
+bcd2dec	PHA		\save original value
+	LSR A		\get high nibble
+	LSR A
+	LSR A
+	LSR A
+	CLC
+	ADC #$30	\convert to ASCII
+	STA (OSW_X),Y	\store tens digit
+	INY
+	PLA		\restore original value
+	AND #$0F	\get low nibble
+	CLC
+	ADC #$30	\convert to ASCII
+	STA (OSW_X),Y	\store units digit
+	INY
+	RTS
+
+; Month names array (3 chars + <cr> each)
+months	STR	"Jan"
+	STR	"Feb"
+	STR	"Mar"
+	STR	"Apr"
+	STR	"May"
+	STR	"Jun"
+	STR	"Jul"
+	STR	"Aug"
+	STR	"Sep"
+	STR	"Oct"
+	STR	"Nov"
+	STR	"Dec"
 
 \------------------------------------------------------------------------------
 \Command to toggle Time-on-Break (ToB) function. Uses storage in the RTC
