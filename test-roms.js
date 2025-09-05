@@ -104,7 +104,9 @@ async function testROM(romTest, browser) {
       };
     });
     
-    console.log(`🖥️  Emulator status:`, emulatorLoaded);
+    if (VERBOSE_MODE) {
+      console.log(`🖥️  Emulator status:`, emulatorLoaded);
+    }
     
     // Check for any error messages on the page
     const errorElements = await page.$$eval('*', elements => {
@@ -327,41 +329,14 @@ async function runAllTests() {
     await browser.close();
   }
   
-  // Print summary
-  console.log('\n' + '=' .repeat(60));
-  console.log('📊 TEST SUMMARY');
-  console.log('=' .repeat(60));
-  
-  results.forEach(result => {
-    const status = result.success ? '✅ PASS' : '❌ FAIL';
-    console.log(`${status} ${result.name}`);
-    if (result.loadTime) {
-      console.log(`   ⏱️  Load time: ${result.loadTime}ms`);
-    }
-    if (result.error) {
-      console.log(`   ❌ Error: ${result.error}`);
-    }
-    if (result.networkRequests) {
-      console.log(`   🌐 Network requests: ${result.networkRequests}`);
-    }
-    if (result.emulatorLoaded) {
-      console.log(`   🖥️  Canvas: ${result.emulatorLoaded.hasCanvas ? 'Yes' : 'No'} (${result.emulatorLoaded.canvasSize?.width}x${result.emulatorLoaded.canvasSize?.height})`);
-      console.log(`   🔧 Electroniq: ${result.emulatorLoaded.hasElectroniq ? 'Yes' : 'No'}`);
-    }
-    if (result.errorElements > 0) {
-      console.log(`   ⚠️  Page errors: ${result.errorElements}`);
-    }
-  });
-  
+  // Simple results summary
   const passCount = results.filter(r => r.success).length;
   const totalCount = results.length;
   
-  console.log(`\n🎯 Results: ${passCount}/${totalCount} tests passed`);
-  
   if (passCount === totalCount) {
-    console.log('🎉 All tests passed!');
+    console.log(`\n🎉 All ${totalCount} tests passed!`);
   } else {
-    console.log('⚠️  Some tests failed - check the logs above');
+    console.log(`\n⚠️  ${passCount}/${totalCount} tests passed`);
   }
 }
 
