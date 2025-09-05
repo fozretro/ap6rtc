@@ -205,24 +205,26 @@ async function testROM(romTest, browser) {
       }, {romTest, verboseMode: VERBOSE_MODE});
       
       if (screenContent) {
-        console.log(`📺 Screen analysis:`);
-        console.log(`   🖼️  Canvas: ${screenContent.canvasSize.width}x${screenContent.canvasSize.height}`);
-        console.log(`   🎨 Pixels: ${screenContent.nonBlackPixels}/${screenContent.totalPixels} non-black`);
-        console.log(`   📝 Text: ${screenContent.textContent.substring(0, 100)}${screenContent.textContent.length > 100 ? '...' : ''}`);
-        console.log(`   👁️  Visible elements: ${screenContent.visibleElements}`);
-        console.log(`   📄 Page title: ${screenContent.pageTitle}`);
-        console.log(`   📄 Body content: ${screenContent.bodyContent}`);
-        
-        // Check for expected text
-        if (screenContent.expectedText) {
-          console.log(`   🔍 Expected text "${screenContent.expectedText}": ${screenContent.hasExpectedText ? '✅ FOUND' : '❌ NOT FOUND'}`);
-        }
-        if (screenContent.expectedElements) {
-          console.log(`   🔍 Expected elements: ${screenContent.hasExpectedElements ? '✅ ALL FOUND' : '❌ MISSING'}`);
-          screenContent.expectedElements.forEach(element => {
-            const found = screenContent.textContent.includes(element);
-            console.log(`      "${element}": ${found ? '✅' : '❌'}`);
-          });
+        if (VERBOSE_MODE) {
+          console.log(`📺 Screen analysis:`);
+          console.log(`   🖼️  Canvas: ${screenContent.canvasSize.width}x${screenContent.canvasSize.height}`);
+          console.log(`   🎨 Pixels: ${screenContent.nonBlackPixels}/${screenContent.totalPixels} non-black`);
+          console.log(`   📝 Text: ${screenContent.textContent.substring(0, 100)}${screenContent.textContent.length > 100 ? '...' : ''}`);
+          console.log(`   👁️  Visible elements: ${screenContent.visibleElements}`);
+          console.log(`   📄 Page title: ${screenContent.pageTitle}`);
+          console.log(`   📄 Body content: ${screenContent.bodyContent}`);
+          
+          // Check for expected text
+          if (screenContent.expectedText) {
+            console.log(`   🔍 Expected text "${screenContent.expectedText}": ${screenContent.hasExpectedText ? '✅ FOUND' : '❌ NOT FOUND'}`);
+          }
+          if (screenContent.expectedElements) {
+            console.log(`   🔍 Expected elements: ${screenContent.hasExpectedElements ? '✅ ALL FOUND' : '❌ MISSING'}`);
+            screenContent.expectedElements.forEach(element => {
+              const found = screenContent.textContent.includes(element);
+              console.log(`      "${element}": ${found ? '✅' : '❌'}`);
+            });
+          }
         }
         
         // Take a screenshot of the canvas for visual inspection
@@ -232,15 +234,21 @@ async function testROM(romTest, browser) {
             const screenshot = await canvas.screenshot();
             const filename = `screenshot_${romTest.name.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
             require('fs').writeFileSync(filename, screenshot);
-            console.log(`   📸 Screenshot saved: ${filename}`);
+            if (VERBOSE_MODE) {
+              console.log(`   📸 Screenshot saved: ${filename}`);
+            }
           }
         } catch (screenshotError) {
-          console.log(`   ⚠️  Could not save screenshot: ${screenshotError.message}`);
+          if (VERBOSE_MODE) {
+            console.log(`   ⚠️  Could not save screenshot: ${screenshotError.message}`);
+          }
         }
       }
     } catch (error) {
-      console.log(`⚠️  Could not analyze screen content: ${error.message}`);
-      console.log(`⚠️  Error details:`, error);
+      if (VERBOSE_MODE) {
+        console.log(`⚠️  Could not analyze screen content: ${error.message}`);
+        console.log(`⚠️  Error details:`, error);
+      }
     }
     
     // Test result - check for expected text on screen (if any expected text)
