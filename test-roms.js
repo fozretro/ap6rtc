@@ -27,10 +27,10 @@ async function testROM(romTest, browser) {
     page.on('console', msg => {
       const text = msg.text();
       
-      // In non-verbose mode, only show errors and warnings
+      // In non-verbose mode, only show errors
       if (!VERBOSE_MODE) {
-        if (text.includes('INFO:') || text.includes('DEBUG:')) {
-          return; // Skip all INFO and DEBUG messages in non-verbose mode
+        if (text.includes('INFO:') || text.includes('DEBUG:') || text.includes('WARNING:')) {
+          return; // Skip all INFO, DEBUG, and WARNING messages in non-verbose mode
         }
       }
       
