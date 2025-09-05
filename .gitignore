@@ -8,3 +8,6 @@ I2CROM_join
 
 # Node.js dependencies
 node_modules/
+
+# Test screenshots
+screenshots/

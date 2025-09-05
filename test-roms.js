@@ -234,10 +234,21 @@ async function testROM(romTest, browser) {
           const canvas = await page.$('canvas');
           if (canvas) {
             const screenshot = await canvas.screenshot();
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Create screenshots directory if it doesn't exist
+            const screenshotsDir = 'screenshots';
+            if (!fs.existsSync(screenshotsDir)) {
+              fs.mkdirSync(screenshotsDir);
+            }
+            
             const filename = `screenshot_${romTest.name.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
-            require('fs').writeFileSync(filename, screenshot);
+            const filepath = path.join(screenshotsDir, filename);
+            fs.writeFileSync(filepath, screenshot);
+            
             if (VERBOSE_MODE) {
-              console.log(`   📸 Screenshot saved: ${filename}`);
+              console.log(`   📸 Screenshot saved: ${filepath}`);
             }
           }
         } catch (screenshotError) {
