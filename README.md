@@ -213,10 +213,10 @@ Successfully implemented SMJoin compatibility for the I2C ROM, enabling it to be
 - **Service entry adjustment**: Automatically adjusts addresses for relocation from $8000 to $8100
 
 **Build Tools:**
-- `bin/buildi2c-eap6-join.sh` - Main build script with `--skip-compile` and `--no-cleanup` flags
-- `bin/smjoin-reloc-data.js` - Node.js tool for relocation data generation
-- `bin/buildap6-rom.sh` - Automated SMJoin process launcher
-- `dev/smjoin-16kb/` - Complete SMJoin directory with all ROMs and COMB file
+- `bin/buildi2c-eap6-join.sh` - Builds a version of the ROM that can be relocated
+- `bin/smjoin-reloc-data.js` - Node.js tool for relocation data generation (called by above)
+- `bin/buildap6-rom.sh` - Runs the BBC Basic SMJoin tool to join all 5 ROMs (must use b-em in coprocessor mode)
+- `dev/smjoin-16kb/` - Directory used by above script and by b-em - COMB file is the final combined ROM
 
 **Documentation:**
 - `SMJOIN.md` - Comprehensive documentation of ROM relocation and chaining mechanisms
