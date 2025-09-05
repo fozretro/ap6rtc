@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/fozretro/ap6rtc#readme",
   "dependencies": {
-    "playwright": "^1.55.0"
+    "playwright": "^1.55.0",
+    "tesseract.js": "^6.0.1"
   }
 }

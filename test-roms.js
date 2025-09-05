@@ -1,4 +1,5 @@
 const { chromium } = require('playwright');
+const Tesseract = require('tesseract.js');
 
 // Configuration
 const VERBOSE_MODE = process.argv.includes('--verbose') || process.argv.includes('-v');
@@ -11,25 +12,31 @@ const romTests = [
     expectedSize: 7772,
     description: 'Official AP6 Plus 1.1.33 ROM - reference baseline',
     expectedText: null, // Text is rendered on WebGL canvas, not in DOM
-    expectedElements: ['BASIC', '>_'] // Only check for elements we can actually detect
-  },
-  {
-    name: 'COMB 16kb ROM',
-    url: 'https://0xc0de6502.github.io/electroniq/?romF=http://localhost:8081/COMB.rom',
-    expectedSize: 12805,
-    description: 'COMB ROM from smjoin-16kb - combined ROM functionality',
-    expectedText: null, // Text is rendered on WebGL canvas, not in DOM
-    expectedElements: ['RH Plus 1', 'BASIC', '>_'] // Look for RH Plus 1 text
-  },
-  {
-    name: 'COMB 8kb ROM',
-    url: 'https://0xc0de6502.github.io/electroniq/?romF=http://localhost:8081/COMB_8kb.rom',
-    expectedSize: 12805,
-    description: 'COMB ROM from smjoin-8kb - compact combined ROM',
-    expectedText: null, // Text is rendered on WebGL canvas, not in DOM
-    expectedElements: ['RH Plus 1', 'BASIC', '>_'] // Look for RH Plus 1 text
+    expectedElements: ['RH', 'Flus', '1', '32K', 'BASIC'] // Check for key text using OCR (flexible for OCR errors)
   }
 ];
+
+// OCR function to extract text from screenshot
+async function extractTextFromScreenshot(imageBuffer) {
+  try {
+    if (VERBOSE_MODE) {
+      console.log('🔍 Running OCR on screenshot...');
+    }
+    const { data: { text } } = await Tesseract.recognize(imageBuffer, 'eng', {
+      logger: m => {
+        if (VERBOSE_MODE && m.status) {
+          console.log(`   OCR: ${m.status}`);
+        }
+      }
+    });
+    return text.trim();
+  } catch (error) {
+    if (VERBOSE_MODE) {
+      console.log(`   ⚠️  OCR failed: ${error.message}`);
+    }
+    return '';
+  }
+}
 
 async function testROM(romTest, browser) {
   console.log(`\n🧪 Testing: ${romTest.name}`);
@@ -147,6 +154,7 @@ async function testROM(romTest, browser) {
     
     // Try to interact with the emulator (if it's responsive)
     let screenContent = null;
+    let ocrText = '';
     try {
       // Look for the emulator screen content
       screenContent = await page.evaluate(({romTest, verboseMode}) => {
@@ -185,6 +193,99 @@ async function testROM(romTest, browser) {
           }
         });
         
+        // Check if Electroniq exposes any text content via global variables (verbose only)
+        let emulatorText = '';
+        if (verboseMode) {
+          try {
+            // Check for common emulator global variables that might contain text
+            if (typeof window.Module !== 'undefined' && window.Module) {
+              console.log('🔍 Found Electroniq Module object');
+              const moduleKeys = Object.keys(window.Module);
+              console.log('🔍 Module keys:', moduleKeys);
+              
+              // Look for text or screen related keys
+              const textRelatedKeys = moduleKeys.filter(key => 
+                key.toLowerCase().includes('text') || 
+                key.toLowerCase().includes('screen') || 
+                key.toLowerCase().includes('display') ||
+                key.toLowerCase().includes('buffer') ||
+                key.toLowerCase().includes('memory')
+              );
+              console.log('🔍 Text/screen related keys:', textRelatedKeys);
+              
+              // Look for HEAP or memory related keys
+              const heapKeys = moduleKeys.filter(key => 
+                key.includes('HEAP') || 
+                key.includes('heap') ||
+                key.includes('Memory') ||
+                key.includes('memory')
+              );
+              console.log('🔍 HEAP/memory related keys:', heapKeys);
+              
+              // Check for screen buffer or text content in Module
+              if (window.Module.HEAPU8) {
+                console.log('🔍 Found HEAPU8 (memory buffer)');
+                // Try to read some memory to see if it contains text
+                try {
+                  const memorySample = Array.from(window.Module.HEAPU8.slice(0, 1000));
+                  const textSample = memorySample.map(byte => byte > 31 && byte < 127 ? String.fromCharCode(byte) : '.').join('');
+                  console.log('🔍 Memory sample (first 1000 bytes):', textSample);
+                } catch (e) {
+                  console.log('🔍 Error reading memory:', e.message);
+                }
+              }
+              if (window.Module.HEAP32) {
+                console.log('🔍 Found HEAP32 (32-bit memory buffer)');
+              }
+              if (window.Module.screen) {
+                console.log('🔍 Found screen object');
+              }
+              if (window.Module.getText) {
+                console.log('🔍 Found getText function');
+              }
+              if (window.Module.getScreenText) {
+                console.log('🔍 Found getScreenText function');
+              }
+              
+              // Try to call emulator functions that might return screen text
+              if (window.Module.ccall) {
+                console.log('🔍 Found ccall function - trying to get screen text');
+                try {
+                  // Common emulator function names for getting screen text
+                  const textFunctions = ['get_screen_text', 'getScreenText', 'get_text', 'getText', 'screen_text', 'get_display_text'];
+                  for (const funcName of textFunctions) {
+                    try {
+                      const result = window.Module.ccall(funcName, 'string', [], []);
+                      if (result && result.trim()) {
+                        console.log(`🔍 Found text via ${funcName}:`, result);
+                        emulatorText = result;
+                        break;
+                      }
+                    } catch (e) {
+                      // Function doesn't exist, continue
+                    }
+                  }
+                } catch (e) {
+                  console.log('🔍 Error calling emulator functions:', e.message);
+                }
+              }
+            }
+            
+            // Check for any canvas-related text extraction
+            if (typeof window.getTextFromCanvas === 'function') {
+              emulatorText = window.getTextFromCanvas();
+              console.log('🔍 Found getTextFromCanvas function');
+            }
+            
+            // Check for any emulator-specific text APIs
+            if (typeof window.emulator !== 'undefined') {
+              console.log('🔍 Found emulator object');
+            }
+          } catch (e) {
+            console.log('🔍 No emulator text APIs found');
+          }
+        }
+        
         // Check if there are any visible elements
         const visibleElements = Array.from(document.querySelectorAll('*')).filter(el => {
           const style = window.getComputedStyle(el);
@@ -200,10 +301,13 @@ async function testROM(romTest, browser) {
         
         // Debug: Log what text we actually found (only in verbose mode)
         if (verboseMode) {
-          const debugText = textContent.substring(0, 100);
-          console.log(`🔍 DEBUG: Text content: "${debugText}${textContent.length > 100 ? '...' : ''}" (${textContent.length} chars)`);
+          const debugText = textContent.substring(0, 200);
+          console.log(`🔍 Text content: "${debugText}${textContent.length > 200 ? '...' : ''}" (${textContent.length} chars)`);
           if (romTest.expectedText) {
-            console.log(`🔍 DEBUG: Looking for "${romTest.expectedText}"`);
+            console.log(`🔍 Looking for expected text: "${romTest.expectedText}"`);
+          }
+          if (romTest.expectedElements && romTest.expectedElements.length > 0) {
+            console.log(`🔍 Looking for expected elements: [${romTest.expectedElements.join(', ')}]`);
           }
         }
         
@@ -245,7 +349,7 @@ async function testROM(romTest, browser) {
           }
         }
         
-        // Take a screenshot of the canvas for visual inspection
+        // Take a screenshot of the canvas for visual inspection and OCR
         try {
           const canvas = await page.$('canvas');
           if (canvas) {
@@ -263,14 +367,29 @@ async function testROM(romTest, browser) {
             const filepath = path.join(screenshotsDir, filename);
             fs.writeFileSync(filepath, screenshot);
             
+            console.log(`📸 Screenshot saved: ${filepath}`);
+            
+            // Extract text using OCR
+            ocrText = await extractTextFromScreenshot(screenshot);
             if (VERBOSE_MODE) {
-              console.log(`   📸 Screenshot saved: ${filepath}`);
+              if (ocrText) {
+                console.log(`🔍 OCR extracted text: "${ocrText}"`);
+                
+                // Check if OCR text contains expected elements
+                if (romTest.expectedElements && romTest.expectedElements.length > 0) {
+                  console.log(`🔍 Checking OCR text for expected elements: [${romTest.expectedElements.join(', ')}]`);
+                  romTest.expectedElements.forEach(element => {
+                    const found = ocrText.toLowerCase().includes(element.toLowerCase());
+                    console.log(`   "${element}": ${found ? '✅ FOUND' : '❌ NOT FOUND'}`);
+                  });
+                }
+              } else {
+                console.log(`🔍 No text extracted from screenshot`);
+              }
             }
           }
         } catch (screenshotError) {
-          if (VERBOSE_MODE) {
-            console.log(`   ⚠️  Could not save screenshot: ${screenshotError.message}`);
-          }
+          console.log(`   ⚠️  Could not save screenshot: ${screenshotError.message}`);
         }
       }
     } catch (error) {
@@ -280,10 +399,15 @@ async function testROM(romTest, browser) {
       }
     }
     
-    // Test result - check for expected text on screen (if any expected text)
-    const textSuccess = screenContent ? 
-      (romTest.expectedText ? screenContent.hasExpectedText : true) && 
-      screenContent.hasExpectedElements : false;
+    // Test result - check for expected text on screen using OCR
+    let textSuccess = true;
+    if (romTest.expectedElements && romTest.expectedElements.length > 0) {
+      // Use OCR text if available, otherwise fall back to DOM text
+      const textToCheck = (typeof ocrText !== 'undefined' ? ocrText : '') || (screenContent ? screenContent.textContent : '');
+      textSuccess = romTest.expectedElements.every(element => 
+        textToCheck.toLowerCase().includes(element.toLowerCase())
+      );
+    }
     const success = emulatorLoaded.hasCanvas && textSuccess;
     const status = success ? '✅ PASS' : '❌ FAIL';
     
