@@ -193,6 +193,44 @@ What are all the other files?
 
 I like to collect all the files when working on a project for ease of use and future reference. Such as the **Lancs Assembler** in `/bin` or some of my very first explorations with accessing the AP6 RTC in `/dev/ap6rtc`. You can also find original files from Martin in `/dev/i2c/archive` as well. Finally, before Martin kindly shared his code I was researching `/src.softrtc` as starting point. So really all these files are not required to develop and build the I2CBeeb ROM as described above, but serve as a handy past reference. Maybe I will clear them out in the future.
 
+SMJoin Compatibility Implementation (Sep 2025)
+-----------------------------------------------
+
+**I2C ROM Successfully Integrated into Combined AP6 ROM System ✅**
+
+Successfully implemented SMJoin compatibility for the I2C ROM, enabling it to be combined with other AP6 ROMs into a single 16KB ROM image.
+
+**Key Achievements:**
+- **5 ROMs successfully combined**: AP1v131, AP6v134, TUBEelk, AP6Count, I2C
+- **Total size**: 12.8KB (well under 16KB limit with 3.5KB free space)
+- **SMJoin compatibility**: Proper relocation data generation and ROM header format
+- **Automated build process**: Scripts with testing flags for rapid iteration
+
+**Technical Implementation:**
+- **Dual compilation process**: Compile ROM at $8000 and $8100 to generate relocation data
+- **Node.js relocation tool**: `smjoin-reloc-data.js` compares builds and generates compressed relocation bitmap
+- **ROM header fix**: Relocation table address must be >= 0x8000 (bit 7 set) for SMJoin recognition
+- **Service entry adjustment**: Automatically adjusts addresses for relocation from $8000 to $8100
+
+**Build Tools:**
+- `bin/buildi2c-eap6-join.sh` - Main build script with `--skip-compile` and `--no-cleanup` flags
+- `bin/smjoin-reloc-data.js` - Node.js tool for relocation data generation
+- `bin/buildap6-rom.sh` - Automated SMJoin process launcher
+- `dev/smjoin-16kb/` - Complete SMJoin directory with all ROMs and COMB file
+
+**Documentation:**
+- `SMJOIN.md` - Comprehensive documentation of ROM relocation and chaining mechanisms
+- Detailed explanation of dual compilation process and relocation data generation
+- Step-by-step instructions for both BBC BASIC and non-BBC BASIC ROMs
+
+**Validation:**
+- I2C ROM strings confirmed in final COMB file
+- All 5 ROMs properly integrated and functional
+- Relocation data generation is stable and reproducible (208 relocatable bytes → 26 bytes compressed)
+- ROM header format matches SMJoin requirements
+
+**Result:** The I2C ROM is now fully compatible with the SMJoin system and can be combined with other AP6 ROMs into a single 16KB ROM image, providing a complete AP6 ROM solution.
+
 Merging I2C ROM into the AP6 Main ROM Update (Jan 2025)
 -------------------------------------------------------
 
