@@ -5,3 +5,6 @@
 I2CROM_8000
 I2CROM_8100
 I2CROM_join
+
+# Node.js dependencies
+node_modules/
