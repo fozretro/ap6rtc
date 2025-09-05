@@ -19,7 +19,7 @@ const romTests = [
     expectedSize: 12805,
     description: 'COMB ROM from smjoin-16kb - combined ROM functionality',
     expectedText: null, // Text is rendered on WebGL canvas, not in DOM
-    expectedElements: ['BASIC', '>_'] // Only check for elements we can actually detect
+    expectedElements: ['RH Plus 1', 'BASIC', '>_'] // Look for RH Plus 1 text
   },
   {
     name: 'COMB 8kb ROM',
@@ -27,7 +27,7 @@ const romTests = [
     expectedSize: 12805,
     description: 'COMB ROM from smjoin-8kb - compact combined ROM',
     expectedText: null, // Text is rendered on WebGL canvas, not in DOM
-    expectedElements: ['BASIC', '>_'] // Only check for elements we can actually detect
+    expectedElements: ['RH Plus 1', 'BASIC', '>_'] // Look for RH Plus 1 text
   }
 ];
 
