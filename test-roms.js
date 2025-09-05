@@ -1,5 +1,8 @@
 const { chromium } = require('playwright');
 
+// Configuration
+const VERBOSE_MODE = process.argv.includes('--verbose') || process.argv.includes('-v');
+
 // ROM test configurations
 const romTests = [
   {
@@ -24,7 +27,14 @@ async function testROM(romTest, browser) {
     page.on('console', msg => {
       const text = msg.text();
       
-      // Filter out verbose emulator initialization messages
+      // In non-verbose mode, only show errors and warnings
+      if (!VERBOSE_MODE) {
+        if (text.includes('INFO:') || text.includes('DEBUG:')) {
+          return; // Skip all INFO and DEBUG messages in non-verbose mode
+        }
+      }
+      
+      // Filter out verbose emulator initialization messages even in verbose mode
       if (text.includes('INFO: Initializing raylib') || 
           text.includes('INFO: Platform backend') ||
           text.includes('INFO: Supported raylib modules') ||
@@ -105,48 +115,43 @@ async function testROM(romTest, browser) {
     });
     
     if (errorElements.length > 0) {
-      console.log(`⚠️  Page errors found: ${errorElements.length} errors`);
-      errorElements.forEach((error, index) => {
-        const truncated = error.length > 200 ? error.substring(0, 200) + '...' : error;
-        const length = error.length > 200 ? ` (${error.length} chars)` : '';
-        console.log(`   ${index + 1}. ${truncated}${length}`);
-      });
+      if (VERBOSE_MODE) {
+        console.log(`⚠️  Page errors found: ${errorElements.length} errors`);
+        errorElements.forEach((error, index) => {
+          const truncated = error.length > 200 ? error.substring(0, 200) + '...' : error;
+          const length = error.length > 200 ? ` (${error.length} chars)` : '';
+          console.log(`   ${index + 1}. ${truncated}${length}`);
+        });
+      } else {
+        console.log(`⚠️  Page errors: ${errorElements.length} (use --verbose to see details)`);
+      }
     }
     
     // Try to interact with the emulator (if it's responsive)
     let screenContent = null;
     try {
       // Look for the emulator screen content
-      screenContent = await page.evaluate((romTest) => {
-        console.log('🔍 DEBUG: Starting screen content analysis...');
+      screenContent = await page.evaluate(({romTest, verboseMode}) => {
         const canvas = document.querySelector('canvas');
-        console.log('🔍 DEBUG: Canvas found:', !!canvas);
         if (!canvas) {
-          console.log('🔍 DEBUG: No canvas found, returning null');
           return null;
         }
         
         // Try to get some basic info about the canvas
         let ctx = canvas.getContext('2d');
-        console.log('🔍 DEBUG: 2D context found:', !!ctx);
         
         // If no 2D context, try WebGL context
         if (!ctx) {
           ctx = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-          console.log('🔍 DEBUG: WebGL context found:', !!ctx);
         }
         
         if (!ctx) {
-          console.log('🔍 DEBUG: No canvas context available, returning null');
           return null;
         }
         
         // For WebGL canvas, we can't easily read pixels, so we'll use a simpler approach
-        console.log('🔍 DEBUG: Canvas dimensions:', canvas.width, 'x', canvas.height);
-        
         // Basic content detection - if canvas has reasonable dimensions, assume it has content
         const hasContent = canvas.width > 100 && canvas.height > 100;
-        console.log('🔍 DEBUG: Canvas has content (based on dimensions):', hasContent);
         
         // For now, we'll use a simple approach - if canvas exists and has reasonable size, assume content
         const nonBlackPixels = hasContent ? 1000 : 0; // Simulate some content
@@ -175,11 +180,13 @@ async function testROM(romTest, browser) {
           romTest.expectedElements.every(element => 
             textContent.toLowerCase().includes(element.toLowerCase())) : true;
         
-        // Debug: Log what text we actually found (concise)
-        const debugText = textContent.substring(0, 100);
-        console.log(`🔍 DEBUG: Text content: "${debugText}${textContent.length > 100 ? '...' : ''}" (${textContent.length} chars)`);
-        if (romTest.expectedText) {
-          console.log(`🔍 DEBUG: Looking for "${romTest.expectedText}"`);
+        // Debug: Log what text we actually found (only in verbose mode)
+        if (verboseMode) {
+          const debugText = textContent.substring(0, 100);
+          console.log(`🔍 DEBUG: Text content: "${debugText}${textContent.length > 100 ? '...' : ''}" (${textContent.length} chars)`);
+          if (romTest.expectedText) {
+            console.log(`🔍 DEBUG: Looking for "${romTest.expectedText}"`);
+          }
         }
         
         return {
@@ -195,7 +202,7 @@ async function testROM(romTest, browser) {
           expectedText: romTest.expectedText,
           expectedElements: romTest.expectedElements
         };
-      }, romTest);
+      }, {romTest, verboseMode: VERBOSE_MODE});
       
       if (screenContent) {
         console.log(`📺 Screen analysis:`);
@@ -286,6 +293,11 @@ async function testROM(romTest, browser) {
 
 async function runAllTests() {
   console.log('🚀 Starting automated ROM testing with Playwright');
+  if (VERBOSE_MODE) {
+    console.log('📢 Verbose mode enabled (use --verbose or -v)');
+  } else {
+    console.log('💡 Use --verbose or -v for detailed logging');
+  }
   console.log('=' .repeat(60));
   
   const browser = await chromium.launch({ 
