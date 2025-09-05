@@ -20,12 +20,31 @@ async function testROM(romTest, browser) {
   const page = await browser.newPage();
   
   try {
-    // Set up console logging
+    // Set up console logging (filtered for important messages only)
     page.on('console', msg => {
+      const text = msg.text();
+      
+      // Filter out verbose emulator initialization messages
+      if (text.includes('INFO: Initializing raylib') || 
+          text.includes('INFO: Platform backend') ||
+          text.includes('INFO: Supported raylib modules') ||
+          text.includes('INFO: Display size') ||
+          text.includes('INFO: GL:') ||
+          text.includes('INFO: TEXTURE:') ||
+          text.includes('INFO: SHADER:') ||
+          text.includes('INFO: AUDIO:') ||
+          text.includes('INFO: STREAM:') ||
+          text.includes('INFO: SYSTEM:')) {
+        return; // Skip these verbose messages
+      }
+      
+      const truncated = text.length > 200 ? text.substring(0, 200) + '...' : text;
+      const length = text.length > 200 ? ` (${text.length} chars)` : '';
+      
       if (msg.type() === 'error') {
-        console.log(`❌ Console Error: ${msg.text()}`);
+        console.log(`❌ Console Error: ${truncated}${length}`);
       } else if (msg.type() === 'log') {
-        console.log(`📋 Console Log: ${msg.text()}`);
+        console.log(`📋 Console Log: ${truncated}${length}`);
       }
     });
     
@@ -86,7 +105,12 @@ async function testROM(romTest, browser) {
     });
     
     if (errorElements.length > 0) {
-      console.log(`⚠️  Page errors found:`, errorElements);
+      console.log(`⚠️  Page errors found: ${errorElements.length} errors`);
+      errorElements.forEach((error, index) => {
+        const truncated = error.length > 200 ? error.substring(0, 200) + '...' : error;
+        const length = error.length > 200 ? ` (${error.length} chars)` : '';
+        console.log(`   ${index + 1}. ${truncated}${length}`);
+      });
     }
     
     // Try to interact with the emulator (if it's responsive)
@@ -151,10 +175,11 @@ async function testROM(romTest, browser) {
           romTest.expectedElements.every(element => 
             textContent.toLowerCase().includes(element.toLowerCase())) : true;
         
-        // Debug: Log what text we actually found
-        console.log(`🔍 DEBUG: Found text content: "${textContent.substring(0, 200)}..."`);
+        // Debug: Log what text we actually found (concise)
+        const debugText = textContent.substring(0, 100);
+        console.log(`🔍 DEBUG: Text content: "${debugText}${textContent.length > 100 ? '...' : ''}" (${textContent.length} chars)`);
         if (romTest.expectedText) {
-          console.log(`🔍 DEBUG: Looking for "${romTest.expectedText}" in text`);
+          console.log(`🔍 DEBUG: Looking for "${romTest.expectedText}"`);
         }
         
         return {
