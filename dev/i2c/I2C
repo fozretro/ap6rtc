@@ -193,7 +193,7 @@ lower	EQU	$20		\upper to lower case mask (b5=1 on ORA)
 
 	INCLUDE 	I2CBUS		\include I2C bus marcos
 
-	ORG	$8000		\sideways rom address start (to $BFFF)
+	ORG	$8100		\sideways rom address start (to $BFFF)
 
 \-------------------------------------------------------------------------------
 romstart	DFB	0,0,0		\no language entry (3 nulls)
@@ -2472,7 +2472,6 @@ days	STR	'Sun'		\1..
 \-------------------------------------------------------------------------------
 \To create an Acorn 16k SWROM image, pad from here to $BF7F with zeroes
 
-	DS	$BF7F-*+1		\writes n x $00 to object file
 
 \-------------------------------------------------------------------------------
 \Jump table to allow 16 commands to be called from assembler with fixed call

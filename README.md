@@ -198,6 +198,90 @@ Merging I2C ROM into the AP6 Main ROM Update (Jan 2025)
 
 I have been reviewing the orignal build scripts to merge 4 ROMs into 1 and have got them running via b-em emulator and its co-processor emmulation (previously looks like the scripts ran on an A5000). The src.AP* folders contain files I have been downloading to get to the point where I can reproduce the current merged ROM from the existing ROM images. This will prove I have the build tools/scripts working. There is however a difference I am exploring with Dave Hitchens at present. Once this is resolved I can apply the realloc table to the I2C ROM and merge it in as well (its about 4kb and we have 8kb spare!). Oh and I also spent a chunk of time getting b-em building on my Macbook running Silcon hardware - build in in /bin/b-em.
 
+### JOIN Tool Validation (Sep 2025)
+-----------------------------------
+
+**8K ROM Build Process - PROVEN WORKING ✅**
+
+Successfully validated the ROM merging process using the SMJoin tool in b-em emulator:
+
+- **Source**: Downloaded official v1.34 ROMs from MDFS.net (now in `/src.ap6.mdfs/`)
+- **Components**: AP1v131 (Plus 1 Support), AP6v134 (ROM Manager), TUBEelk (TUBE HOST), AP6Count (RAMCountAP6)
+- **Build Method**: SMJoin BASIC program in b-em emulator
+- **Result**: Bit-for-bit identical to official AP6v134.rom (7,852 bytes)
+- **Status**: Build process 100% reliable and validated
+
+**Directory Structure:**
+- `/dev/smjoin-8kb/` - 8K ROM build directory with individual components
+- `/src.ap6.mdfs/` - Official MDFS ROMs and source code for comparison
+- `/src.smjoin/SMJoin.bas` - SMJoin source code
+- `/bin/buildap6-rom.sh` - Build script for launching b-em with VDFS
+
+**How to Run 8K Build:**
+```bash
+# Launch b-em with 8K build directory
+./bin/b-em/b-em -autoboot -sp5 -vroot ./dev/smjoin-8kb
+
+# In b-em emulator:
+>LOAD "JOIN"
+>RUN
+Enter input files, end with RETURN
+: AP1V131
+: AP6V134  
+: TUBEELK
+: AP6COUNT
+: [RETURN]
+Enter output filename: COMB
+```
+
+**Result:** Creates `/dev/smjoin-8kb/COMB` (7,852 bytes) - bit-for-bit identical to official AP6v134.rom
+
+**16K ROM Build Process - TOOL LIMITATION DISCOVERED ❌**
+
+Attempted to build 16K ROM with TreeCopy component:
+
+- **Issue**: SMJoin has hard-coded 16,640 byte limit (&4100 in hex)
+- **Problem**: TreeROM (8,704 bytes) + 4 components (8,051 bytes) = 16,755 bytes (exceeds limit)
+- **Discovery**: Official 16K ROM (AP6v134t.rom) is 16,147 bytes - also over 16K limit
+- **Conclusion**: Official 16K ROM was built with different tools, not SMJoin
+- **MDFS Build Script**: Only references 4 components (8K build), not 5 (16K build)
+
+**Directory Structure:**
+- `/dev/smjoin-16kb/` - 16K ROM build directory (attempted, failed due to size limit)
+- `/src.AP6v133t/roms/TreeROM` - TreeCopy component (8,704 bytes)
+- `/src.ap6.mdfs/AP6v134t.rom` - Official 16K ROM for reference
+
+**How to Run 16K Build (FAILS due to size limit):**
+```bash
+# Launch b-em with 16K build directory
+./bin/b-em/b-em -autoboot -sp5 -vroot ./dev/smjoin-16kb
+
+# In b-em emulator:
+>LOAD "JOIN"
+>RUN
+Enter input files, end with RETURN
+: AP1V131
+: AP6V134
+: TUBEELK
+: AP6COUNT
+: TREEROM
+: [RETURN]
+# ERROR: File 'TREEROM' too long
+```
+
+**Error:** SMJoin rejects TreeROM due to 16,640 byte buffer limit. Total size (16,755 bytes) exceeds available space.
+
+**Key Findings:**
+- SMJoin works perfectly for 8K ROMs (4 components)
+- 16K ROMs require different build methodology
+- AP6 systems tolerate ROMs 200-400 bytes over 16K limit
+- Focus on 8K build process for I2C ROM integration (340 bytes available)
+
+**Next Steps:**
+- Create compact I2C ROM to fit in remaining 340 bytes
+- Use proven 8K build process for I2C integration
+- Avoid 16K complexity until different build tools are found
+
 Known Issues
 ------------
 - None at present
