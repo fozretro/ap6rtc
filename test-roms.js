@@ -12,6 +12,22 @@ const romTests = [
     description: 'Official AP6 Plus 1.1.33 ROM - reference baseline',
     expectedText: null, // Text is rendered on WebGL canvas, not in DOM
     expectedElements: ['BASIC', '>_'] // Only check for elements we can actually detect
+  },
+  {
+    name: 'COMB 16kb ROM',
+    url: 'https://0xc0de6502.github.io/electroniq/?romF=http://localhost:8081/COMB.rom',
+    expectedSize: 12805,
+    description: 'COMB ROM from smjoin-16kb - combined ROM functionality',
+    expectedText: null, // Text is rendered on WebGL canvas, not in DOM
+    expectedElements: ['BASIC', '>_'] // Only check for elements we can actually detect
+  },
+  {
+    name: 'COMB 8kb ROM',
+    url: 'https://0xc0de6502.github.io/electroniq/?romF=http://localhost:8081/COMB_8kb.rom',
+    expectedSize: 12805,
+    description: 'COMB ROM from smjoin-8kb - compact combined ROM',
+    expectedText: null, // Text is rendered on WebGL canvas, not in DOM
+    expectedElements: ['BASIC', '>_'] // Only check for elements we can actually detect
   }
 ];
 
