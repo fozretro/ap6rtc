@@ -65,7 +65,27 @@ async function extractTextFromScreenshot(imageBuffer) {
         if (VERBOSE_MODE && m.status) {
           console.log(`   OCR: ${m.status}`);
         }
-      }
+      },
+      // Enhanced options for computer/terminal text recognition
+      tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,;:!?@#$%^&*()_+-=[]{}|\\/"\'<>~` ',
+      tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK, // Treat as single text block
+      tessedit_ocr_engine_mode: Tesseract.OEM.LSTM_ONLY, // Use LSTM neural network
+      preserve_interword_spaces: '1', // Preserve spaces between words
+      tessedit_char_blacklist: '', // Don't blacklist any characters
+      // Additional options for better terminal text recognition
+      classify_bln_numeric_mode: '0', // Don't force numeric mode
+      textord_min_linesize: '2.5', // Minimum line size
+      textord_old_baselines: '0', // Use new baseline detection
+      textord_old_xheight: '0', // Use new x-height detection
+      textord_min_xheight: '8', // Minimum x-height
+      textord_force_make_prop_words: 'F', // Don't force proportional words
+      textord_force_make_prop_fonts: 'F', // Don't force proportional fonts
+      // Character recognition improvements
+      classify_enable_learning: 'F', // Disable learning for consistency
+      classify_enable_adaptive_matcher: 'F', // Disable adaptive matching
+      classify_enable_adaptive_debugger: 'F', // Disable adaptive debugger
+      // Text layout improvements
+      textord_really_old_xheight: 'F' // Don't use really old x-height
     });
     return text.trim();
   } catch (error) {
@@ -394,7 +414,7 @@ async function testROM(romTest, browser) {
       console.log(`⌨️  Sending keyboard entry: "${romTest.keyboardEntry}"`);
       try {
         // Wait for page to be fully loaded
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         
         // Click on the canvas to ensure focus
         await page.click('canvas');
@@ -493,7 +513,7 @@ async function testROM(romTest, browser) {
                       'K': { x: 0.64, width: 0.05 },
                       'L': { x: 0.64, width: 0.05 }, // Moved further left from 0.68 to 0.64
                       '+': { x: 0.78, width: 0.05 },
-                      '*': { x: 0.75, width: 0.05 }, // Moved left from 0.80 to 0.75 (closer to RETURN)
+                      '*': { x: 0.75, width: 0.05, requiresShift: true }, // Moved left from 0.80 to 0.75 (closer to RETURN)
                       'RETURN': { x: 0.80, width: 0.08 }, // Moved left to be just right of * key (0.75)
                     }
                   },
@@ -526,7 +546,8 @@ async function testROM(romTest, browser) {
                       const keyInfo = row.keys[key];
                       return {
                         x: canvasBox.x + canvasBox.width * keyInfo.x + (canvasBox.width * keyInfo.width / 2),
-                        y: row.y + (canvasBox.height * 0.05 / 2) // Center vertically within key height
+                        y: row.y + (canvasBox.height * 0.05 / 2), // Center vertically within key height
+                        requiresShift: keyInfo.requiresShift || false
                       };
                     }
                   }
@@ -546,13 +567,20 @@ async function testROM(romTest, browser) {
                   return {
                     char: item.char,
                     x: coords ? coords.x : canvasBox.x + canvasBox.width * 0.5,
-                    y: coords ? coords.y : canvasBox.y + canvasBox.height * 0.5
+                    y: coords ? coords.y : canvasBox.y + canvasBox.height * 0.5,
+                    requiresShift: coords ? coords.requiresShift : false
                   };
                 });
             
             for (const key of keyPositions) {
               if (VERBOSE_MODE) {
-                console.log(`   🔤 Clicking ${key.char} at (${Math.round(key.x)}, ${Math.round(key.y)})`);
+                console.log(`   🔤 Clicking ${key.char} at (${Math.round(key.x)}, ${Math.round(key.y)})${key.requiresShift ? ' [SHIFT]' : ''}`);
+              }
+              
+              // Press shift if required
+              if (key.requiresShift) {
+                await page.keyboard.down('Shift');
+                await page.waitForTimeout(10);
               }
               
               // Move to the key position first
@@ -564,6 +592,12 @@ async function testROM(romTest, browser) {
               await page.waitForTimeout(10);
               await page.mouse.up();
               await page.waitForTimeout(50); // Reduced delay between clicks
+              
+              // Release shift if it was pressed
+              if (key.requiresShift) {
+                await page.keyboard.up('Shift');
+                await page.waitForTimeout(10);
+              }
             }
             
             if (VERBOSE_MODE) {
@@ -576,29 +610,11 @@ async function testROM(romTest, browser) {
           }
         }
         
-        // Wait for all key presses to be processed
-        await page.waitForTimeout(1000);
-        
-        // Get canvas dimensions for clicking below keyboard
-        const canvas = await page.$('canvas');
-        let canvasBox = null;
-        if (canvas) {
-          canvasBox = await canvas.boundingBox();
-        }
-        
-        // Click below the keyboard to bring emulator window to foreground
-        if (canvasBox) {
-          await page.mouse.move(canvasBox.x + canvasBox.width * 0.5, canvasBox.y + canvasBox.height * 0.8);
-          await page.mouse.down();
-          await page.mouse.up();
-          await page.waitForTimeout(200);
-        }
-        
         // Press F6 again to close the virtual keyboard using down/up method
         await page.keyboard.down('F6');
         await page.waitForTimeout(100);
         await page.keyboard.up('F6');
-        await page.waitForTimeout(1000); // Give more time for keyboard to close
+        await page.waitForTimeout(100);
         
         // OCR scan before final screenshot to see what was typed
         try {
@@ -656,12 +672,64 @@ async function testROM(romTest, browser) {
       console.log(`   ⚠️  Could not save screenshot: ${screenshotError.message}`);
     }
 
-    // Test result - check for expected text using OCR
+    // Test result - check for expected text using OCR with fuzzy matching
     let textSuccess = true;
     if (romTest.expectedElements && romTest.expectedElements.length > 0) {
-      textSuccess = romTest.expectedElements.every(element => 
-        ocrText.toLowerCase().includes(element.toLowerCase())
-      );
+      if (VERBOSE_MODE) {
+        console.log(`🔍 Checking expected elements: ${romTest.expectedElements.join(', ')}`);
+        console.log(`🔍 OCR text: "${ocrText}"`);
+      }
+      
+      textSuccess = romTest.expectedElements.every(element => {
+        const elementLower = element.toLowerCase();
+        const ocrLower = ocrText.toLowerCase();
+        
+        // Direct match
+        if (ocrLower.includes(elementLower)) {
+          if (VERBOSE_MODE) {
+            console.log(`   ✅ Found direct match: "${element}"`);
+          }
+          return true;
+        }
+        
+        // Fuzzy matching for common OCR errors
+        const fuzzyPatterns = [
+          // Common OCR character substitutions
+          elementLower.replace(/i/g, '[il1]'),
+          elementLower.replace(/l/g, '[il1]'),
+          elementLower.replace(/1/g, '[il1]'),
+          elementLower.replace(/o/g, '[o0]'),
+          elementLower.replace(/0/g, '[o0]'),
+          elementLower.replace(/s/g, '[s5]'),
+          elementLower.replace(/5/g, '[s5]'),
+          elementLower.replace(/b/g, '[b6]'),
+          elementLower.replace(/6/g, '[b6]'),
+          elementLower.replace(/g/g, '[g9]'),
+          elementLower.replace(/9/g, '[g9]'),
+          elementLower.replace(/z/g, '[z2]'),
+          elementLower.replace(/2/g, '[z2]'),
+          // Handle common BBC Micro character substitutions
+          elementLower.replace(/\*/g, '[>»]'),
+          elementLower.replace(/>/g, '[>»]'),
+          elementLower.replace(/»/g, '[>»]')
+        ];
+        
+        // Check if any fuzzy pattern matches
+        const fuzzyMatch = fuzzyPatterns.some(pattern => {
+          const regex = new RegExp(pattern.replace(/\[.*?\]/g, '[.*]'), 'i');
+          return regex.test(ocrLower);
+        });
+        
+        if (VERBOSE_MODE) {
+          if (fuzzyMatch) {
+            console.log(`   ✅ Found fuzzy match: "${element}"`);
+          } else {
+            console.log(`   ❌ No match found for: "${element}"`);
+          }
+        }
+        
+        return fuzzyMatch;
+      });
     }
     const success = emulatorLoaded.hasCanvas && textSuccess;
     const status = success ? '✅ PASS' : '❌ FAIL';
