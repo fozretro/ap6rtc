@@ -4,6 +4,8 @@ set -e # Exit immediately if a command exits with a non-zero status.
 # Parse command line arguments
 SKIP_I2C_BUILD=false
 KEEP_SERVER_RUNNING=false
+TEST_FILTER=""
+VERBOSE=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -15,10 +17,21 @@ while [[ $# -gt 0 ]]; do
             KEEP_SERVER_RUNNING=true
             shift
             ;;
+        --testFilter)
+            TEST_FILTER="$2"
+            shift 2
+            ;;
+        --verbose|-v)
+            VERBOSE=true
+            shift
+            ;;
         -h|--help)
-            echo "Usage: $0 [--skip-i2c-build] [--nokill-romserver]"
+            echo "Usage: $0 [--skip-i2c-build] [--nokill-romserver] [--testFilter ROM1,ROM2,...] [--verbose]"
             echo "  --skip-i2c-build     Skip I2C ROM compilation, use existing files"
             echo "  --nokill-romserver   Keep ROM server running after tests complete"
+            echo "  --testFilter         Comma-separated list of ROM names to test (e.g., AP6.rom,I2C.rom)"
+            echo "                       Available ROMs: AP6.rom, LatestAP6.rom, I2C.rom, LatestI2C.rom"
+            echo "  --verbose, -v        Enable verbose logging in test output"
             exit 0
             ;;
         *)
@@ -98,11 +111,33 @@ ls -la ../../dist/ap6.rom
 echo ""
 
 echo "🧪 Step 4: Running ROM tests..."
+if [ -n "$TEST_FILTER" ]; then
+    echo "  -> Filtering tests to: $TEST_FILTER"
+fi
+if [ "$VERBOSE" = true ]; then
+    echo "  -> Verbose logging enabled"
+fi
 if [ "$KEEP_SERVER_RUNNING" = true ]; then
     echo "  -> Server will be kept running after tests complete"
-    node smjoin-test.js --nokill-romserver
+    if [ -n "$TEST_FILTER" ] && [ "$VERBOSE" = true ]; then
+        node smjoin-test.js --nokill-romserver --testFilter "$TEST_FILTER" --verbose
+    elif [ -n "$TEST_FILTER" ]; then
+        node smjoin-test.js --nokill-romserver --testFilter "$TEST_FILTER"
+    elif [ "$VERBOSE" = true ]; then
+        node smjoin-test.js --nokill-romserver --verbose
+    else
+        node smjoin-test.js --nokill-romserver
+    fi
 else
-    node smjoin-test.js
+    if [ -n "$TEST_FILTER" ] && [ "$VERBOSE" = true ]; then
+        node smjoin-test.js --testFilter "$TEST_FILTER" --verbose
+    elif [ -n "$TEST_FILTER" ]; then
+        node smjoin-test.js --testFilter "$TEST_FILTER"
+    elif [ "$VERBOSE" = true ]; then
+        node smjoin-test.js --verbose
+    else
+        node smjoin-test.js
+    fi
 fi
 if [ $? -ne 0 ]; then
     echo "❌ ROM tests failed!"

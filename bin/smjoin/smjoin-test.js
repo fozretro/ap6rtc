@@ -8,38 +8,49 @@ const path = require('path');
 // Configuration
 const VERBOSE_MODE = process.argv.includes('--verbose') || process.argv.includes('-v');
 const KEEP_SERVER_RUNNING = process.argv.includes('--nokill-romserver');
+
+// Parse test filter argument
+let TEST_FILTER = [];
+const testFilterIndex = process.argv.indexOf('--testFilter');
+if (testFilterIndex !== -1 && testFilterIndex + 1 < process.argv.length) {
+  const filterArg = process.argv[testFilterIndex + 1];
+  TEST_FILTER = filterArg.split(',').map(name => name.trim());
+}
+
 const SERVER_PORT = 8080;
 const SERVER_SCRIPT = 'smjoin-test-server.py';
 
 // ROM test configurations
 const romTests = [
     {
-      name: 'Official AP6 ROM',
+      name: 'AP6.rom',
       url: 'https://0xc0de6502.github.io/electroniq/?romF=http://localhost:8080/AP6.rom',
       expectedSize: 16147,
       description: 'Official AP6 Plus 1.1.33 ROM - reference baseline',
       expectedElements: ['RH', 'Flus', '1', '32K', 'BASIC'] // Check for key text using OCR
     },
     {
-      name: 'New AP6 ROM',
+      name: 'LatestAP6.rom',
       url: 'https://0xc0de6502.github.io/electroniq/?romF=http://localhost:8080/LatestAP6.rom',
       expectedSize: 12805,
       description: 'New AP6 ROM - combined ROM with I2C functionality',
       expectedElements: ['RH', 'Flus', '1', '32K', 'BASIC'] // Check for key text using OCR
     },
     {
-      name: 'I2C ROM Original',
+      name: 'I2C.rom',
       url: 'https://0xc0de6502.github.io/electroniq/?romF=http://localhost:8080/I2C.rom',
-      expectedSize: 4951,
+      expectedSize: 16384,
       description: 'Original I2C ROM - unmodified I2C ROM for comparison',
-      expectedElements: ['I2C', '32K'] // Check for I2C-specific text
+      expectedElements: ['I2C', '3.2EAP6', 'OS', '1.00'], // Check for I2C version info after *HELP
+      keyboardEntry: '*HELP' // Send *HELP command to show I2C info
     },
     {
-      name: 'I2C ROM Standalone',
+      name: 'LatestI2C.rom',
       url: 'https://0xc0de6502.github.io/electroniq/?romF=http://localhost:8080/LatestI2C.rom',
       expectedSize: 4977,
       description: 'I2C ROM standalone - relocated I2C ROM for debugging',
-      expectedElements: ['I2C', '32K'] // Check for I2C-specific text
+      expectedElements: ['I2C', '3.2EAP6', 'OS', '1.00'], // Check for I2C version info after *HELP
+      keyboardEntry: '*HELP' // Send *HELP command to show I2C info
     }
 ];
 
@@ -330,6 +341,27 @@ async function testROM(romTest, browser) {
     console.log(`⏳ Waiting for emulator to load ROM content...`);
     await page.waitForTimeout(3000);
 
+    // Take initial screenshot if keyboard entry is required
+    let initialScreenshot = null;
+    if (romTest.keyboardEntry) {
+      try {
+        const canvas = await page.$('canvas');
+        if (canvas) {
+          initialScreenshot = await canvas.screenshot();
+          const screenshotsDir = path.join(__dirname, 'screenshots');
+          if (!fs.existsSync(screenshotsDir)) {
+            fs.mkdirSync(screenshotsDir, { recursive: true });
+          }
+          const filename = `screenshot_${romTest.name.replace(/[^a-zA-Z0-9]/g, '_')}_1_initial.png`;
+          const filepath = path.join(screenshotsDir, filename);
+          fs.writeFileSync(filepath, initialScreenshot);
+          console.log(`📸 Initial screenshot saved: ${filepath}`);
+        }
+      } catch (error) {
+        console.log(`   ⚠️  Could not save initial screenshot: ${error.message}`);
+      }
+    }
+
     // Check if emulator loaded successfully
     const emulatorLoaded = await page.evaluate(() => {
       const canvas = document.querySelector('canvas');
@@ -357,6 +389,40 @@ async function testROM(romTest, browser) {
       }
     }
 
+    // Perform keyboard entry if required
+    if (romTest.keyboardEntry) {
+      console.log(`⌨️  Sending keyboard entry: "${romTest.keyboardEntry}"`);
+      try {
+        // Click on the canvas to ensure focus
+        await page.click('canvas');
+        await page.waitForTimeout(500);
+        
+        // Type the keyboard entry
+        await page.keyboard.type(romTest.keyboardEntry);
+        await page.waitForTimeout(500);
+        
+        // Press Enter
+        await page.keyboard.press('Enter');
+        await page.waitForTimeout(2000); // Wait for response
+        
+        // Take screenshot after keyboard entry
+        const canvas = await page.$('canvas');
+        if (canvas) {
+          const afterKeyboardScreenshot = await canvas.screenshot();
+          const screenshotsDir = path.join(__dirname, 'screenshots');
+          if (!fs.existsSync(screenshotsDir)) {
+            fs.mkdirSync(screenshotsDir, { recursive: true });
+          }
+          const filename = `screenshot_${romTest.name.replace(/[^a-zA-Z0-9]/g, '_')}_2_after_keyboard.png`;
+          const filepath = path.join(screenshotsDir, filename);
+          fs.writeFileSync(filepath, afterKeyboardScreenshot);
+          console.log(`📸 After keyboard screenshot saved: ${filepath}`);
+        }
+      } catch (error) {
+        console.log(`   ⚠️  Keyboard entry failed: ${error.message}`);
+      }
+    }
+
     // Take a screenshot and extract text using OCR
     let ocrText = '';
     try {
@@ -370,7 +436,7 @@ async function testROM(romTest, browser) {
           fs.mkdirSync(screenshotsDir, { recursive: true });
         }
         
-        const filename = `screenshot_${romTest.name.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
+        const filename = `screenshot_${romTest.name.replace(/[^a-zA-Z0-9]/g, '_')}_3_final.png`;
         const filepath = path.join(screenshotsDir, filename);
         fs.writeFileSync(filepath, screenshot);
         
@@ -468,10 +534,22 @@ async function runAllTests() {
     slowMo: 0 // No delay needed in headless mode
   });
   
+  // Filter tests if testFilter is specified
+  let testsToRun = romTests;
+  if (TEST_FILTER.length > 0) {
+    testsToRun = romTests.filter(test => TEST_FILTER.includes(test.name));
+    console.log(`🔍 Filtering tests to: ${TEST_FILTER.join(', ')}`);
+    console.log(`📋 Running ${testsToRun.length} of ${romTests.length} tests`);
+    if (testsToRun.length === 0) {
+      console.log('❌ No tests match the filter criteria');
+      process.exit(1);
+    }
+  }
+  
   const results = [];
   
   try {
-    for (const romTest of romTests) {
+    for (const romTest of testsToRun) {
       const result = await testROM(romTest, browser);
       results.push(result);
       
