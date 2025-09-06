@@ -16,3 +16,6 @@ bin/smjoin/tmp/
 
 # Tesseract.js training data
 eng.traineddata
+
+# Python cache
+__pycache__/

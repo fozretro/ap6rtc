@@ -6,20 +6,20 @@ const VERBOSE_MODE = process.argv.includes('--verbose') || process.argv.includes
 
 // ROM test configurations
 const romTests = [
-  {
-    name: 'Official AP6 ROM',
-    url: 'https://0xc0de6502.github.io/electroniq/?romF=http://localhost:8081/AP6.rom',
-    expectedSize: 7772,
-    description: 'Official AP6 Plus 1.1.33 ROM - reference baseline',
-    expectedElements: ['RH', 'Flus', '1', '32K', 'BASIC'] // Check for key text using OCR
-  },
-  {
-    name: 'New AP6 ROM',
-    url: 'https://0xc0de6502.github.io/electroniq/?romF=http://localhost:8081/distAP6.rom',
-    expectedSize: 12805,
-    description: 'New AP6 ROM - combined ROM with I2C functionality',
-    expectedElements: ['RH', 'Flus', '1', '32K', 'BASIC'] // Check for key text using OCR
-  }
+    {
+      name: 'Official AP6 ROM',
+      url: 'https://0xc0de6502.github.io/electroniq/?romF=http://localhost:8080/AP6.rom',
+      expectedSize: 16147,
+      description: 'Official AP6 Plus 1.1.33 ROM - reference baseline',
+      expectedElements: ['RH', 'Flus', '1', '32K', 'BASIC'] // Check for key text using OCR
+    },
+    {
+      name: 'New AP6 ROM',
+      url: 'https://0xc0de6502.github.io/electroniq/?romF=http://localhost:8080/LatestAP6.rom',
+      expectedSize: 12805,
+      description: 'New AP6 ROM - combined ROM with I2C functionality',
+      expectedElements: ['RH', 'Flus', '1', '32K', 'BASIC'] // Check for key text using OCR
+    }
 ];
 
 // OCR function to extract text from screenshot

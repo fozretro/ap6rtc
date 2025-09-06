@@ -31,9 +31,9 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         # Map ROM files to their actual locations
         rom_mappings = {
-            'AP6.rom': 'AP6.rom',
-            'I2C_standard.rom': 'dist/i2c/I2C32EAP6.rom',
-            'distAP6.rom': 'dist/ap6.rom',
+            'AP6.rom': 'src.AP6.MDFS/AP6v134t.rom',
+            'I2C.rom': 'dist/i2c/I2C32EAP6.rom',
+            'LatestAP6.rom': 'dist/ap6.rom',
         }
         
         # Extract filename from path
@@ -50,8 +50,9 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 return
             else:
                 # For local files, serve them directly
-                # Don't change directory, use absolute paths
-                file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), target)
+                # Go up two levels from bin/smjoin/ to project root, then use target path
+                project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                file_path = os.path.join(project_root, target)
                 print(f"[DEBUG] Looking for file: {file_path}")
                 print(f"[DEBUG] File exists: {os.path.exists(file_path)}")
                 
@@ -83,7 +84,7 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         sys.stdout.write(f"[CORS] {self.address_string()} - {format % args}\n")
 
 def main():
-    port = 8081
+    port = 8080
     server_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'server')
     
     print(f"🚀 Starting CORS-enabled HTTP server...")
