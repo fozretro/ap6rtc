@@ -11,3 +11,8 @@ node_modules/
 
 # Test screenshots
 screenshots/
+bin/smjoin/screenshots/
+bin/smjoin/tmp/
+
+# Tesseract.js training data
+eng.traineddata

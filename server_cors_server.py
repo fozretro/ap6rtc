@@ -33,9 +33,7 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         rom_mappings = {
             'AP6.rom': 'AP6.rom',
             'I2C_standard.rom': 'dist/i2c/I2C32EAP6.rom',
-            'I2C.rom': 'dev/smjoin-16kb/I2C',
-            'COMB_8kb.rom': 'dev/smjoin-8kb/COMB',
-            'COMB.rom': 'dev/smjoin-16kb/COMB',
+            'distAP6.rom': 'dist/ap6.rom',
         }
         
         # Extract filename from path
@@ -95,9 +93,7 @@ def main():
     print(f"📥 ROM mappings:")
     print(f"   AP6.rom -> Official AP6 ROM (HTTP download needed)")
     print(f"   I2C_standard.rom -> dist/i2c/I2C32EAP6.rom")
-    print(f"   I2C.rom -> dev/smjoin-16kb/I2C")
-    print(f"   COMB_8kb.rom -> dev/smjoin-8kb/COMB")
-    print(f"   COMB.rom -> dev/smjoin-16kb/COMB")
+    print(f"   distAP6.rom -> dist/ap6.rom")
     print(f"⏹️  Press Ctrl+C to stop the server")
     print("-" * 60)
     
