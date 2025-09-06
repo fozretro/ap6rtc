@@ -394,29 +394,17 @@ async function testROM(romTest, browser) {
       console.log(`⌨️  Sending keyboard entry: "${romTest.keyboardEntry}"`);
       try {
         // Wait for page to be fully loaded
-        await page.waitForTimeout(5000);
-        
-        // Press Tab multiple times to move focus from address bar to page content
-        await page.keyboard.press('Tab');
-        await page.waitForTimeout(500);
-        await page.keyboard.press('Tab');
-        await page.waitForTimeout(500);
-        await page.keyboard.press('Tab');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(2000);
         
         // Click on the canvas to ensure focus
         await page.click('canvas');
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(500);
         
-        // Try to open virtual keyboard with F6 using key code
-        await page.keyboard.press('F6');
-        await page.waitForTimeout(1000);
-        
-        // Also try with down/up
+        // Open virtual keyboard with F6 (down/up method that works)
         await page.keyboard.down('F6');
         await page.waitForTimeout(100);
         await page.keyboard.up('F6');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
 
         // Take screenshot after F6 opens keyboard but before typing
         const keyboardCanvas = await page.$('canvas');
@@ -432,74 +420,6 @@ async function testROM(romTest, browser) {
           console.log(`📸 After F6 keyboard screenshot saved: ${filepath}`);
         }
         
-        // Analyze virtual keyboard elements
-        if (VERBOSE_MODE) {
-          console.log(`   🔍 Analyzing virtual keyboard elements...`);
-        }
-        try {
-          const keyboardInfo = await page.evaluate(() => {
-            // Find all clickable elements that might be keyboard keys
-            const allElements = document.querySelectorAll('*');
-            const keyboardElements = [];
-            
-            for (let element of allElements) {
-              const text = element.textContent?.trim();
-              const tagName = element.tagName?.toLowerCase();
-              const className = element.className;
-              const id = element.id;
-              
-              // Look for elements that might be keyboard keys
-              if (text && text.length <= 3 && (
-                text.match(/^[A-Z0-9\*\-=\.\,\;\:\'\"\[\]\\\/\s]+$/) || // Common keyboard characters
-                text === 'Enter' || text === 'Return' || text === 'Space' || text === 'Shift' ||
-                text === 'Caps' || text === 'Ctrl' || text === 'Alt' || text === 'Tab' ||
-                text === 'Esc' || text === 'Del' || text === 'Backspace'
-              )) {
-                keyboardElements.push({
-                  tagName,
-                  text,
-                  className,
-                  id,
-                  hasOnClick: !!element.onclick,
-                  hasOnMouseDown: !!element.onmousedown,
-                  hasOnMouseUp: !!element.onmouseup,
-                  hasOnTouchStart: !!element.ontouchstart,
-                  hasOnTouchEnd: !!element.ontouchend,
-                  boundingRect: element.getBoundingClientRect()
-                });
-              }
-            }
-            
-            return {
-              totalElements: allElements.length,
-              keyboardElements: keyboardElements.slice(0, 50), // Limit to first 50
-              bodyHTML: document.body.innerHTML.substring(0, 2000) // First 2000 chars
-            };
-          });
-          
-          if (VERBOSE_MODE) {
-            console.log(`   📊 Found ${keyboardInfo.keyboardElements.length} potential keyboard elements out of ${keyboardInfo.totalElements} total elements`);
-            console.log(`   🔑 Sample keyboard elements:`);
-            keyboardInfo.keyboardElements.slice(0, 10).forEach((el, i) => {
-              console.log(`     ${i+1}. <${el.tagName}> "${el.text}" (class: ${el.className}, id: ${el.id})`);
-            });
-          }
-          
-          // Save the analysis to a file
-          const screenshotsDir = path.join(__dirname, 'screenshots');
-          if (!fs.existsSync(screenshotsDir)) {
-            fs.mkdirSync(screenshotsDir, { recursive: true });
-          }
-          const analysisPath = path.join(screenshotsDir, `keyboard_analysis_${romTest.name.replace(/[^a-zA-Z0-9]/g, '_')}.json`);
-          fs.writeFileSync(analysisPath, JSON.stringify(keyboardInfo, null, 2));
-          if (VERBOSE_MODE) {
-            console.log(`   ✅ Keyboard analysis saved to: ${analysisPath}`);
-          }
-        } catch (error) {
-          if (VERBOSE_MODE) {
-            console.log(`   ❌ Error analyzing keyboard: ${error.message}`);
-          }
-        }
         
         // Try coordinate-based clicking on the virtual keyboard
         if (VERBOSE_MODE) {
@@ -613,8 +533,13 @@ async function testROM(romTest, browser) {
                   return null;
                 }
 
-                // Test RETURN key next - should be on same row as * (row 3) and to the right
+                // Test full *HELP sequence with all working keys
                 const keyPositions = [
+                  { char: '*', key: '*' },
+                  { char: 'H', key: 'H' },
+                  { char: 'E', key: 'E' },
+                  { char: 'L', key: 'L' },
+                  { char: 'P', key: 'P' },
                   { char: 'Enter', key: 'RETURN' }
                 ].map(item => {
                   const coords = getKeyCoordinates(item.key);
@@ -632,13 +557,13 @@ async function testROM(romTest, browser) {
               
               // Move to the key position first
               await page.mouse.move(key.x, key.y);
-              await page.waitForTimeout(50);
+              await page.waitForTimeout(10);
               
-                  // Press and release mouse button
-                  await page.mouse.down();
-                  await page.waitForTimeout(25);
-                  await page.mouse.up();
-                  await page.waitForTimeout(200); // Longer delay between clicks
+              // Press and release mouse button
+              await page.mouse.down();
+              await page.waitForTimeout(10);
+              await page.mouse.up();
+              await page.waitForTimeout(50); // Reduced delay between clicks
             }
             
             if (VERBOSE_MODE) {
@@ -651,8 +576,8 @@ async function testROM(romTest, browser) {
           }
         }
         
-        // Wait longer for all key presses to be processed
-        await page.waitForTimeout(2000);
+        // Wait for all key presses to be processed
+        await page.waitForTimeout(1000);
         
         // Get canvas dimensions for clicking below keyboard
         const canvas = await page.$('canvas');
@@ -666,14 +591,14 @@ async function testROM(romTest, browser) {
           await page.mouse.move(canvasBox.x + canvasBox.width * 0.5, canvasBox.y + canvasBox.height * 0.8);
           await page.mouse.down();
           await page.mouse.up();
-          await page.waitForTimeout(500);
+          await page.waitForTimeout(200);
         }
         
         // Press F6 again to close the virtual keyboard using down/up method
         await page.keyboard.down('F6');
         await page.waitForTimeout(100);
         await page.keyboard.up('F6');
-        await page.waitForTimeout(2000); // Give more time for keyboard to close
+        await page.waitForTimeout(1000); // Give more time for keyboard to close
         
         // OCR scan before final screenshot to see what was typed
         try {
