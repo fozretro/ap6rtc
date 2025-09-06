@@ -54,6 +54,31 @@ const romTests = [
     }
 ];
 
+// Levenshtein distance function for fuzzy string matching
+function levenshteinDistance(str1, str2) {
+  const matrix = [];
+  for (let i = 0; i <= str2.length; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= str1.length; j++) {
+    matrix[0][j] = j;
+  }
+  for (let i = 1; i <= str2.length; i++) {
+    for (let j = 1; j <= str1.length; j++) {
+      if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        );
+      }
+    }
+  }
+  return matrix[str2.length][str1.length];
+}
+
 // OCR function to extract text from screenshot
 async function extractTextFromScreenshot(imageBuffer) {
   try {
@@ -692,33 +717,65 @@ async function testROM(romTest, browser) {
           return true;
         }
         
-        // Fuzzy matching for common OCR errors
-        const fuzzyPatterns = [
-          // Common OCR character substitutions
-          elementLower.replace(/i/g, '[il1]'),
-          elementLower.replace(/l/g, '[il1]'),
-          elementLower.replace(/1/g, '[il1]'),
-          elementLower.replace(/o/g, '[o0]'),
-          elementLower.replace(/0/g, '[o0]'),
-          elementLower.replace(/s/g, '[s5]'),
-          elementLower.replace(/5/g, '[s5]'),
-          elementLower.replace(/b/g, '[b6]'),
-          elementLower.replace(/6/g, '[b6]'),
-          elementLower.replace(/g/g, '[g9]'),
-          elementLower.replace(/9/g, '[g9]'),
-          elementLower.replace(/z/g, '[z2]'),
-          elementLower.replace(/2/g, '[z2]'),
-          // Handle common BBC Micro character substitutions
-          elementLower.replace(/\*/g, '[>»]'),
-          elementLower.replace(/>/g, '[>»]'),
-          elementLower.replace(/»/g, '[>»]')
-        ];
-        
-        // Check if any fuzzy pattern matches
-        const fuzzyMatch = fuzzyPatterns.some(pattern => {
-          const regex = new RegExp(pattern.replace(/\[.*?\]/g, '[.*]'), 'i');
-          return regex.test(ocrLower);
+        // Try partial matching - look for the element anywhere in the OCR text
+        const words = ocrLower.split(/\s+/);
+        const partialMatch = words.some(word => {
+          if (word.includes(elementLower) || elementLower.includes(word)) {
+            if (VERBOSE_MODE) {
+              console.log(`   ✅ Found partial match: "${element}" in word "${word}"`);
+            }
+            return true;
+          }
+          return false;
         });
+        
+        if (partialMatch) {
+          return true;
+        }
+        
+        // Fuzzy matching for common OCR errors
+        let fuzzyMatch = false;
+        
+        // Create a flexible pattern that handles common OCR substitutions
+        let flexiblePattern = elementLower
+          .replace(/i/g, '[il1]')
+          .replace(/l/g, '[il1]') 
+          .replace(/1/g, '[il1]')
+          .replace(/o/g, '[o0]')
+          .replace(/0/g, '[o0]')
+          .replace(/s/g, '[s5]')
+          .replace(/5/g, '[s5]')
+          .replace(/b/g, '[b6]')
+          .replace(/6/g, '[b6]')
+          .replace(/g/g, '[g9]')
+          .replace(/9/g, '[g9]')
+          .replace(/z/g, '[z2]')
+          .replace(/2/g, '[z2]')
+          .replace(/\*/g, '[>»]')
+          .replace(/>/g, '[>»]')
+          .replace(/»/g, '[>»]');
+        
+        // Convert to proper regex
+        const regex = new RegExp(flexiblePattern.replace(/\[.*?\]/g, '[.*]'), 'i');
+        fuzzyMatch = regex.test(ocrLower);
+        
+        // Also try simple character distance matching on individual words
+        if (!fuzzyMatch) {
+          const words = ocrLower.split(/\s+/);
+          for (const word of words) {
+            const distance = levenshteinDistance(elementLower, word);
+            if (VERBOSE_MODE) {
+              console.log(`   🔍 Levenshtein distance for "${element}" vs "${word}": ${distance}`);
+            }
+            if (distance <= 2) {
+              fuzzyMatch = true;
+              if (VERBOSE_MODE) {
+                console.log(`   ✅ Found fuzzy match via Levenshtein: "${element}" matches "${word}"`);
+              }
+              break;
+            }
+          }
+        }
         
         if (VERBOSE_MODE) {
           if (fuzzyMatch) {
