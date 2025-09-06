@@ -34,7 +34,7 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             'AP6.rom': 'src.AP6.MDFS/AP6v134t.rom',
             'I2C.rom': 'dist/i2c/I2C32EAP6.rom',
             'LatestAP6.rom': 'dist/ap6.rom',
-            'LatestI2C.rom': 'bin/smjoin/tmp/i2c-reloc.rom',
+            'LatestI2C8000.rom': 'bin/smjoin/tmp/i2c-8000.rom',
         }
         
         # Extract filename from path

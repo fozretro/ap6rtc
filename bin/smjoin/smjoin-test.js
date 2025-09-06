@@ -45,10 +45,10 @@ const romTests = [
       bootCommands: ['*HELP'],
     },
     {
-      name: 'LatestI2C.rom',
-      rom: 'LatestI2C.rom',
-      expectedSize: 4977,
-      description: 'I2C ROM standalone - relocated I2C ROM for debugging',
+      name: 'LatestI2C8000.rom',
+      rom: 'LatestI2C8000.rom',
+      expectedSize: 4951,
+      description: 'I2C ROM original - unrelocated I2C ROM compiled at $8000',
       expectedElements: ['I2C', '3.2EAP6', 'OS', '1.00'], // Check for I2C version info after *HELP
       bootCommands: ['*HELP']
     }

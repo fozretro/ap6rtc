@@ -344,12 +344,9 @@ function generateRelocData(rom8000Path, rom8100Path, outputPath) {
     console.log(`  -> Language entry: BRK + 0x${relocTableAddr.toString(16).padStart(4, '0')} (${relocTableAddr} decimal)`);
     console.log(`     Low byte: 0x${(relocTableAddr & 0xFF).toString(16).padStart(2, '0')}, High byte: 0x${((relocTableAddr >> 8) & 0xFF).toString(16).padStart(2, '0')} (bit 7 set: ${((relocTableAddr >> 8) & 0x80) !== 0})`);
     
-    // Offset 3-5: Service entry (adjust address for relocation)
+    // Offset 3-5: Service entry (keep original - will be modified by next tool in pipeline)
     const originalServiceAddr = finalRom[4] | (finalRom[5] << 8);
-    const relocatedServiceAddr = originalServiceAddr + 0x100; // Adjust for relocation from $8000 to $8100
-    finalRom[4] = relocatedServiceAddr & 0xFF;
-    finalRom[5] = (relocatedServiceAddr >> 8) & 0xFF;
-    console.log(`  -> Service entry: JMP 0x${originalServiceAddr.toString(16)} -> JMP 0x${relocatedServiceAddr.toString(16)} (adjusted for relocation)`);
+    console.log(`  -> Service entry: JMP 0x${originalServiceAddr.toString(16)} (unchanged - will be modified by next tool)`);
     
     // Offset 6: Copyright byte (keep existing)
     console.log(`  -> Copyright byte: 0x${finalRom[6].toString(16).padStart(2, '0')} (unchanged)`);
