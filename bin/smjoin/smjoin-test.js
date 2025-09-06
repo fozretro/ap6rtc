@@ -24,33 +24,33 @@ const SERVER_SCRIPT = 'smjoin-test-server.py';
 const romTests = [
     {
       name: 'AP6.rom',
-      url: 'https://0xc0de6502.github.io/electroniq/?romF=http://localhost:8080/AP6.rom',
+      rom: 'AP6.rom',
       expectedSize: 16147,
       description: 'Official AP6 Plus 1.1.33 ROM - reference baseline',
       expectedElements: ['RH', 'Flus', '1', '32K', 'BASIC'] // Check for key text using OCR
     },
     {
       name: 'LatestAP6.rom',
-      url: 'https://0xc0de6502.github.io/electroniq/?romF=http://localhost:8080/LatestAP6.rom',
+      rom: 'LatestAP6.rom',
       expectedSize: 12805,
       description: 'New AP6 ROM - combined ROM with I2C functionality',
       expectedElements: ['RH', 'Flus', '1', '32K', 'BASIC'] // Check for key text using OCR
     },
     {
       name: 'I2C.rom',
-      url: 'https://0xc0de6502.github.io/electroniq/?romF=http://localhost:8080/I2C.rom',
+      rom: 'I2C.rom',
       expectedSize: 16384,
       description: 'Original I2C ROM - unmodified I2C ROM for comparison',
       expectedElements: ['I2C', '3.2EAP6', 'OS', '1.00'], // Check for I2C version info after *HELP
-      keyboardEntry: '*HELP' // Send *HELP command to show I2C info
+      bootCommands: ['*HELP'],
     },
     {
       name: 'LatestI2C.rom',
-      url: 'https://0xc0de6502.github.io/electroniq/?romF=http://localhost:8080/LatestI2C.rom',
+      rom: 'LatestI2C.rom',
       expectedSize: 4977,
       description: 'I2C ROM standalone - relocated I2C ROM for debugging',
       expectedElements: ['I2C', '3.2EAP6', 'OS', '1.00'], // Check for I2C version info after *HELP
-      keyboardEntry: '*HELP' // Send *HELP command to show I2C info
+      bootCommands: ['*HELP']
     }
 ];
 
@@ -257,7 +257,12 @@ async function testServerConnection() {
 async function testROM(romTest, browser) {
   console.log(`\n🧪 Testing: ${romTest.name}`);
   console.log(`📝 Description: ${romTest.description}`);
-  console.log(`🔗 URL: ${romTest.url}`);
+  // Build the emulator URL from the ROM name
+  const baseUrl = 'https://0xc0de6502.github.io/electroniq/';
+  const romUrl = `http://localhost:${SERVER_PORT}/${romTest.rom}`;
+  const emulatorUrl = `${baseUrl}?romF=${romUrl}`;
+  
+  console.log(`🔗 URL: ${emulatorUrl}`);
   
   const page = await browser.newPage();
   let screenshotIndex = 1; // Track screenshot index for this test
@@ -342,7 +347,7 @@ async function testROM(romTest, browser) {
 
     // First, test if the ROM file is accessible via direct GET request
     console.log(`🔍 Testing ROM file accessibility...`);
-    const romUrl = romTest.url.split('romF=')[1];
+    const romUrl = `http://localhost:${SERVER_PORT}/${romTest.rom}`;
     if (romUrl) {
       try {
         const response = await page.evaluate(async (url) => {
@@ -389,9 +394,24 @@ async function testROM(romTest, browser) {
       }
     }
 
+    // Process bootCommands if present
+    let finalUrl = emulatorUrl;
+    if (romTest.bootCommands && romTest.bootCommands.length > 0) {
+      // Add carriage return to each command to simulate Enter key press
+      const commands = romTest.bootCommands.map(cmd => cmd + '\r').join('');
+      finalUrl = `${emulatorUrl}&cmd=${encodeURIComponent(commands)}`;
+      if (romTest.bootCommandsDelay) {
+        finalUrl += `&cmd-delay=${romTest.bootCommandsDelay}`;
+      }
+      if (VERBOSE_MODE) {
+        console.log(`   🚀 BootCommands: ${romTest.bootCommands.join(', ')} (with Enter)`);
+        console.log(`   🔗 Final URL: ${finalUrl}`);
+      }
+    }
+
     // Load the emulator page
     const startTime = Date.now();
-    await page.goto(romTest.url, { 
+    await page.goto(finalUrl, { 
       waitUntil: 'domcontentloaded',
       timeout: 15000
     });
@@ -847,11 +867,6 @@ async function runAllTests() {
     process.exit(1);
   }
   
-  const browser = await chromium.launch({ 
-    headless: false, // Run in visible mode to see the virtual keyboard
-    slowMo: 200 // Add delay to see what's happening
-  });
-  
   // Filter tests if testFilter is specified
   let testsToRun = romTests;
   if (TEST_FILTER.length > 0) {
@@ -868,15 +883,27 @@ async function runAllTests() {
   
   try {
     for (const romTest of testsToRun) {
-      const result = await testROM(romTest, browser);
-      results.push(result);
+      // Determine if this specific test requires keyboard input
+      const needsKeyboard = !!romTest.keyboardEntry;
       
-      // Wait between tests
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Launch browser for this specific test
+      const browser = await chromium.launch({ 
+        headless: !needsKeyboard, // Only run non-headless if this test needs keyboardEntry
+        slowMo: needsKeyboard ? 200 : 0 // Add delay only when keyboardEntry is needed
+      });
+      
+      try {
+        const result = await testROM(romTest, browser);
+        results.push(result);
+        
+        // Wait between tests
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      } finally {
+        // Close browser after each test
+        await browser.close();
+      }
     }
   } finally {
-    await browser.close();
-    
     // Clean up: stop the server (unless --nokill-romserver flag is set)
     if (!KEEP_SERVER_RUNNING) {
       await stopServer();
