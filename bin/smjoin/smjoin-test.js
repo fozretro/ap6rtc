@@ -907,15 +907,7 @@ async function runAllTests() {
     // Clean up: stop the server (unless --nokill-romserver flag is set)
     if (!KEEP_SERVER_RUNNING) {
       await stopServer();
-    } else {
-      console.log(`\n🔄 ROM server kept running on port ${SERVER_PORT} for manual testing`);
-      console.log(`   Available ROMs:`);
-      console.log(`   - Official AP6: http://localhost:${SERVER_PORT}/AP6.rom`);
-      console.log(`   - New AP6: http://localhost:${SERVER_PORT}/LatestAP6.rom`);
-      console.log(`   - I2C Standalone: http://localhost:${SERVER_PORT}/LatestI2C.rom`);
-      console.log(`   - I2C Original: http://localhost:${SERVER_PORT}/I2C.rom`);
-      console.log(`\n   To stop the server later, run: lsof -ti:${SERVER_PORT} | xargs kill -9`);
-    }
+    } 
   }
   
   // Simple results summary
