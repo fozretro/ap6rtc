@@ -260,6 +260,24 @@ async function testROM(romTest, browser) {
   console.log(`🔗 URL: ${romTest.url}`);
   
   const page = await browser.newPage();
+  let screenshotIndex = 1; // Track screenshot index for this test
+  
+  // Helper function to save screenshots with proper indexing
+  async function saveScreenshot(canvas, description) {
+    if (!canvas) return null;
+    
+    const screenshot = await canvas.screenshot();
+    const screenshotsDir = path.join(__dirname, 'screenshots');
+    if (!fs.existsSync(screenshotsDir)) {
+      fs.mkdirSync(screenshotsDir, { recursive: true });
+    }
+    const filename = `screenshot_${romTest.name.replace(/[^a-zA-Z0-9]/g, '_')}_${screenshotIndex}_${description}.png`;
+    const filepath = path.join(screenshotsDir, filename);
+    fs.writeFileSync(filepath, screenshot);
+    console.log(`📸 ${description} screenshot saved: ${filepath}`);
+    screenshotIndex++;
+    return filepath;
+  }
   
   try {
     // Set up console logging (filtered for important messages only)
@@ -392,15 +410,7 @@ async function testROM(romTest, browser) {
       try {
         const canvas = await page.$('canvas');
         if (canvas) {
-          initialScreenshot = await canvas.screenshot();
-          const screenshotsDir = path.join(__dirname, 'screenshots');
-          if (!fs.existsSync(screenshotsDir)) {
-            fs.mkdirSync(screenshotsDir, { recursive: true });
-          }
-          const filename = `screenshot_${romTest.name.replace(/[^a-zA-Z0-9]/g, '_')}_1_initial.png`;
-          const filepath = path.join(screenshotsDir, filename);
-          fs.writeFileSync(filepath, initialScreenshot);
-          console.log(`📸 Initial screenshot saved: ${filepath}`);
+          await saveScreenshot(canvas, 'initial');
         }
       } catch (error) {
         console.log(`   ⚠️  Could not save initial screenshot: ${error.message}`);
@@ -454,15 +464,7 @@ async function testROM(romTest, browser) {
         // Take screenshot after F6 opens keyboard but before typing
         const keyboardCanvas = await page.$('canvas');
         if (keyboardCanvas) {
-          const afterKeyboardScreenshot = await keyboardCanvas.screenshot();
-          const screenshotsDir = path.join(__dirname, 'screenshots');
-          if (!fs.existsSync(screenshotsDir)) {
-            fs.mkdirSync(screenshotsDir, { recursive: true });
-          }
-          const filename = `screenshot_${romTest.name.replace(/[^a-zA-Z0-9]/g, '_')}_2_after_keyboard.png`;
-          const filepath = path.join(screenshotsDir, filename);
-          fs.writeFileSync(filepath, afterKeyboardScreenshot);
-          console.log(`📸 After F6 keyboard screenshot saved: ${filepath}`);
+          await saveScreenshot(keyboardCanvas, 'after_keyboard');
         }
         
         
@@ -645,21 +647,19 @@ async function testROM(romTest, browser) {
         try {
           const canvas = await page.$('canvas');
           if (canvas) {
-            const preFinalScreenshot = await canvas.screenshot();
-            const screenshotsDir = path.join(__dirname, 'screenshots');
-            if (!fs.existsSync(screenshotsDir)) {
-              fs.mkdirSync(screenshotsDir, { recursive: true });
-            }
-            const preFinalPath = path.join(screenshotsDir, `screenshot_${romTest.name.replace(/[^a-zA-Z0-9]/g, '_')}_pre_final.png`);
-            fs.writeFileSync(preFinalPath, preFinalScreenshot);
+            const preFinalPath = await saveScreenshot(canvas, 'pre_final');
             
-            // Run OCR on the pre-final screenshot
-            const Tesseract = require('tesseract.js');
-            const { data: { text } } = await Tesseract.recognize(preFinalPath, 'eng');
-            console.log(`🔍 Pre-final OCR: "${text.trim()}"`);
+            // Run OCR on the pre-final screenshot (only in verbose mode)
+            if (VERBOSE_MODE) {
+              const Tesseract = require('tesseract.js');
+              const { data: { text } } = await Tesseract.recognize(preFinalPath, 'eng');
+              console.log(`🔍 Pre-final OCR: "${text.trim()}"`);
+            }
           }
         } catch (error) {
-          console.log(`   ⚠️  Pre-final OCR failed: ${error.message}`);
+          if (VERBOSE_MODE) {
+            console.log(`   ⚠️  Pre-final OCR failed: ${error.message}`);
+          }
         }
         
         // Screenshot after keyboard entry is now taken earlier after F6
@@ -673,21 +673,10 @@ async function testROM(romTest, browser) {
     try {
       const canvas = await page.$('canvas');
       if (canvas) {
-        const screenshot = await canvas.screenshot();
-        
-        // Create screenshots directory if it doesn't exist
-        const screenshotsDir = path.join(__dirname, 'screenshots');
-        if (!fs.existsSync(screenshotsDir)) {
-          fs.mkdirSync(screenshotsDir, { recursive: true });
-        }
-        
-        const filename = `screenshot_${romTest.name.replace(/[^a-zA-Z0-9]/g, '_')}_3_final.png`;
-        const filepath = path.join(screenshotsDir, filename);
-        fs.writeFileSync(filepath, screenshot);
-        
-        console.log(`📸 Screenshot saved: ${filepath}`);
+        const filepath = await saveScreenshot(canvas, 'final');
         
         // Extract text using OCR
+        const screenshot = await canvas.screenshot();
         ocrText = await extractTextFromScreenshot(screenshot);
         if (VERBOSE_MODE && ocrText) {
           console.log(`🔍 OCR extracted text: "${ocrText}"`);
