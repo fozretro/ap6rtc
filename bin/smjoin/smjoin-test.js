@@ -1,8 +1,14 @@
 const { chromium } = require('playwright');
 const Tesseract = require('tesseract.js');
+const { spawn, exec } = require('child_process');
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
 
 // Configuration
 const VERBOSE_MODE = process.argv.includes('--verbose') || process.argv.includes('-v');
+const SERVER_PORT = 8080;
+const SERVER_SCRIPT = 'smjoin-test-server.py';
 
 // ROM test configurations
 const romTests = [
@@ -41,6 +47,139 @@ async function extractTextFromScreenshot(imageBuffer) {
       console.log(`   ⚠️  OCR failed: ${error.message}`);
     }
     return '';
+  }
+}
+
+// Server management functions
+let serverProcess = null;
+
+async function clearScreenshotsFolder() {
+  const screenshotsDir = path.join(__dirname, 'screenshots');
+  
+  try {
+    // Check if screenshots directory exists
+    if (fs.existsSync(screenshotsDir)) {
+      console.log('🧹 Clearing screenshots folder...');
+      
+      // Read all files in the directory
+      const files = fs.readdirSync(screenshotsDir);
+      
+      // Delete each file
+      for (const file of files) {
+        const filePath = path.join(screenshotsDir, file);
+        if (fs.statSync(filePath).isFile()) {
+          fs.unlinkSync(filePath);
+          if (VERBOSE_MODE) {
+            console.log(`   Deleted: ${file}`);
+          }
+        }
+      }
+      
+      console.log(`✅ Cleared ${files.length} files from screenshots folder`);
+    } else {
+      // Create the directory if it doesn't exist
+      fs.mkdirSync(screenshotsDir, { recursive: true });
+      console.log('📁 Created screenshots folder');
+    }
+  } catch (error) {
+    console.log(`⚠️  Warning: Could not clear screenshots folder: ${error.message}`);
+  }
+}
+
+async function checkServerRunning() {
+  return new Promise((resolve) => {
+    const req = http.get(`http://localhost:${SERVER_PORT}/AP6.rom`, (res) => {
+      resolve(true);
+    });
+    req.on('error', () => {
+      resolve(false);
+    });
+    req.setTimeout(1000, () => {
+      req.destroy();
+      resolve(false);
+    });
+  });
+}
+
+async function killExistingServer() {
+  return new Promise((resolve) => {
+    exec(`lsof -ti:${SERVER_PORT}`, (error, stdout) => {
+      if (stdout.trim()) {
+        console.log(`🛑 Killing existing server on port ${SERVER_PORT}...`);
+        exec(`kill -9 ${stdout.trim()}`, () => {
+          setTimeout(resolve, 500); // Wait for port to be released
+        });
+      } else {
+        resolve();
+      }
+    });
+  });
+}
+
+async function startServer() {
+  console.log(`🚀 Starting ROM server on port ${SERVER_PORT}...`);
+  
+  return new Promise((resolve, reject) => {
+    serverProcess = spawn('python3', [SERVER_SCRIPT], {
+      cwd: __dirname,
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+
+    let serverReady = false;
+    const checkInterval = setInterval(async () => {
+      if (await checkServerRunning()) {
+        if (!serverReady) {
+          console.log(`✅ Server started successfully on port ${SERVER_PORT}`);
+          serverReady = true;
+          clearInterval(checkInterval);
+          resolve();
+        }
+      }
+    }, 500);
+
+    // Timeout after 10 seconds
+    setTimeout(() => {
+      if (!serverReady) {
+        clearInterval(checkInterval);
+        reject(new Error('Server failed to start within 10 seconds'));
+      }
+    }, 10000);
+
+    serverProcess.on('error', (error) => {
+      clearInterval(checkInterval);
+      reject(error);
+    });
+  });
+}
+
+async function stopServer() {
+  if (serverProcess) {
+    console.log(`🛑 Stopping ROM server...`);
+    serverProcess.kill();
+    serverProcess = null;
+    
+    // Wait a moment for the server to stop
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    console.log(`✅ Server stopped`);
+  }
+}
+
+async function testServerConnection() {
+  console.log(`🔍 Testing server connection...`);
+  
+  try {
+    const response = await fetch(`http://localhost:${SERVER_PORT}/AP6.rom`);
+    if (response.ok) {
+      const contentLength = response.headers.get('content-length');
+      console.log(`✅ Server connection test passed (${contentLength} bytes)`);
+      return true;
+    } else {
+      console.log(`❌ Server connection test failed: ${response.status}`);
+      return false;
+    }
+  } catch (error) {
+    console.log(`❌ Server connection test failed: ${error.message}`);
+    return false;
   }
 }
 
@@ -155,13 +294,11 @@ async function testROM(romTest, browser) {
       const canvas = await page.$('canvas');
       if (canvas) {
         const screenshot = await canvas.screenshot();
-        const fs = require('fs');
-        const path = require('path');
         
         // Create screenshots directory if it doesn't exist
-        const screenshotsDir = 'screenshots';
+        const screenshotsDir = path.join(__dirname, 'screenshots');
         if (!fs.existsSync(screenshotsDir)) {
-          fs.mkdirSync(screenshotsDir);
+          fs.mkdirSync(screenshotsDir, { recursive: true });
         }
         
         const filename = `screenshot_${romTest.name.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
@@ -233,6 +370,30 @@ async function runAllTests() {
   }
   console.log('=' .repeat(60));
   
+  // Clear screenshots folder
+  await clearScreenshotsFolder();
+  
+  // Server management
+  try {
+    // Kill any existing server on port 8080
+    await killExistingServer();
+    
+    // Start the ROM server
+    await startServer();
+    
+    // Test server connection
+    const serverTestPassed = await testServerConnection();
+    if (!serverTestPassed) {
+      throw new Error('Server connection test failed');
+    }
+    
+    console.log('');
+    
+  } catch (error) {
+    console.log(`❌ Server setup failed: ${error.message}`);
+    process.exit(1);
+  }
+  
   const browser = await chromium.launch({ 
     headless: true, // Run in headless mode for automation
     slowMo: 0 // No delay needed in headless mode
@@ -250,6 +411,9 @@ async function runAllTests() {
     }
   } finally {
     await browser.close();
+    
+    // Clean up: stop the server
+    await stopServer();
   }
   
   // Simple results summary
