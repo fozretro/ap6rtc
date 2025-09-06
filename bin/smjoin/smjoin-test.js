@@ -7,6 +7,7 @@ const path = require('path');
 
 // Configuration
 const VERBOSE_MODE = process.argv.includes('--verbose') || process.argv.includes('-v');
+const KEEP_SERVER_RUNNING = process.argv.includes('--nokill-romserver');
 const SERVER_PORT = 8080;
 const SERVER_SCRIPT = 'smjoin-test-server.py';
 
@@ -25,6 +26,20 @@ const romTests = [
       expectedSize: 12805,
       description: 'New AP6 ROM - combined ROM with I2C functionality',
       expectedElements: ['RH', 'Flus', '1', '32K', 'BASIC'] // Check for key text using OCR
+    },
+    {
+      name: 'I2C ROM Original',
+      url: 'https://0xc0de6502.github.io/electroniq/?romF=http://localhost:8080/I2C.rom',
+      expectedSize: 4951,
+      description: 'Original I2C ROM - unmodified I2C ROM for comparison',
+      expectedElements: ['I2C', '32K'] // Check for I2C-specific text
+    },
+    {
+      name: 'I2C ROM Standalone',
+      url: 'https://0xc0de6502.github.io/electroniq/?romF=http://localhost:8080/LatestI2C.rom',
+      expectedSize: 4977,
+      description: 'I2C ROM standalone - relocated I2C ROM for debugging',
+      expectedElements: ['I2C', '32K'] // Check for I2C-specific text
     }
 ];
 
@@ -228,6 +243,11 @@ async function testROM(romTest, browser) {
         }
       }
       
+      // Filter out WebSocket connection errors (not relevant to ROM functionality)
+      if (text.includes('WebSocket connection to') && text.includes('failed')) {
+        return; // Skip WebSocket connection errors
+      }
+      
       // Truncate very long messages
       const truncated = text.length > 200 ? text.substring(0, 200) + '...' : text;
       const length = text.length > 200 ? ` (${text.length} chars)` : '';
@@ -245,6 +265,55 @@ async function testROM(romTest, browser) {
     page.on('pageerror', error => {
       errorElements.push(error.message);
     });
+
+    // First, test if the ROM file is accessible via direct GET request
+    console.log(`🔍 Testing ROM file accessibility...`);
+    const romUrl = romTest.url.split('romF=')[1];
+    if (romUrl) {
+      try {
+        const response = await page.evaluate(async (url) => {
+          const response = await fetch(url);
+          return {
+            status: response.status,
+            statusText: response.statusText,
+            contentLength: response.headers.get('content-length'),
+            ok: response.ok
+          };
+        }, romUrl);
+        
+        if (response.ok) {
+          console.log(`✅ ROM file accessible: ${response.contentLength} bytes`);
+        } else {
+          console.log(`❌ ROM file not accessible: HTTP ${response.status} ${response.statusText}`);
+          return {
+            name: romTest.name,
+            passed: false,
+            loadTime: 0,
+            networkRequests: 0,
+            hasCanvas: false,
+            hasElectroniq: false,
+            canvasSize: null,
+            screenContent: { nonBlackPixels: 0, totalPixels: 0 },
+            expectedElements: [],
+            error: `ROM file not accessible: HTTP ${response.status} ${response.statusText}`
+          };
+        }
+      } catch (error) {
+        console.log(`❌ ROM file test failed: ${error.message}`);
+        return {
+          name: romTest.name,
+          passed: false,
+          loadTime: 0,
+          networkRequests: 0,
+          hasCanvas: false,
+          hasElectroniq: false,
+          canvasSize: null,
+          screenContent: { nonBlackPixels: 0, totalPixels: 0 },
+          expectedElements: [],
+          error: `ROM file test failed: ${error.message}`
+        };
+      }
+    }
 
     // Load the emulator page
     const startTime = Date.now();
@@ -412,8 +481,18 @@ async function runAllTests() {
   } finally {
     await browser.close();
     
-    // Clean up: stop the server
-    await stopServer();
+    // Clean up: stop the server (unless --nokill-romserver flag is set)
+    if (!KEEP_SERVER_RUNNING) {
+      await stopServer();
+    } else {
+      console.log(`\n🔄 ROM server kept running on port ${SERVER_PORT} for manual testing`);
+      console.log(`   Available ROMs:`);
+      console.log(`   - Official AP6: http://localhost:${SERVER_PORT}/AP6.rom`);
+      console.log(`   - New AP6: http://localhost:${SERVER_PORT}/LatestAP6.rom`);
+      console.log(`   - I2C Standalone: http://localhost:${SERVER_PORT}/LatestI2C.rom`);
+      console.log(`   - I2C Original: http://localhost:${SERVER_PORT}/I2C.rom`);
+      console.log(`\n   To stop the server later, run: lsof -ti:${SERVER_PORT} | xargs kill -9`);
+    }
   }
   
   // Simple results summary
