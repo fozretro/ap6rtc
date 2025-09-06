@@ -393,22 +393,35 @@ async function testROM(romTest, browser) {
     if (romTest.keyboardEntry) {
       console.log(`⌨️  Sending keyboard entry: "${romTest.keyboardEntry}"`);
       try {
+        // Wait for page to be fully loaded
+        await page.waitForTimeout(5000);
+        
+        // Press Tab multiple times to move focus from address bar to page content
+        await page.keyboard.press('Tab');
+        await page.waitForTimeout(500);
+        await page.keyboard.press('Tab');
+        await page.waitForTimeout(500);
+        await page.keyboard.press('Tab');
+        await page.waitForTimeout(500);
+        
         // Click on the canvas to ensure focus
         await page.click('canvas');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(1000);
         
-        // Type the keyboard entry
-        await page.keyboard.type(romTest.keyboardEntry);
-        await page.waitForTimeout(500);
+        // Try to open virtual keyboard with F6 using key code
+        await page.keyboard.press('F6');
+        await page.waitForTimeout(1000);
         
-        // Press Enter
-        await page.keyboard.press('Enter');
-        await page.waitForTimeout(2000); // Wait for response
-        
-        // Take screenshot after keyboard entry
-        const canvas = await page.$('canvas');
-        if (canvas) {
-          const afterKeyboardScreenshot = await canvas.screenshot();
+        // Also try with down/up
+        await page.keyboard.down('F6');
+        await page.waitForTimeout(100);
+        await page.keyboard.up('F6');
+        await page.waitForTimeout(2000);
+
+        // Take screenshot after F6 opens keyboard but before typing
+        const keyboardCanvas = await page.$('canvas');
+        if (keyboardCanvas) {
+          const afterKeyboardScreenshot = await keyboardCanvas.screenshot();
           const screenshotsDir = path.join(__dirname, 'screenshots');
           if (!fs.existsSync(screenshotsDir)) {
             fs.mkdirSync(screenshotsDir, { recursive: true });
@@ -416,8 +429,274 @@ async function testROM(romTest, browser) {
           const filename = `screenshot_${romTest.name.replace(/[^a-zA-Z0-9]/g, '_')}_2_after_keyboard.png`;
           const filepath = path.join(screenshotsDir, filename);
           fs.writeFileSync(filepath, afterKeyboardScreenshot);
-          console.log(`📸 After keyboard screenshot saved: ${filepath}`);
+          console.log(`📸 After F6 keyboard screenshot saved: ${filepath}`);
         }
+        
+        // Analyze virtual keyboard elements
+        if (VERBOSE_MODE) {
+          console.log(`   🔍 Analyzing virtual keyboard elements...`);
+        }
+        try {
+          const keyboardInfo = await page.evaluate(() => {
+            // Find all clickable elements that might be keyboard keys
+            const allElements = document.querySelectorAll('*');
+            const keyboardElements = [];
+            
+            for (let element of allElements) {
+              const text = element.textContent?.trim();
+              const tagName = element.tagName?.toLowerCase();
+              const className = element.className;
+              const id = element.id;
+              
+              // Look for elements that might be keyboard keys
+              if (text && text.length <= 3 && (
+                text.match(/^[A-Z0-9\*\-=\.\,\;\:\'\"\[\]\\\/\s]+$/) || // Common keyboard characters
+                text === 'Enter' || text === 'Return' || text === 'Space' || text === 'Shift' ||
+                text === 'Caps' || text === 'Ctrl' || text === 'Alt' || text === 'Tab' ||
+                text === 'Esc' || text === 'Del' || text === 'Backspace'
+              )) {
+                keyboardElements.push({
+                  tagName,
+                  text,
+                  className,
+                  id,
+                  hasOnClick: !!element.onclick,
+                  hasOnMouseDown: !!element.onmousedown,
+                  hasOnMouseUp: !!element.onmouseup,
+                  hasOnTouchStart: !!element.ontouchstart,
+                  hasOnTouchEnd: !!element.ontouchend,
+                  boundingRect: element.getBoundingClientRect()
+                });
+              }
+            }
+            
+            return {
+              totalElements: allElements.length,
+              keyboardElements: keyboardElements.slice(0, 50), // Limit to first 50
+              bodyHTML: document.body.innerHTML.substring(0, 2000) // First 2000 chars
+            };
+          });
+          
+          if (VERBOSE_MODE) {
+            console.log(`   📊 Found ${keyboardInfo.keyboardElements.length} potential keyboard elements out of ${keyboardInfo.totalElements} total elements`);
+            console.log(`   🔑 Sample keyboard elements:`);
+            keyboardInfo.keyboardElements.slice(0, 10).forEach((el, i) => {
+              console.log(`     ${i+1}. <${el.tagName}> "${el.text}" (class: ${el.className}, id: ${el.id})`);
+            });
+          }
+          
+          // Save the analysis to a file
+          const screenshotsDir = path.join(__dirname, 'screenshots');
+          if (!fs.existsSync(screenshotsDir)) {
+            fs.mkdirSync(screenshotsDir, { recursive: true });
+          }
+          const analysisPath = path.join(screenshotsDir, `keyboard_analysis_${romTest.name.replace(/[^a-zA-Z0-9]/g, '_')}.json`);
+          fs.writeFileSync(analysisPath, JSON.stringify(keyboardInfo, null, 2));
+          if (VERBOSE_MODE) {
+            console.log(`   ✅ Keyboard analysis saved to: ${analysisPath}`);
+          }
+        } catch (error) {
+          if (VERBOSE_MODE) {
+            console.log(`   ❌ Error analyzing keyboard: ${error.message}`);
+          }
+        }
+        
+        // Try coordinate-based clicking on the virtual keyboard
+        if (VERBOSE_MODE) {
+          console.log(`   🎯 Attempting coordinate-based keyboard interaction...`);
+        }
+        
+        try {
+          // Get canvas dimensions
+          const canvas = await page.$('canvas');
+          if (canvas) {
+            const canvasBox = await canvas.boundingBox();
+            if (VERBOSE_MODE) {
+              console.log(`   📐 Canvas dimensions: ${canvasBox.width}x${canvasBox.height} at (${canvasBox.x}, ${canvasBox.y})`);
+            }
+            
+                // Create a comprehensive keyboard map based on the visible layout
+                const keyboardMap = {
+                  // Row 1 (Top): ESC, !1, "2, #3, $4, %5, &6, '7, (8, )9, @0, =-^~, \|, BRK
+                  row1: {
+                    y: canvasBox.y + canvasBox.height * 0.25, // Top row
+                    keys: {
+                      'ESC': { x: 0.05, width: 0.08 },
+                      '!': { x: 0.15, width: 0.05 },
+                      '"': { x: 0.22, width: 0.05 },
+                      '#': { x: 0.29, width: 0.05 },
+                      '$': { x: 0.36, width: 0.05 },
+                      '%': { x: 0.43, width: 0.05 },
+                      '&': { x: 0.50, width: 0.05 },
+                      "'": { x: 0.57, width: 0.05 },
+                      '(': { x: 0.64, width: 0.05 },
+                      ')': { x: 0.71, width: 0.05 },
+                      '@': { x: 0.78, width: 0.05 },
+                      '=': { x: 0.85, width: 0.05 },
+                      '\\': { x: 0.92, width: 0.05 },
+                      'BRK': { x: 0.95, width: 0.05 }
+                    }
+                  },
+                  // Row 2 (QWERTY): CAPS/FUNC, Q, W, E, R, T, Y, U, I, O, P, £{, -}, [], COPY
+                  row2: {
+                    y: canvasBox.y + canvasBox.height * 0.35, // Second row
+                    keys: {
+                      'CAPS': { x: 0.05, width: 0.08 },
+                      'Q': { x: 0.15, width: 0.05 },
+                      'W': { x: 0.22, width: 0.05 },
+                      'E': { x: 0.29, width: 0.05 },
+                      'R': { x: 0.36, width: 0.05 },
+                      'T': { x: 0.43, width: 0.05 },
+                      'Y': { x: 0.50, width: 0.05 },
+                      'U': { x: 0.57, width: 0.05 },
+                      'I': { x: 0.64, width: 0.05 },
+                      'O': { x: 0.71, width: 0.05 },
+                      'P': { x: 0.68, width: 0.05 }, // Moved two keys left from 0.78 to 0.68
+                      '£': { x: 0.85, width: 0.05 },
+                      '-': { x: 0.92, width: 0.05 },
+                      '[': { x: 0.95, width: 0.05 },
+                      'COPY': { x: 0.98, width: 0.05 }
+                    }
+                  },
+                  // Row 3 (ASDF): CTRL, A, S, D, F, G, H, J, K, L, +;, *:, RETURN
+                  row3: {
+                    y: canvasBox.y + canvasBox.height * 0.45, // Third row
+                    keys: {
+                      'CTRL': { x: 0.05, width: 0.08 },
+                      'A': { x: 0.15, width: 0.05 },
+                      'S': { x: 0.22, width: 0.05 },
+                      'D': { x: 0.29, width: 0.05 },
+                      'F': { x: 0.36, width: 0.05 },
+                      'G': { x: 0.43, width: 0.05 },
+                      'H': { x: 0.45, width: 0.05 }, // Moved left from 0.50 to 0.45
+                      'J': { x: 0.57, width: 0.05 },
+                      'K': { x: 0.64, width: 0.05 },
+                      'L': { x: 0.64, width: 0.05 }, // Moved further left from 0.68 to 0.64
+                      '+': { x: 0.78, width: 0.05 },
+                      '*': { x: 0.75, width: 0.05 }, // Moved left from 0.80 to 0.75 (closer to RETURN)
+                      'RETURN': { x: 0.80, width: 0.08 }, // Moved left to be just right of * key (0.75)
+                    }
+                  },
+                  // Row 4 (ZXCV): SHIFT, Z, X, C, V, B, N, M, <,, >., ?/, SHIFT, DEL
+                  row4: {
+                    y: canvasBox.y + canvasBox.height * 0.55, // Fourth row
+                    keys: {
+                      'SHIFT': { x: 0.05, width: 0.08 },
+                      'Z': { x: 0.15, width: 0.05 },
+                      'X': { x: 0.22, width: 0.05 },
+                      'C': { x: 0.29, width: 0.05 },
+                      'V': { x: 0.36, width: 0.05 },
+                      'B': { x: 0.43, width: 0.05 },
+                      'N': { x: 0.50, width: 0.05 },
+                      'M': { x: 0.57, width: 0.05 },
+                      '<': { x: 0.64, width: 0.05 },
+                      '>': { x: 0.71, width: 0.05 },
+                      '?': { x: 0.78, width: 0.05 },
+                      'SHIFT2': { x: 0.85, width: 0.08 },
+                      'DEL': { x: 0.95, width: 0.05 }
+                    }
+                  }
+                };
+
+                // Function to get key coordinates from the map
+                function getKeyCoordinates(key) {
+                  for (const rowName in keyboardMap) {
+                    const row = keyboardMap[rowName];
+                    if (row.keys[key]) {
+                      const keyInfo = row.keys[key];
+                      return {
+                        x: canvasBox.x + canvasBox.width * keyInfo.x + (canvasBox.width * keyInfo.width / 2),
+                        y: row.y + (canvasBox.height * 0.05 / 2) // Center vertically within key height
+                      };
+                    }
+                  }
+                  return null;
+                }
+
+                // Test RETURN key next - should be on same row as * (row 3) and to the right
+                const keyPositions = [
+                  { char: 'Enter', key: 'RETURN' }
+                ].map(item => {
+                  const coords = getKeyCoordinates(item.key);
+                  return {
+                    char: item.char,
+                    x: coords ? coords.x : canvasBox.x + canvasBox.width * 0.5,
+                    y: coords ? coords.y : canvasBox.y + canvasBox.height * 0.5
+                  };
+                });
+            
+            for (const key of keyPositions) {
+              if (VERBOSE_MODE) {
+                console.log(`   🔤 Clicking ${key.char} at (${Math.round(key.x)}, ${Math.round(key.y)})`);
+              }
+              
+              // Move to the key position first
+              await page.mouse.move(key.x, key.y);
+              await page.waitForTimeout(50);
+              
+                  // Press and release mouse button
+                  await page.mouse.down();
+                  await page.waitForTimeout(25);
+                  await page.mouse.up();
+                  await page.waitForTimeout(200); // Longer delay between clicks
+            }
+            
+            if (VERBOSE_MODE) {
+              console.log(`   ✅ Completed coordinate-based keyboard input`);
+            }
+          }
+        } catch (error) {
+          if (VERBOSE_MODE) {
+            console.log(`   ❌ Error with coordinate-based clicking: ${error.message}`);
+          }
+        }
+        
+        // Wait longer for all key presses to be processed
+        await page.waitForTimeout(2000);
+        
+        // Get canvas dimensions for clicking below keyboard
+        const canvas = await page.$('canvas');
+        let canvasBox = null;
+        if (canvas) {
+          canvasBox = await canvas.boundingBox();
+        }
+        
+        // Click below the keyboard to bring emulator window to foreground
+        if (canvasBox) {
+          await page.mouse.move(canvasBox.x + canvasBox.width * 0.5, canvasBox.y + canvasBox.height * 0.8);
+          await page.mouse.down();
+          await page.mouse.up();
+          await page.waitForTimeout(500);
+        }
+        
+        // Press F6 again to close the virtual keyboard using down/up method
+        await page.keyboard.down('F6');
+        await page.waitForTimeout(100);
+        await page.keyboard.up('F6');
+        await page.waitForTimeout(2000); // Give more time for keyboard to close
+        
+        // OCR scan before final screenshot to see what was typed
+        try {
+          const canvas = await page.$('canvas');
+          if (canvas) {
+            const preFinalScreenshot = await canvas.screenshot();
+            const screenshotsDir = path.join(__dirname, 'screenshots');
+            if (!fs.existsSync(screenshotsDir)) {
+              fs.mkdirSync(screenshotsDir, { recursive: true });
+            }
+            const preFinalPath = path.join(screenshotsDir, `screenshot_${romTest.name.replace(/[^a-zA-Z0-9]/g, '_')}_pre_final.png`);
+            fs.writeFileSync(preFinalPath, preFinalScreenshot);
+            
+            // Run OCR on the pre-final screenshot
+            const Tesseract = require('tesseract.js');
+            const { data: { text } } = await Tesseract.recognize(preFinalPath, 'eng');
+            console.log(`🔍 Pre-final OCR: "${text.trim()}"`);
+          }
+        } catch (error) {
+          console.log(`   ⚠️  Pre-final OCR failed: ${error.message}`);
+        }
+        
+        // Screenshot after keyboard entry is now taken earlier after F6
       } catch (error) {
         console.log(`   ⚠️  Keyboard entry failed: ${error.message}`);
       }
@@ -530,8 +809,8 @@ async function runAllTests() {
   }
   
   const browser = await chromium.launch({ 
-    headless: true, // Run in headless mode for automation
-    slowMo: 0 // No delay needed in headless mode
+    headless: false, // Run in visible mode to see the virtual keyboard
+    slowMo: 200 // Add delay to see what's happening
   });
   
   // Filter tests if testFilter is specified
