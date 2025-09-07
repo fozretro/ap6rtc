@@ -19,15 +19,150 @@ The breakthrough came when it was realized:
 
 The complete process involves three phases: making ROMs joinable, joining them with SMJoin, and the resulting chained execution flow.
 
+## Candidate Bytes and Relocation Bitmap Generation
+
+### What Are Candidate Bytes?
+
+A **candidate byte** is any byte in a ROM that has the potential to be part of a relocatable address. Specifically, a candidate byte is one where **bits 7 and 6 are both set**:
+
+```javascript
+(byte & 0xC0) === 0x80
+```
+
+This means the byte has the pattern: `10xxxxxx` (where `x` can be 0 or 1)
+
+### Why This Pattern Matters
+
+In 6502 assembly, addresses are stored as **16-bit values** (2 bytes):
+- **Low byte**: The lower 8 bits of the address
+- **High byte**: The upper 8 bits of the address
+
+When the high byte has bits 7 and 6 set (`10xxxxxx`), it indicates:
+- **Bit 7 (0x80)**: This is likely a **memory address** (not just data)
+- **Bit 6 (0x40)**: This suggests it's in the **upper memory range** (typically $8000-$FFFF)
+
+### Examples of Candidate Bytes
+
+- `0x80` = `10000000` ✅ (candidate)
+- `0x81` = `10000001` ✅ (candidate) 
+- `0x82` = `10000010` ✅ (candidate)
+- `0x93` = `10010011` ✅ (candidate)
+- `0x00` = `00000000` ❌ (not a candidate)
+- `0x4C` = `01001100` ❌ (not a candidate)
+
+### How Candidate Bytes Work in Relocation
+
+When `smjoin-create.js` scans through a ROM:
+
+1. **It only processes candidate bytes** - these are the ones that might contain relocatable addresses
+2. **For each candidate byte**, it consumes one bit from the relocation bitmap
+3. **If the bit is set (1)**, it relocates the address at that position
+4. **If the bit is clear (0)**, it leaves the address unchanged
+
+### Why This Filtering is Important
+
+- **Performance**: Only processes bytes that could actually be addresses
+- **Accuracy**: Avoids relocating data bytes that happen to have the right bit pattern
+- **Efficiency**: Reduces the size of the relocation bitmap significantly
+
+### Example: Relocation Bitmap Generation
+
+**Important:** A candidate byte is identified by its bit pattern (`(byte & 0xC0) === 0x80`), but that doesn't automatically mean it needs relocation. The relocation system compares two versions of the same ROM compiled at different base addresses ($8000 vs $8100). If a candidate byte has the same value in both ROMs, it's likely data or a constant that happens to have the address-like bit pattern, so no relocation is needed. Only candidate bytes that differ between the two ROMs (typically by 0x01 in the high byte) are actually relocatable addresses.
+
+Let's say we have a ROM with the following bytes at offsets 0x0000-0x000F:
+
+```
+Offset 0x0000: 0x00 (not candidate) - skipped
+Offset 0x0001: 0x80 (candidate) - needs relocation
+Offset 0x0002: 0x00 (not candidate) - skipped
+Offset 0x0003: 0x81 (candidate) - no relocation needed
+Offset 0x0004: 0x00 (not candidate) - skipped
+Offset 0x0005: 0x82 (candidate) - needs relocation
+Offset 0x0006: 0x00 (not candidate) - skipped
+Offset 0x0007: 0x93 (candidate) - no relocation needed
+Offset 0x0008: 0x00 (not candidate) - skipped
+Offset 0x0009: 0x84 (candidate) - needs relocation
+Offset 0x000A: 0x00 (not candidate) - skipped
+Offset 0x000B: 0x85 (candidate) - no relocation needed
+Offset 0x000C: 0x00 (not candidate) - skipped
+Offset 0x000D: 0x86 (candidate) - needs relocation
+Offset 0x000E: 0x00 (not candidate) - skipped
+Offset 0x000F: 0x87 (candidate) - no relocation needed
+```
+
+**Step 1: Generate bits array (only for candidate bytes)**
+
+A candidate byte is determined to need relocation by comparing the two compilation forms of the code at different addresses ($8000 vs $8100). If the candidate byte has different values between the two ROMs, it's a relocatable address and gets a bit value of 1. If it has the same value, it's data/constants and gets a bit value of 0.
+
+```
+Candidate at 0x0001: 0x80 (ROM $8000) vs 0x81 (ROM $8100) → different → bit = 1
+Candidate at 0x0003: 0x81 (ROM $8000) vs 0x81 (ROM $8100) → same → bit = 0  
+Candidate at 0x0005: 0x82 (ROM $8000) vs 0x83 (ROM $8100) → different → bit = 1
+Candidate at 0x0007: 0x93 (ROM $8000) vs 0x93 (ROM $8100) → same → bit = 0
+Candidate at 0x0009: 0x84 (ROM $8000) vs 0x85 (ROM $8100) → different → bit = 1
+Candidate at 0x000B: 0x85 (ROM $8000) vs 0x85 (ROM $8100) → same → bit = 0
+Candidate at 0x000D: 0x86 (ROM $8000) vs 0x87 (ROM $8100) → different → bit = 1
+Candidate at 0x000F: 0x87 (ROM $8000) vs 0x87 (ROM $8100) → same → bit = 0
+```
+
+**Step 2: Compress into 8-bit bytes (LSB-first)**
+```
+bits = [1, 0, 1, 0, 1, 0, 1, 0]  (8 bits from 8 candidate bytes)
+bitmap_byte_0 = 0b01010101 = 0x55 (bits 0,2,4,6 set)
+
+Final relocation bitmap: [0x55]  (1 byte total)
+```
+
+**Note:** In this example, we have exactly 8 candidate bytes, so they compress into exactly 1 bitmap byte. If we had more candidate bytes, we would need additional bitmap bytes (e.g., 16 candidates = 2 bytes, 24 candidates = 3 bytes, etc.).
+
+**Step 3: How smjoin-create.js consumes it**
+```
+Candidate at 0x0001: consume bit 0 (1) → relocate
+Candidate at 0x0003: consume bit 1 (0) → no relocation
+Candidate at 0x0005: consume bit 2 (1) → relocate  
+Candidate at 0x0007: consume bit 3 (0) → no relocation
+Candidate at 0x0009: consume bit 4 (1) → relocate
+Candidate at 0x000B: consume bit 5 (0) → no relocation
+Candidate at 0x000D: consume bit 6 (1) → relocate
+Candidate at 0x000F: consume bit 7 (0) → no relocation
+```
+
+## Header Modification and Candidate Byte Generation
+
+### The Process
+
+When generating relocation data, the system must account for the fact that **header modification creates new candidate bytes**:
+
+1. **Original ROM**: `00 00 00 4c 27 80 82 14...`
+2. **After header modification**: `00 57 93 4c 27 80 82 14...`
+   - Byte 1: `0x00` → `0x57` (low byte of relocation table offset)
+   - Byte 2: `0x00` → `0x93` (high byte with bit 7 set)
+
+3. **Result**: Byte 2 (`0x93`) now has `(0x93 & 0xC0) === 0x80`, making it a **candidate byte**!
+
+### Implementation
+
+The relocation bitmap generation process:
+
+1. **Set header bytes first** - Set bytes 1 & 2 to the known relocation table offset
+2. **Generate bitmap** - Create relocation bitmap accounting for the new candidate byte at offset 2
+3. **Append bitmap** - Add the relocation bitmap to the end of the ROM
+
+### Why This Is Necessary
+
+- Header modification **creates new candidates** that weren't in the original ROM
+- The bitmap consumption is **sequential** - each candidate byte consumes one bit
+- The bitmap generation and consumption must be **perfectly aligned**
+- We must set the header first, then generate the bitmap based on the modified ROM
+
 ## Complete ROM Joining Process
+
+This section documents the complete ROM joining process as implemented in the original BBC BASIC source code (`MiniRom.bas`, `AP6v133.src`, and `SMJoin.bas`). The process involves three distinct phases that work together to create joinable ROMs and then combine them into a single chained ROM image.
 
 ### Phase 1: Making ROMs Joinable (Individual ROM Sources)
 **MiniRom.bas & AP6 ROM Source show how to structure ROMs for joining:**
 - **Language Entry (0-2)**: `EQUB &00:EQUW RelocTable` - Points to relocation table
-- **Service Entry (3-5)**: `JMP ServiceHandler` - Points to own service handler  
-- **Copyright & Length (6-7)**: `EQUB &82:EQUB RelocTableEnd-RomStart` - Standard header + reloc table length
 - **Relocation Data**: Generated by `PROCsm_table` at end of code
-- **Service Handler**: Handles service calls and returns (doesn't chain)
 
 ### Phase 2: ROM Joining Process (SMJoin.bas)
 **When SMJoin loads each ROM:**
@@ -61,16 +196,18 @@ NewStart2: JSR Service1     ; Call original handler (inserted by SMJoin)
 3. NewStart2: LDX &F4 → Service2 executes → returns  
 4. NewStart3: LDX &F4 → Service3 executes → returns to OS
 
-## Step-by-Step Instructions for SMJoin Compatibility
+## Step-by-Step Instructions for SMJoin Compatibility and Creating a Combined ROM
 
 The approach for making a ROM SMJoin-compatible depends on how the ROM is compiled and what tools are available. There are two main methods:
 
-- **Method A**: For ROMs compiled with BBC BASIC, which has built-in relocation generation capabilities
+- **Method A**: For ROMs compiled with BBC BASIC, which has a built-in 6502 compiler that can be customized to generate the relocation bitmap
 - **Method B**: For ROMs compiled with other assemblers (BeebAsm, Lancs Assembler, etc.), which require post-processing tools
 
 Both methods achieve the same result: a ROM with proper relocation data that SMJoin can process, but they use different techniques to generate that relocation data.
 
 ### Method A: BBC BASIC ROMs (MiniRom.bas, AP6v133.src)
+
+**Source files location:** `src.smjoin/MiniRom.bas`, `src.smjoin/SMJoin.bas`
 
 This method shows how `MiniRom.bas` implements SMJoin compatibility using BBC BASIC's built-in relocation generation.
 
@@ -79,7 +216,7 @@ This method shows how `MiniRom.bas` implements SMJoin compatibility using BBC BA
 .RomStart
 BRK:EQUW RelocTable          \ Offsets 0-2: Language entry
 JMP Service                  \ Offsets 3-5: Service entry
-EQUB &82:EQUB Copyright-RomStart  \ Offsets 6-7: Copyright + reloc table length
+EQUB &82:EQUB Copyright-RomStart  \ Offsets 6-7: Copyright + copyright offset
 ```
 
 #### Dual Compilation Control (MiniRom.bas)
@@ -119,6 +256,19 @@ PRINTA$;:OSCLIA$:PRINT
 4. **`PROCsm_table`**: Generate relocation data by comparing the two builds
 5. **`*SAVE`**: Save final ROM with relocation data
 
+#### Step 6: Create Combined ROM with BBC BASIC SMJoin
+**Run the original BBC BASIC SMJoin.bas program:**
+```basic
+CHAIN "SMJoin"
+```
+
+**What BBC BASIC SMJoin does:**
+1. **Loads each ROM** and validates their headers
+2. **Applies relocation data** to each ROM based on its final position
+3. **Links service routines** to create a proper call chain
+4. **Combines all ROMs** into a single image
+5. **Outputs final combined ROM** ready for use
+
 ### Method B: Non-BBC BASIC ROMs (BeebAsm, Lancs Assembler, etc.)
 
 For ROMs that cannot use BBC BASIC's `PROCsm_table` function, use the Node.js post-processing approach:
@@ -143,7 +293,7 @@ For ROMs that cannot use BBC BASIC's `PROCsm_table` function, use the Node.js po
 #### Step 2: Run Node.js Relocation Tool
 **Use the Node.js tool to generate SMJoin-compatible ROM:**
 ```bash
-node smjoin-reloc-data.js rom_8000.bin rom_8100.bin output_rom.bin
+node smjoin-reloc.js rom_8000.bin rom_8100.bin output_rom.bin
 ```
 
 #### Step 3: What the Node.js Tool Does
@@ -151,12 +301,10 @@ node smjoin-reloc-data.js rom_8000.bin rom_8100.bin output_rom.bin
 
 1. **Compares the two ROM builds** byte-by-byte to identify relocatable addresses
 2. **Generates compressed relocation data** (bitmap of which bytes need relocation)
-3. **Modifies the ROM header** to be SMJoin-compatible:
-   - **Language Entry (0-2)**: Changes `DFB 0,0,0` to `BRK + RelocTable address`
-   - **Service Entry (3-5)**: Keeps existing `JMP ServiceHandler` unchanged
-   - **Relocation Length (7)**: Updates to actual relocation table length
-4. **Appends relocation data** to the end of the ROM
-5. **Outputs final ROM** ready for SMJoin processing
+3. **Sets header bytes first** - Sets bytes 1 & 2 to the known relocation table offset
+4. **Generates bitmap** - Creates relocation bitmap accounting for new candidate bytes
+5. **Appends relocation data** to the end of the ROM
+6. **Outputs final ROM** ready for SMJoin processing
 
 #### Step 4: ROM Header Changes Summary
 **Input ROM header:**
@@ -173,7 +321,7 @@ romstart    BRK                       \dummy language entry
             EQUW    RelocTable        \address to relocation table
             JMP     service           \to service entry (unchanged)
             DFB     $82               \ROM type : Service + 6502 code  
-            DFB     RelocTableLength  \relocation table length
+            DFB     (copyr-romstart)  \offset to copyright string (unchanged)
             ; ... ROM code ...
             ; ... relocation data appended at end ...
 ```
@@ -184,6 +332,19 @@ romstart    BRK                       \dummy language entry
 - SMJoin relocates the ROM to its final position
 - SMJoin modifies the service entry to implement chaining
 - ROM becomes part of the service call chain
+
+#### Step 6: Create Combined ROM with SMJoin
+**Use the Node.js SMJoin tool to combine multiple ROMs:**
+```bash
+node smjoin-create.js rom1.bin rom2.bin rom3.bin output_combined.bin
+```
+
+**What SMJoin does:**
+1. **Loads each ROM** and validates their headers
+2. **Applies relocation data** to each ROM based on its final position
+3. **Links service routines** to create a proper call chain
+4. **Combines all ROMs** into a single image
+5. **Outputs final combined ROM** ready for use
 
 ## ROM Chaining Mechanism
 
@@ -254,10 +415,18 @@ The system looks for bytes that differ by exactly 1 page (256 bytes) between the
 - **Difference**: High byte changed from `80` to `81` (exactly 1 page)
 
 ### Relocation Bitmap Generation
-- Each byte is checked: `(byte80% AND &C0)=&80` (address high byte pattern)
-- If difference is ±1 page: mark for relocation (bit = 1)
-- Pack 8 relocation bits into each output byte
-- Store compressed bitmap at end of ROM
+The bitmap generation process uses **candidate byte filtering** for efficiency:
+
+1. **Candidate Detection**: Each byte is checked: `(byte80% AND &C0)=&80` (candidate byte pattern)
+2. **Difference Analysis**: For candidate bytes only, check if difference is ±1 page
+3. **Bitmap Creation**: If difference is ±1 page: mark for relocation (bit = 1), otherwise (bit = 0)
+4. **Compression**: Pack 8 relocation bits into each output byte (LSB-first)
+5. **Storage**: Store compressed bitmap at end of ROM
+
+**Important**: Only candidate bytes (those with `(byte & 0xC0) === 0x80`) are processed for relocation. This filtering:
+- **Improves performance** by skipping non-address bytes
+- **Reduces bitmap size** significantly 
+- **Prevents false positives** from data bytes that happen to differ by 1
 
 ### ROM Header Structure
 ```
