@@ -30,14 +30,6 @@ const romTests = [
       expectedElements: ['RH', 'Flus', '1', '32K', 'BASIC'] // Check for key text using OCR
     },
     {
-      name: 'LatestAP6.rom',
-      rom: 'LatestAP6.rom',
-      expectedSize: 12805,
-      description: 'New AP6 ROM - combined ROM with I2C functionality',
-      expectedElements: ['RH', 'Flus', '1', '32K', 'BASIC', 'I2C','Sun'], // Check for key text using OCR
-      bootCommands: ['*HELP', '*NOW']
-    },
-    {
       name: 'I2C.rom',
       rom: 'I2C.rom',
       expectedSize: 16384,
@@ -51,6 +43,14 @@ const romTests = [
       expectedSize: 4951,
       description: 'I2C ROM original - unrelocated I2C ROM compiled at $8000',
       expectedElements: ['I2C', '3.2EAP6', 'OS', '1.00', 'Sun'],
+      bootCommands: ['*HELP', '*NOW']
+    },
+    {
+      name: 'LatestAP6.rom',
+      rom: 'LatestAP6.rom',
+      expectedSize: 12805,
+      description: 'New AP6 ROM - combined ROM with I2C functionality',
+      expectedElements: ['RH', 'Flus', '1', '32K', 'BASIC', 'I2C','Sun'], // Check for key text using OCR
       bootCommands: ['*HELP', '*NOW']
     }
 ];
