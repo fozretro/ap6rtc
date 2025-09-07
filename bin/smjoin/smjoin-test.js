@@ -34,7 +34,8 @@ const romTests = [
       rom: 'LatestAP6.rom',
       expectedSize: 12805,
       description: 'New AP6 ROM - combined ROM with I2C functionality',
-      expectedElements: ['RH', 'Flus', '1', '32K', 'BASIC'] // Check for key text using OCR
+      expectedElements: ['RH', 'Flus', '1', '32K', 'BASIC', 'I2C','Sun'], // Check for key text using OCR
+      bootCommands: ['*HELP', '*NOW']
     },
     {
       name: 'I2C.rom',
@@ -49,8 +50,8 @@ const romTests = [
       rom: 'LatestI2C8000.rom',
       expectedSize: 4951,
       description: 'I2C ROM original - unrelocated I2C ROM compiled at $8000',
-      expectedElements: ['I2C', '3.2EAP6', 'OS', '1.00'], // Check for I2C version info after *HELP
-      bootCommands: ['*HELP']
+      expectedElements: ['I2C', '3.2EAP6', 'OS', '1.00', 'Sun'],
+      bootCommands: ['*HELP', '*NOW']
     }
 ];
 
@@ -708,94 +709,104 @@ async function testROM(romTest, browser) {
 
     // Test result - check for expected text using OCR with fuzzy matching
     let textSuccess = true;
+    let missingElements = [];
+    
     if (romTest.expectedElements && romTest.expectedElements.length > 0) {
       if (VERBOSE_MODE) {
         console.log(`🔍 Checking expected elements: ${romTest.expectedElements.join(', ')}`);
         console.log(`🔍 OCR text: "${ocrText}"`);
       }
       
-      textSuccess = romTest.expectedElements.every(element => {
+      // Check each element and collect missing ones
+      romTest.expectedElements.forEach(element => {
         const elementLower = element.toLowerCase();
         const ocrLower = ocrText.toLowerCase();
+        let found = false;
         
         // Direct match
         if (ocrLower.includes(elementLower)) {
           if (VERBOSE_MODE) {
             console.log(`   ✅ Found direct match: "${element}"`);
           }
-          return true;
-        }
-        
-        // Try partial matching - look for the element anywhere in the OCR text
-        const words = ocrLower.split(/\s+/);
-        const partialMatch = words.some(word => {
-          if (word.includes(elementLower) || elementLower.includes(word)) {
-            if (VERBOSE_MODE) {
-              console.log(`   ✅ Found partial match: "${element}" in word "${word}"`);
-            }
-            return true;
-          }
-          return false;
-        });
-        
-        if (partialMatch) {
-          return true;
-        }
-        
-        // Fuzzy matching for common OCR errors
-        let fuzzyMatch = false;
-        
-        // Create a flexible pattern that handles common OCR substitutions
-        let flexiblePattern = elementLower
-          .replace(/i/g, '[il1]')
-          .replace(/l/g, '[il1]') 
-          .replace(/1/g, '[il1]')
-          .replace(/o/g, '[o0]')
-          .replace(/0/g, '[o0]')
-          .replace(/s/g, '[s5]')
-          .replace(/5/g, '[s5]')
-          .replace(/b/g, '[b6]')
-          .replace(/6/g, '[b6]')
-          .replace(/g/g, '[g9]')
-          .replace(/9/g, '[g9]')
-          .replace(/z/g, '[z2]')
-          .replace(/2/g, '[z2]')
-          .replace(/\*/g, '[>»]')
-          .replace(/>/g, '[>»]')
-          .replace(/»/g, '[>»]');
-        
-        // Convert to proper regex
-        const regex = new RegExp(flexiblePattern.replace(/\[.*?\]/g, '[.*]'), 'i');
-        fuzzyMatch = regex.test(ocrLower);
-        
-        // Also try simple character distance matching on individual words
-        if (!fuzzyMatch) {
+          found = true;
+        } else {
+          // Try partial matching - look for the element anywhere in the OCR text
           const words = ocrLower.split(/\s+/);
-          for (const word of words) {
-            const distance = levenshteinDistance(elementLower, word);
-            if (VERBOSE_MODE) {
-              console.log(`   🔍 Levenshtein distance for "${element}" vs "${word}": ${distance}`);
-            }
-            if (distance <= 2) {
-              fuzzyMatch = true;
+          const partialMatch = words.some(word => {
+            if (word.includes(elementLower) || elementLower.includes(word)) {
               if (VERBOSE_MODE) {
-                console.log(`   ✅ Found fuzzy match via Levenshtein: "${element}" matches "${word}"`);
+                console.log(`   ✅ Found partial match: "${element}" in word "${word}"`);
               }
-              break;
+              return true;
+            }
+            return false;
+          });
+          
+          if (partialMatch) {
+            found = true;
+          } else {
+            // Fuzzy matching for common OCR errors
+            let fuzzyMatch = false;
+            
+            // Create a flexible pattern that handles common OCR substitutions
+            let flexiblePattern = elementLower
+              .replace(/i/g, '[il1]')
+              .replace(/l/g, '[il1]') 
+              .replace(/1/g, '[il1]')
+              .replace(/o/g, '[o0]')
+              .replace(/0/g, '[o0]')
+              .replace(/s/g, '[s5]')
+              .replace(/5/g, '[s5]')
+              .replace(/b/g, '[b6]')
+              .replace(/6/g, '[b6]')
+              .replace(/g/g, '[g9]')
+              .replace(/9/g, '[g9]')
+              .replace(/z/g, '[z2]')
+              .replace(/2/g, '[z2]')
+              .replace(/\*/g, '[>»]')
+              .replace(/>/g, '[>»]')
+              .replace(/»/g, '[>»]');
+            
+            // Convert to proper regex
+            const regex = new RegExp(flexiblePattern.replace(/\[.*?\]/g, '[.*]'), 'i');
+            fuzzyMatch = regex.test(ocrLower);
+            
+            // Also try simple character distance matching on individual words
+            if (!fuzzyMatch) {
+              const words = ocrLower.split(/\s+/);
+              for (const word of words) {
+                const distance = levenshteinDistance(elementLower, word);
+                if (VERBOSE_MODE) {
+                  console.log(`   🔍 Levenshtein distance for "${element}" vs "${word}": ${distance}`);
+                }
+                if (distance <= 2) {
+                  fuzzyMatch = true;
+                  if (VERBOSE_MODE) {
+                    console.log(`   ✅ Found fuzzy match via Levenshtein: "${element}" matches "${word}"`);
+                  }
+                  break;
+                }
+              }
+            }
+            
+            if (fuzzyMatch) {
+              found = true;
+              if (VERBOSE_MODE) {
+                console.log(`   ✅ Found fuzzy match: "${element}"`);
+              }
             }
           }
         }
         
-        if (VERBOSE_MODE) {
-          if (fuzzyMatch) {
-            console.log(`   ✅ Found fuzzy match: "${element}"`);
-          } else {
+        if (!found) {
+          missingElements.push(element);
+          if (VERBOSE_MODE) {
             console.log(`   ❌ No match found for: "${element}"`);
           }
         }
-        
-        return fuzzyMatch;
       });
+      
+      textSuccess = missingElements.length === 0;
     }
     const success = emulatorLoaded.hasCanvas && textSuccess;
     const status = success ? '✅ PASS' : '❌ FAIL';
@@ -810,6 +821,9 @@ async function testROM(romTest, browser) {
     }
     console.log(`   📺 Screen content: 1000/0 non-black pixels`);
     console.log(`   🔍 Expected elements: ${textSuccess ? '✅ ALL FOUND' : '❌ MISSING'}`);
+    if (!textSuccess && missingElements.length > 0) {
+      console.log(`   📝 Missing elements: ${missingElements.join(', ')}`);
+    }
     
     return {
       name: romTest.name,
@@ -818,7 +832,8 @@ async function testROM(romTest, browser) {
       emulatorLoaded,
       networkRequests: networkRequests.length,
       errorElements: errorElements.length,
-      ocrText
+      ocrText,
+      missingElements
     };
     
   } catch (error) {
