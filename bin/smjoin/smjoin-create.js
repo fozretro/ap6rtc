@@ -44,6 +44,13 @@ class SMJoin {
             this.ptr += 2; // Add 2-byte gap between modules
         }
 
+        // Align to 256-byte page boundary
+        const pageBoundary = Math.ceil(this.ptr / 256) * 256;
+        if (this.ptr !== pageBoundary) {
+            this.log(`  Aligning from 0x${this.ptr.toString(16)} to 0x${pageBoundary.toString(16)} (page boundary)`);
+            this.ptr = pageBoundary;
+        }
+
         // Copy file data to memory
         this.mem.set(data, this.ptr);
         
