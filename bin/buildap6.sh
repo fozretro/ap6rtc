@@ -3,10 +3,10 @@ set -e # Exit immediately if a command exits with a non-zero status.
 
 # ROM file constants
 ROM_FILES=(
-    "../../dev/smjoin-8kb/AP1V131"
-    "../../dev/smjoin-8kb/AP6V134"
-    "../../dev/smjoin-8kb/TUBEELK"
-    "../../dev/smjoin-8kb/AP6COUNT"
+    "../../src.AP6.MDFS/AP1v131"
+    "../../src.AP6.MDFS/AP6v134"
+    "../../src.AP6.MDFS/TUBEelk"
+    "../../src.AP6.MDFS/AP6Count"
     "tmp/i2c-reloc.rom"
 )
 OUTPUT_ROM="../../dist/ap6.rom"
