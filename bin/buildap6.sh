@@ -1,11 +1,22 @@
 #!/bin/bash
 set -e # Exit immediately if a command exits with a non-zero status.
 
+# ROM file constants
+ROM_FILES=(
+    "../../dev/smjoin-8kb/AP1V131"
+    "../../dev/smjoin-8kb/AP6V134"
+    "../../dev/smjoin-8kb/TUBEELK"
+    "../../dev/smjoin-8kb/AP6COUNT"
+    "tmp/i2c-reloc.rom"
+)
+OUTPUT_ROM="../../dist/ap6.rom"
+
 # Parse command line arguments
 SKIP_I2C_BUILD=false
 KEEP_SERVER_RUNNING=false
 TEST_FILTER=""
 VERBOSE=false
+SKIP_TESTING=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -25,13 +36,18 @@ while [[ $# -gt 0 ]]; do
             VERBOSE=true
             shift
             ;;
+        --skip-testing)
+            SKIP_TESTING=true
+            shift
+            ;;
         -h|--help)
-            echo "Usage: $0 [--skip-i2c-build] [--nokill-romserver] [--testFilter ROM1,ROM2,...] [--verbose]"
+            echo "Usage: $0 [--skip-i2c-build] [--nokill-romserver] [--testFilter ROM1,ROM2,...] [--verbose] [--skip-testing]"
             echo "  --skip-i2c-build     Skip I2C ROM compilation, use existing files"
             echo "  --nokill-romserver   Keep ROM server running after tests complete"
             echo "  --testFilter         Comma-separated list of ROM names to test (e.g., AP6.rom,I2C.rom)"
             echo "                       Available ROMs: AP6.rom, LatestAP6.rom, I2C.rom, LatestI2C.rom"
             echo "  --verbose, -v        Enable verbose logging in test output"
+            echo "  --skip-testing       Skip ROM testing step entirely"
             exit 0
             ;;
         *)
@@ -46,6 +62,9 @@ echo "🚀 AP6 Complete Build Pipeline"
 echo "============================="
 if [ "$SKIP_I2C_BUILD" = true ]; then
     echo "  -> Skipping I2C build (using existing files)"
+fi
+if [ "$SKIP_TESTING" = true ]; then
+    echo "  -> Skipping testing step"
 fi
 echo ""
 
@@ -98,7 +117,11 @@ echo "✅ Relocation ROM created successfully"
 echo ""
 
 echo "🔗 Step 3: Combining ROMs with SMJoin..."
-node smjoin-create.js ../../dev/smjoin-8kb/AP1V131 ../../dev/smjoin-8kb/AP6V134 ../../dev/smjoin-8kb/TUBEELK ../../dev/smjoin-8kb/AP6COUNT tmp/i2c-reloc.rom ../../dist/ap6.rom
+if [ "$VERBOSE" = true ]; then
+    node smjoin-create.js "${ROM_FILES[@]}" "$OUTPUT_ROM" --verbose
+else
+    node smjoin-create.js "${ROM_FILES[@]}" "$OUTPUT_ROM"
+fi
 if [ $? -ne 0 ]; then
     echo "❌ SMJoin combination failed!"
     exit 1
@@ -107,44 +130,49 @@ echo "✅ SMJoin combination completed successfully"
 echo ""
 
 echo "📊 Final ROM Statistics:"
-ls -la ../../dist/ap6.rom
+ls -la "$OUTPUT_ROM"
 echo ""
 
-echo "🧪 Step 4: Running ROM tests..."
-if [ -n "$TEST_FILTER" ]; then
-    echo "  -> Filtering tests to: $TEST_FILTER"
-fi
-if [ "$VERBOSE" = true ]; then
-    echo "  -> Verbose logging enabled"
-fi
-if [ "$KEEP_SERVER_RUNNING" = true ]; then
-    echo "  -> Server will be kept running after tests complete"
-    if [ -n "$TEST_FILTER" ] && [ "$VERBOSE" = true ]; then
-        node smjoin-test.js --nokill-romserver --testFilter "$TEST_FILTER" --verbose
-    elif [ -n "$TEST_FILTER" ]; then
-        node smjoin-test.js --nokill-romserver --testFilter "$TEST_FILTER"
-    elif [ "$VERBOSE" = true ]; then
-        node smjoin-test.js --nokill-romserver --verbose
-    else
-        node smjoin-test.js --nokill-romserver
-    fi
+if [ "$SKIP_TESTING" = true ]; then
+    echo "🧪 Step 4: Skipping ROM tests..."
+    echo "✅ Testing step skipped"
 else
-    if [ -n "$TEST_FILTER" ] && [ "$VERBOSE" = true ]; then
-        node smjoin-test.js --testFilter "$TEST_FILTER" --verbose
-    elif [ -n "$TEST_FILTER" ]; then
-        node smjoin-test.js --testFilter "$TEST_FILTER"
-    elif [ "$VERBOSE" = true ]; then
-        node smjoin-test.js --verbose
-    else
-        node smjoin-test.js
+    echo "🧪 Step 4: Running ROM tests..."
+    if [ -n "$TEST_FILTER" ]; then
+        echo "  -> Filtering tests to: $TEST_FILTER"
     fi
-fi
-if [ $? -ne 0 ]; then
-    echo "❌ ROM tests failed!"
-    exit 1
+    if [ "$VERBOSE" = true ]; then
+        echo "  -> Verbose logging enabled"
+    fi
+    if [ "$KEEP_SERVER_RUNNING" = true ]; then
+        echo "  -> Server will be kept running after tests complete"
+        if [ -n "$TEST_FILTER" ] && [ "$VERBOSE" = true ]; then
+            node smjoin-test.js --nokill-romserver --testFilter "$TEST_FILTER" --verbose
+        elif [ -n "$TEST_FILTER" ]; then
+            node smjoin-test.js --nokill-romserver --testFilter "$TEST_FILTER"
+        elif [ "$VERBOSE" = true ]; then
+            node smjoin-test.js --nokill-romserver --verbose
+        else
+            node smjoin-test.js --nokill-romserver
+        fi
+    else
+        if [ -n "$TEST_FILTER" ] && [ "$VERBOSE" = true ]; then
+            node smjoin-test.js --testFilter "$TEST_FILTER" --verbose
+        elif [ -n "$TEST_FILTER" ]; then
+            node smjoin-test.js --testFilter "$TEST_FILTER"
+        elif [ "$VERBOSE" = true ]; then
+            node smjoin-test.js --verbose
+        else
+            node smjoin-test.js
+        fi
+    fi
+    if [ $? -ne 0 ]; then
+        echo "❌ ROM tests failed!"
+        exit 1
+    fi
 fi
 echo ""
 
 echo "🎉 AP6 Complete Build Pipeline finished successfully!"
-echo "Output: dist/ap6.rom"
+echo "Output: $OUTPUT_ROM"
 echo "=================================================="
