@@ -235,6 +235,48 @@ Successfully implemented SMJoin compatibility for the I2C ROM, enabling it to be
 
 **Result:** The I2C ROM is now fully compatible with the SMJoin system and can be combined with other AP6 ROMs into a single 16KB ROM image, providing a complete AP6 ROM solution with automated testing.
 
+TreeROM Version Compatibility Issue (Sep 2025)
+-----------------------------------------------
+
+**Issue Identified: TreeROM Version Mismatch Preventing Full ROM Combination**
+
+During testing of the complete AP6 ROM combination (including TreeROM), a version compatibility issue was discovered that prevents the full 5-ROM combination from fitting within the 16KB limit.
+
+**Problem Analysis:**
+- **Current TreeROM available**: Version 1.62 (8,704 bytes) - too large for 16KB ROM
+- **Original AP6v133t.rom used**: TreeROM Version 1.61 (smaller) - fits successfully
+- **Available space**: 3,497 bytes (after combining AP1v131, AP6v134, TUBEelk, AP6Count, I2C)
+- **Space needed**: 5,207 bytes more than available
+
+**Critical Discovery:**
+The original AP6v133t.rom (16,067 bytes) contained **5 ROMs without I2C**:
+- AP1v131, AP6v133, TUBEelk, AP6Count, TreeROM
+- **No I2C ROM was included in the original combination**
+
+Our current build includes **6 ROMs including I2C** (12,887 bytes), which is why adding TreeROM exceeds the 16KB limit.
+
+**Why All 6 ROMs Won't Fit:**
+- **Original 5-ROM combination**: 16,067 bytes (fits in 16KB with 317 bytes spare)
+- **Adding I2C ROM**: +5,136 bytes = 21,203 bytes total
+- **16KB limit**: 16,384 bytes
+- **Result**: 4,819 bytes over the limit
+- **Conclusion**: The 16KB ROM space can accommodate either the original 5 ROMs OR 4 ROMs + I2C, but not all 6 ROMs together
+
+**Root Cause:**
+The source code analysis at [MDFS TreeCopier](https://mdfs.net/Software/CommandSrc/FileUtils/TreeCopier/) confirms that TreeCopy version 1.62 source is larger than version 1.61, explaining the size difference. The original AP6v133t.rom was built using the smaller TreeROM version 1.61.
+
+**Current Status:**
+- ✅ **4-ROM combination works perfectly**: AP1v131, AP6v134, TUBEelk, AP6Count, I2C (12,887 bytes)
+- ❌ **5-ROM combination fails**: Adding TreeROM 1.62 exceeds 16KB limit
+- ✅ **All tests pass**: Complete build and test pipeline functional without TreeROM
+
+**Solution Options:**
+1. **Download TreeROM version 1.61** from MDFS (the version used in original AP6v133t.rom)
+2. **Optimize I2C ROM** to free up additional space for TreeROM 1.62
+3. **Proceed with 4-ROM combination** (fully functional and tested)
+
+**Reference:** [MDFS TreeCopier Source](https://mdfs.net/Software/CommandSrc/FileUtils/TreeCopier/) - Contains source code for both TreeCopy 1.61 and 1.62 versions.
+
 Merging I2C ROM into the AP6 Main ROM Update (Jan 2025)
 -------------------------------------------------------
 
