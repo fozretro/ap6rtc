@@ -8,7 +8,22 @@ import http.server
 import socketserver
 import os
 import sys
+import json
 from urllib.parse import urlparse
+
+def load_config():
+    """Load ROM mappings from JSON config file"""
+    config_path = os.path.join(os.path.dirname(__file__), 'config', 'smjoin-test-server-config.json')
+    try:
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+            return config.get('rom_mappings', {})
+    except FileNotFoundError:
+        print(f"⚠️  Config file not found: {config_path}")
+        return {}
+    except json.JSONDecodeError as e:
+        print(f"⚠️  Error parsing JSON config: {e}")
+        return {}
 
 class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
@@ -29,13 +44,8 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.do_GET()
 
     def do_GET(self):
-        # Map ROM files to their actual locations
-        rom_mappings = {
-            'AP6.rom': 'src.AP6.MDFS/AP6v134t.rom',
-            'I2C.rom': 'dist/i2c/I2C32EAP6.rom',
-            'LatestAP6.rom': 'dist/ap6.rom',
-            'LatestI2C8000.rom': 'bin/smjoin/tmp/i2c-8000.rom',
-        }
+        # Load ROM mappings from config file
+        rom_mappings = load_config()
         
         # Extract filename from path
         path = urlparse(self.path).path.lstrip('/')
@@ -93,9 +103,14 @@ def main():
     print(f"🌐 Server URL: http://localhost:{port}")
     print(f"🔧 CORS enabled for all origins (*)")
     print(f"📥 ROM mappings:")
-    print(f"   AP6.rom -> Official AP6 ROM (HTTP download needed)")
-    print(f"   I2C_standard.rom -> dist/i2c/I2C32EAP6.rom")
-    print(f"   distAP6.rom -> dist/ap6.rom")
+    
+    # Load and display ROM mappings from config
+    rom_mappings = load_config()
+    if rom_mappings:
+        for rom_name, rom_path in rom_mappings.items():
+            print(f"   {rom_name} -> {rom_path}")
+    else:
+        print("   ⚠️  No ROM mappings loaded from config")
     print(f"⏹️  Press Ctrl+C to stop the server")
     print("-" * 60)
     
