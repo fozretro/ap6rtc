@@ -17,43 +17,35 @@ if (testFilterIndex !== -1 && testFilterIndex + 1 < process.argv.length) {
   TEST_FILTER = filterArg.split(',').map(name => name.trim());
 }
 
-const SERVER_PORT = 8080;
-const SERVER_SCRIPT = 'smjoin-test-server.py';
+// Parse config file argument
+let config = null;
+const configIndex = process.argv.indexOf('--config');
+if (configIndex !== -1 && configIndex + 1 < process.argv.length) {
+  const configPath = process.argv[configIndex + 1];
+  try {
+    config = require(path.resolve(configPath));
+    console.log(`✅ Loaded configuration from: ${configPath}`);
+  } catch (error) {
+    console.error(`❌ Failed to load config from ${configPath}:`, error.message);
+    process.exit(1);
+  }
+} else {
+  // Use default config
+  try {
+    config = require('./config/smjoin-test-config.js');
+    console.log('✅ Using default configuration');
+  } catch (error) {
+    console.error('❌ Failed to load default config:', error.message);
+    process.exit(1);
+  }
+}
 
-// ROM test configurations
-const romTests = [
-    {
-      name: 'AP6.rom',
-      rom: 'AP6.rom',
-      expectedSize: 16147,
-      description: 'Official AP6 Plus 1.1.33 ROM - reference baseline',
-      expectedElements: ['RH', 'Flus', '1', '32K', 'BASIC'] // Check for key text using OCR
-    },
-    {
-      name: 'I2C.rom',
-      rom: 'I2C.rom',
-      expectedSize: 16384,
-      description: 'Original I2C ROM - unmodified I2C ROM for comparison',
-      expectedElements: ['I2C', '3.2EAP6', 'OS', '1.00'], // Check for I2C version info after *HELP
-      bootCommands: ['*HELP'],
-    },
-    {
-      name: 'LatestI2C8000.rom',
-      rom: 'LatestI2C8000.rom',
-      expectedSize: 4951,
-      description: 'I2C ROM original - unrelocated I2C ROM compiled at $8000',
-      expectedElements: ['I2C', '3.2EAP6', 'OS', '1.00', 'Sun'],
-      bootCommands: ['*HELP', '*NOW']
-    },
-    {
-      name: 'LatestAP6.rom',
-      rom: 'LatestAP6.rom',
-      expectedSize: 12805,
-      description: 'New AP6 ROM - combined ROM with I2C functionality',
-      expectedElements: ['RH', 'Flus', '1', '32K', 'BASIC', 'I2C','Sun'], // Check for key text using OCR
-      bootCommands: ['*HELP', '*NOW']
-    }
-];
+// Extract configuration values
+const SERVER_PORT = config.server.port;
+const SERVER_SCRIPT = config.server.script;
+
+// ROM test configurations from config file
+const romTests = config.romTests;
 
 // Levenshtein distance function for fuzzy string matching
 function levenshteinDistance(str1, str2) {
@@ -86,32 +78,13 @@ async function extractTextFromScreenshot(imageBuffer) {
     if (VERBOSE_MODE) {
       console.log('🔍 Running OCR on screenshot...');
     }
-    const { data: { text } } = await Tesseract.recognize(imageBuffer, 'eng', {
+    const { data: { text } } = await Tesseract.recognize(imageBuffer, config.ocr.language, {
       logger: m => {
         if (VERBOSE_MODE && m.status) {
           console.log(`   OCR: ${m.status}`);
         }
       },
-      // Enhanced options for computer/terminal text recognition
-      tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,;:!?@#$%^&*()_+-=[]{}|\\/"\'<>~` ',
-      tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK, // Treat as single text block
-      tessedit_ocr_engine_mode: Tesseract.OEM.LSTM_ONLY, // Use LSTM neural network
-      preserve_interword_spaces: '1', // Preserve spaces between words
-      tessedit_char_blacklist: '', // Don't blacklist any characters
-      // Additional options for better terminal text recognition
-      classify_bln_numeric_mode: '0', // Don't force numeric mode
-      textord_min_linesize: '2.5', // Minimum line size
-      textord_old_baselines: '0', // Use new baseline detection
-      textord_old_xheight: '0', // Use new x-height detection
-      textord_min_xheight: '8', // Minimum x-height
-      textord_force_make_prop_words: 'F', // Don't force proportional words
-      textord_force_make_prop_fonts: 'F', // Don't force proportional fonts
-      // Character recognition improvements
-      classify_enable_learning: 'F', // Disable learning for consistency
-      classify_enable_adaptive_matcher: 'F', // Disable adaptive matching
-      classify_enable_adaptive_debugger: 'F', // Disable adaptive debugger
-      // Text layout improvements
-      textord_really_old_xheight: 'F' // Don't use really old x-height
+      ...config.ocr.options
     });
     return text.trim();
   } catch (error) {
@@ -207,15 +180,15 @@ async function startServer() {
           resolve();
         }
       }
-    }, 500);
+    }, config.server.checkInterval);
 
-    // Timeout after 10 seconds
+    // Timeout after configured time
     setTimeout(() => {
       if (!serverReady) {
         clearInterval(checkInterval);
-        reject(new Error('Server failed to start within 10 seconds'));
+        reject(new Error(`Server failed to start within ${config.server.timeout/1000} seconds`));
       }
-    }, 10000);
+    }, config.server.timeout);
 
     serverProcess.on('error', (error) => {
       clearInterval(checkInterval);
@@ -259,7 +232,7 @@ async function testROM(romTest, browser) {
   console.log(`\n🧪 Testing: ${romTest.name}`);
   console.log(`📝 Description: ${romTest.description}`);
   // Build the emulator URL from the ROM name
-  const baseUrl = 'https://0xc0de6502.github.io/electroniq/';
+  const baseUrl = config.emulator.baseUrl;
   const romUrl = `http://localhost:${SERVER_PORT}/${romTest.rom}`;
   const emulatorUrl = `${baseUrl}?romF=${romUrl}`;
   
@@ -277,7 +250,10 @@ async function testROM(romTest, browser) {
     if (!fs.existsSync(screenshotsDir)) {
       fs.mkdirSync(screenshotsDir, { recursive: true });
     }
-    const filename = `screenshot_${romTest.name.replace(/[^a-zA-Z0-9]/g, '_')}_${screenshotIndex}_${description}.png`;
+    const filename = config.screenshots.naming.pattern
+      .replace('{romName}', romTest.name.replace(config.screenshots.naming.replacements.romName, config.screenshots.naming.replacements.replacement))
+      .replace('{index}', screenshotIndex)
+      .replace('{description}', description);
     const filepath = path.join(screenshotsDir, filename);
     fs.writeFileSync(filepath, screenshot);
     console.log(`📸 ${description} screenshot saved: ${filepath}`);
@@ -329,8 +305,8 @@ async function testROM(romTest, browser) {
       }
       
       // Truncate very long messages
-      const truncated = text.length > 200 ? text.substring(0, 200) + '...' : text;
-      const length = text.length > 200 ? ` (${text.length} chars)` : '';
+      const truncated = text.length > config.execution.maxMessageLength ? text.substring(0, config.execution.maxMessageLength) + '...' : text;
+      const length = text.length > config.execution.maxMessageLength ? ` (${text.length} chars)` : '';
       console.log(`📋 Console Log: ${truncated}${length}`);
     });
 
@@ -414,7 +390,7 @@ async function testROM(romTest, browser) {
     const startTime = Date.now();
     await page.goto(finalUrl, { 
       waitUntil: 'domcontentloaded',
-      timeout: 15000
+      timeout: config.emulator.loadTimeout
     });
     const loadTime = Date.now() - startTime;
     
@@ -423,7 +399,7 @@ async function testROM(romTest, browser) {
     
     // Wait for emulator to load ROM content
     console.log(`⏳ Waiting for emulator to load ROM content...`);
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(config.emulator.contentWaitTime);
 
     // Take initial screenshot if keyboard entry is required
     let initialScreenshot = null;
@@ -456,8 +432,8 @@ async function testROM(romTest, browser) {
       if (VERBOSE_MODE) {
         console.log(`⚠️  Page errors found: ${errorElements.length} errors`);
         errorElements.forEach((error, index) => {
-          const truncated = error.length > 200 ? error.substring(0, 200) + '...' : error;
-          const length = error.length > 200 ? ` (${error.length} chars)` : '';
+          const truncated = error.length > config.execution.maxMessageLength ? error.substring(0, config.execution.maxMessageLength) + '...' : error;
+          const length = error.length > config.execution.maxMessageLength ? ` (${error.length} chars)` : '';
           console.log(`   ${index + 1}. ${truncated}${length}`);
         });
       } else {
@@ -474,13 +450,13 @@ async function testROM(romTest, browser) {
         
         // Click on the canvas to ensure focus
         await page.click('canvas');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(config.emulator.keyboardWaitTime);
         
         // Open virtual keyboard with F6 (down/up method that works)
         await page.keyboard.down('F6');
-        await page.waitForTimeout(100);
+        await page.waitForTimeout(config.keyboard.timing.f6Delay);
         await page.keyboard.up('F6');
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(config.keyboard.timing.f6Delay);
 
         // Take screenshot after F6 opens keyboard but before typing
         const keyboardCanvas = await page.$('canvas');
@@ -628,23 +604,23 @@ async function testROM(romTest, browser) {
               // Press shift if required
               if (key.requiresShift) {
                 await page.keyboard.down('Shift');
-                await page.waitForTimeout(10);
+                await page.waitForTimeout(config.keyboard.timing.shiftDelay);
               }
               
               // Move to the key position first
               await page.mouse.move(key.x, key.y);
-              await page.waitForTimeout(10);
+              await page.waitForTimeout(config.keyboard.timing.keyPressDelay);
               
               // Press and release mouse button
               await page.mouse.down();
-              await page.waitForTimeout(10);
+              await page.waitForTimeout(config.keyboard.timing.keyPressDelay);
               await page.mouse.up();
-              await page.waitForTimeout(50); // Reduced delay between clicks
+              await page.waitForTimeout(config.keyboard.timing.clickDelay);
               
               // Release shift if it was pressed
               if (key.requiresShift) {
                 await page.keyboard.up('Shift');
-                await page.waitForTimeout(10);
+                await page.waitForTimeout(config.keyboard.timing.keyReleaseDelay);
               }
             }
             
@@ -660,9 +636,9 @@ async function testROM(romTest, browser) {
         
         // Press F6 again to close the virtual keyboard using down/up method
         await page.keyboard.down('F6');
-        await page.waitForTimeout(100);
+        await page.waitForTimeout(config.keyboard.timing.f6Delay);
         await page.keyboard.up('F6');
-        await page.waitForTimeout(100);
+        await page.waitForTimeout(config.keyboard.timing.f6Delay);
         
         // OCR scan before final screenshot to see what was typed
         try {
@@ -903,8 +879,8 @@ async function runAllTests() {
       
       // Launch browser for this specific test
       const browser = await chromium.launch({ 
-        headless: !needsKeyboard, // Only run non-headless if this test needs keyboardEntry
-        slowMo: needsKeyboard ? 200 : 0 // Add delay only when keyboardEntry is needed
+        headless: config.browser.headless && !needsKeyboard, // Only run non-headless if this test needs keyboardEntry
+        slowMo: needsKeyboard ? config.browser.keyboardSlowMo : config.browser.slowMo // Add delay only when keyboardEntry is needed
       });
       
       try {
@@ -912,7 +888,7 @@ async function runAllTests() {
         results.push(result);
         
         // Wait between tests
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, config.execution.testDelay));
       } finally {
         // Close browser after each test
         await browser.close();
