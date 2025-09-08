@@ -1,35 +1,44 @@
 /**
  * Configuration for SMJoin ROM combination
- * Defines ROM files and their page alignment options
+ * Builds AP6v134t replacement ROM with I2C instead of TreeCopy
+ * 
+ * Original AP6v134t.rom contains:
+ * - Plus 1 1.34 (22 Jun 2018) + Plus 1 Support 1.31 (22 Jun 2018)
+ * - ROM Manager & File Utils 1.34 (01 Jan 2021) 
+ * - Electron TUBE HOST 1.10 (01 Jan 1990)
+ * - RAMCountAP6 0.05 (20 May 2016)
+ * - TreeCopy 1.62 (08 Feb 2017)
+ * 
+ * Our replacement contains:
+ * - Plus 1 1.34 (22 Jun 2018) + Plus 1 Support 1.31 (22 Jun 2018)
+ * - ROM Manager & File Utils 1.34 (01 Jan 2021)
+ * - Electron TUBE HOST 1.10 (01 Jan 1990) 
+ * - RAMCountAP6 0.05 (20 May 2016)
+ * - I2C (custom ROM) - replaces TreeCopy
  */
 
 module.exports = {
     // ROM files to combine (in order)
     romFiles: [
         {
-            path: "../../src.AP6.MDFS/AP1v131",
-            name: "AP1v131"
+            path: "../../roms/AP1Plus-v1.34.rom",
+            name: "AP1Plus"
         },
         {
-            path: "../../src.AP6.MDFS/AP6v134", 
-            name: "AP6v134",
+            path: "../../roms/ROMManager-v1.34.rom", 
+            name: "ROMManager",
             pageAlignment: false
         },
         {
-            path: "../../src.AP6.MDFS/TUBEelk",
+            path: "../../roms/TUBEelk-v1.10.rom",
             name: "TUBEelk", 
             pageAlignment: false
         },
         {
-            path: "../../src.AP6.MDFS/AP6Count",
+            path: "../../roms/AP6Count-v0.05.rom",
             name: "AP6Count",
             pageAlignment: false
         },
-        // {
-        //     path: "../../src.AP6v133t/roms/TreeROM",
-        //     name: "TreeROM",
-        //     pageAlignment: false
-        // },
         {
             path: "tmp/i2c-reloc.rom",
             name: "I2C",
@@ -40,6 +49,6 @@ module.exports = {
     // Output configuration
     output: {
         path: "../../dist/ap6.rom",
-        name: "AP6 Combined ROM"
+        name: "AP6v134t-I2C ROM (TreeCopy replaced with I2C)"
     }
 };
