@@ -10,7 +10,7 @@ This document captures the BBC Micro ROM relocation and chaining mechanisms used
 
 ## Understanding the Process
 
-Initially, there was confusion about the relationship between these sources. The MDFS documentation describes service entry points pointing to "spare space" that calls original handlers, but the ROM sources showed service entries pointing directly to their own handlers. 
+The MDFS documentation describes service entry points pointing to "spare space" that calls previous handlers, while the ROM sources show service entries pointing directly to their own handlers. 
 
 The breakthrough came when it was realized:
 - **Individual ROMs** (MiniRom.bas, AP6) are structured to be **joinable** (with relocation data)
@@ -157,7 +157,7 @@ The relocation bitmap generation process:
 
 ## Complete ROM Joining Process
 
-This section documents the complete ROM joining process as implemented in the original BBC BASIC source code (`MiniRom.bas`, `AP6v133.src`, and `SMJoin.bas`). The process involves three distinct phases that work together to create joinable ROMs and then combine them into a single chained ROM image.
+This section documents the complete ROM joining process as implemented in the BBC BASIC source code (`MiniRom.bas`, `AP6v133.src`, and `SMJoin.bas`). The process involves three distinct phases that work together to create joinable ROMs and then combine them into a single chained ROM image.
 
 ### Phase 1: Making ROMs Joinable (Individual ROM Sources)
 **MiniRom.bas & AP6 ROM Source show how to structure ROMs for joining:**
@@ -179,12 +179,12 @@ This section documents the complete ROM joining process as implemented in the or
 8000   JMP MYLANG           ; Language entry (if language ROM)
 8003   JMP NewStart3        ; Service entry points to newest module
 ...
-Service1: \ Original service handler
+Service1: \ Base service handler
 ...
 NewStart3: JSR NewStart2    ; Call previous module (inserted by SMJoin)
            LDX &F4          ; Restore X register
            Service3: ...    ; ROM 3's service code
-NewStart2: JSR Service1     ; Call original handler (inserted by SMJoin)  
+NewStart2: JSR Service1     ; Call base handler (inserted by SMJoin)  
            LDX &F4          ; Restore X register
            Service2: ...    ; ROM 2's service code
 ```
@@ -257,7 +257,7 @@ PRINTA$;:OSCLIA$:PRINT
 5. **`*SAVE`**: Save final ROM with relocation data
 
 #### Step 6: Create Combined ROM with BBC BASIC SMJoin
-**Run the original BBC BASIC SMJoin.bas program:**
+**Run the BBC BASIC SMJoin.bas program:**
 ```basic
 CHAIN "SMJoin"
 ```
@@ -293,6 +293,7 @@ For ROMs that cannot use BBC BASIC's `PROCsm_table` function, use the Node.js po
 #### Step 2: Run Node.js Relocation Tool
 **Use the Node.js tool to generate SMJoin-compatible ROM:**
 ```bash
+cd bin/smjoin
 node smjoin-reloc.js rom_8000.bin rom_8100.bin output_rom.bin
 ```
 
@@ -335,8 +336,10 @@ romstart    BRK                       \dummy language entry
 
 #### Step 6: Create Combined ROM with SMJoin
 **Use the Node.js SMJoin tool to combine multiple ROMs:**
+
+**Method 1: Using configuration file (recommended)**
 ```bash
-node smjoin-create.js rom1.bin rom2.bin rom3.bin output_combined.bin
+node smjoin-create.js --config config/smjoin-create-config.js
 ```
 
 **What SMJoin does:**
@@ -350,9 +353,9 @@ node smjoin-create.js rom1.bin rom2.bin rom3.bin output_combined.bin
 
 Many ROMs programs do not use the full 8K or 16K of the ROM, and have spare space in them. You can use this spare space to add extra ROM code. This is fairly easy to do as long as no more than one component of a multi-code ROM claims memory or provides a language. The simplest method is to add purely service code to an existing ROM.
 
-To do this, you need the image of the ROM you are adding to, and the source code (or a method of relocating the image) for the ROM code you want to add. This is done by changing the destination of the service call entry at &8003 to the start of the spare space at the end of the ROM. At the start of this spare space, the new code firstly calls the old service handler, and then continues with the new code's service handler:
+To do this, you need the image of the ROM you are adding to, and the source code (or a method of relocating the image) for the ROM code you want to add. This is done by changing the destination of the service call entry at &8003 to the start of the spare space at the end of the ROM. At the start of this spare space, the new code firstly calls the previous service handler, and then continues with the new code's service handler:
 
-**Original ROM:**
+**Base ROM:**
 ```
 8003   JMP SERV              \ Service entry
 ...
@@ -363,9 +366,9 @@ SERV   \ Service handler
 ```
 8003   JMP MYCODE            \ New service entry
 ...
-SERV   \ Original service handler
+SERV   \ Base service handler
 ...
-MYCODE JSR SERV              \ Call original handler
+MYCODE JSR SERV              \ Call base handler
 ...    \ My service handler
 ```
 
@@ -373,7 +376,7 @@ The additional code can even be a relocated ROM image with the language entry po
 
 Any number of ROM code fragments can be joined together like this. However, as each fragment is independent of each other, only one can claim workspace and use the workspace byte at &DF0+rom, and only one can be a language and be entered at &8000. To be entered as a language, the entry at &8000 should be changed to jump to the ROM code fragment's entry point:
 
-**Original ROM:**
+**Base ROM:**
 ```
 8000   BRK:BRK:BRK           \ No language entry
 8003   JMP SERV              \ Service entry
@@ -384,9 +387,9 @@ Any number of ROM code fragments can be joined together like this. However, as e
 8000   JMP MYLANG            \ New language entry
 8003   JMP MYCODE            \ New service entry
 ...
-SERV   \ Original service handler
+SERV   \ Base service handler
 ...
-MYCODE JSR SERV              \ Call original handler
+MYCODE JSR SERV              \ Call base handler
 ...    \ My service handler
 MYLANG \ My language startup
 ```
@@ -439,7 +442,7 @@ Byte 7: Copyright pointer offset from RomStart
 
 ### Service Call Chaining
 When ROMs are joined, SMJoin modifies the service entry points to create a chain:
-1. **Original**: `8003 JMP SERV` (points to service handler)
+1. **Base**: `8003 JMP SERV` (points to service handler)
 2. **Modified**: `8003 JMP NewStart` (points to new module)
 3. **New Module**: `JSR PreviousHandler` + `LDX &F4` + new service code
 
@@ -451,6 +454,166 @@ Service calls flow through the chain in reverse order (newest first):
 4. NewStart3: LDX &F4 → Service3 executes → returns to OS
 
 This allows multiple ROMs to handle the same service calls, with each getting a chance to process the call before passing it to the next ROM in the chain.
+
+## Configuration Files
+
+The Node.js SMJoin tools support configuration files to externalize ROM definitions and settings, making the build process more maintainable and flexible.
+
+### SMJoin Create Configuration (`smjoin-create-config.js`)
+
+**Location:** `bin/smjoin/config/smjoin-create-config.js`
+
+This configuration file defines which ROMs to combine and their settings:
+
+```javascript
+module.exports = {
+    // ROM files to combine (in order)
+    romFiles: [
+        {
+            path: "../../roms/AP1Plus-v1.34.rom",
+            name: "AP1Plus"
+        },
+        {
+            path: "../../roms/ROMManager-v1.34.rom", 
+            name: "ROMManager",
+            pageAlignment: false
+        },
+        {
+            path: "../../roms/TUBEelk-v1.10.rom",
+            name: "TUBEelk", 
+            pageAlignment: false
+        },
+        {
+            path: "../../roms/AP6Count-v0.05.rom",
+            name: "AP6Count",
+            pageAlignment: false
+        },
+        {
+            path: "tmp/i2c-reloc.rom",
+            name: "I2C",
+            pageAlignment: true
+        }
+    ],
+
+    // Output configuration
+    output: {
+        path: "../../dist/ap6.rom",
+        name: "AP6v134t-I2C ROM (TreeCopy replaced with I2C)"
+    }
+};
+```
+
+**Configuration Options:**
+- **`path`**: Relative path to the ROM file
+- **`name`**: Display name for the ROM (used in logging)
+- **`pageAlignment`**: Whether to align ROM to page boundary (256-byte boundary)
+  - `true`: ROM will be aligned to next page boundary
+  - `false`: ROM will be placed immediately after previous ROM
+  - **Note**: First ROM always skips page alignment regardless of setting
+
+### SMJoin Test Configuration (`smjoin-test-config.js`)
+
+**Location:** `bin/smjoin/config/smjoin-test-config.js`
+
+This configuration file defines the automated test suite:
+
+```javascript
+module.exports = {
+    // Test server configuration
+    server: {
+        port: 8080,
+        timeout: 10000
+    },
+
+    // ROM tests to run
+    tests: [
+        {
+            name: "AP6.rom",
+            description: "Official AP6 Plus 1.1.33 ROM - reference baseline",
+            url: "https://0xc0de6502.github.io/electroniq/?romF=http://localhost:8080/AP6.rom",
+            expectedElements: ["RH Plus 1", "AP6"]
+        },
+        {
+            name: "I2C.rom", 
+            description: "I2C ROM - unmodified I2C ROM for comparison",
+            url: "https://0xc0de6502.github.io/electroniq/?romF=http://localhost:8080/I2C.rom",
+            expectedElements: ["I2C", "RTC"]
+        },
+        {
+            name: "LatestI2C8000.rom",
+            description: "I2C ROM - unrelocated I2C ROM compiled at $8000",
+            url: "https://0xc0de6502.github.io/electroniq/?romF=http://localhost:8080/LatestI2C8000.rom", 
+            expectedElements: ["I2C", "RTC"]
+        },
+        {
+            name: "LatestAP6.rom",
+            description: "New AP6 ROM - combined ROM with I2C functionality",
+            url: "https://0xc0de6502.github.io/electroniq/?romF=http://localhost:8080/LatestAP6.rom",
+            expectedElements: ["RH Plus 1", "AP6", "I2C", "RTC"]
+        }
+    ]
+};
+```
+
+### SMJoin Test Server Configuration (`smjoin-test-server-config.json`)
+
+**Location:** `bin/smjoin/config/smjoin-test-server-config.json`
+
+This configuration file defines ROM mappings for the test server:
+
+```json
+{
+  "rom_mappings": {
+    "AP6.rom": "roms/ap6/AP6v134t.rom",
+    "I2C.rom": "dist/i2c/I2C32EAP6.rom", 
+    "LatestAP6.rom": "dist/ap6.rom",
+    "LatestI2C8000.rom": "bin/smjoin/tmp/i2c-8000.rom"
+  }
+}
+```
+
+**Configuration Options:**
+- **`rom_mappings`**: Maps test ROM names to actual file paths
+- **Keys**: The ROM name used in test URLs (e.g., `AP6.rom`)
+- **Values**: Relative path from project root to the actual ROM file
+
+### Using Configuration Files
+
+**SMJoin Create with config:**
+```bash
+cd bin/smjoin
+node smjoin-create.js --config config/smjoin-create-config.js
+```
+
+**SMJoin Test with config:**
+```bash
+cd bin/smjoin  
+node smjoin-test.js --config config/smjoin-test-config.js
+# Or use default config:
+node smjoin-test.js
+```
+
+**Test Server with config:**
+```bash
+cd bin/smjoin
+python3 smjoin-test-server.py
+# Server automatically loads smjoin-test-server-config.json
+```
+
+### Current Implementation Status
+
+- ✅ **`smjoin-create.js`**: Full `--config` support implemented
+- ✅ **`smjoin-test.js`**: Full `--config` support implemented
+- ✅ **`smjoin-test-server.py`**: Uses JSON configuration file automatically
+
+### Benefits of Configuration Files
+
+1. **Maintainability**: ROM paths and settings centralized in one place
+2. **Flexibility**: Easy to switch between different ROM combinations
+3. **Documentation**: Configuration files serve as documentation of the build process
+4. **Version Control**: Changes to ROM combinations tracked in git
+5. **Automation**: Build scripts can reference configuration files
+6. **Testing**: Test configurations can be easily modified for different scenarios
 
 ## References
 
