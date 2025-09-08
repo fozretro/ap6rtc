@@ -1,15 +1,16 @@
 #!/bin/bash
 set -e # Exit immediately if a command exits with a non-zero status.
 
-# ROM file constants
-ROM_FILES=(
-    "../../src.AP6.MDFS/AP1v131"
-    "../../src.AP6.MDFS/AP6v134"
-    "../../src.AP6.MDFS/TUBEelk"
-    "../../src.AP6.MDFS/AP6Count"
-    "tmp/i2c-reloc.rom"
-)
-OUTPUT_ROM="../../dist/ap6.rom"
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Get the project root directory (parent of bin directory)
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Note: We'll use subshells for directory changes to avoid affecting the user's shell
+
+# Configuration file for SMJoin
+SMJOIN_CONFIG="bin/smjoin/config/smjoin-create-config.js"
+OUTPUT_ROM="dist/ap6.rom"
 
 # Parse command line arguments
 SKIP_I2C_BUILD=false
@@ -68,13 +69,13 @@ if [ "$SKIP_TESTING" = true ]; then
 fi
 echo ""
 
-# Change to project root
-cd "$(dirname "$0")/.."
+# Change to project root directory
+pushd "$PROJECT_ROOT" > /dev/null
 
 # Clear tmp folder when not skipping I2C build
 if [ "$SKIP_I2C_BUILD" = false ]; then
     echo "🧹 Clearing temporary build files..."
-    rm -rf ./bin/smjoin/tmp/*
+    rm -rf bin/smjoin/tmp/*
     echo "✅ Temporary files cleared"
     echo ""
 fi
@@ -99,7 +100,7 @@ echo ""
 
 
 echo "🔗 Step 2: Creating relocation ROM..."
-cd bin/smjoin/
+pushd bin/smjoin > /dev/null
 
 # Remove existing i2c-reloc.rom if it exists
 if [ -f "tmp/i2c-reloc.rom" ]; then
@@ -109,6 +110,7 @@ if [ -f "tmp/i2c-reloc.rom" ]; then
 fi
 
 node smjoin-reloc.js tmp/i2c-8000.rom tmp/i2c-8100.rom tmp/i2c-reloc.rom
+popd > /dev/null
 if [ $? -ne 0 ]; then
     echo "❌ Relocation ROM creation failed!"
     exit 1
@@ -117,10 +119,16 @@ echo "✅ Relocation ROM created successfully"
 echo ""
 
 echo "🔗 Step 3: Combining ROMs with SMJoin..."
+# Add bin/smjoin to PATH so we can run the script directly
+export PATH="bin/smjoin:$PATH"
 if [ "$VERBOSE" = true ]; then
-    node smjoin-create.js "${ROM_FILES[@]}" "$OUTPUT_ROM" --verbose
+    pushd bin/smjoin > /dev/null
+    node smjoin-create.js --config config/smjoin-create-config.js --verbose
+    popd > /dev/null
 else
-    node smjoin-create.js "${ROM_FILES[@]}" "$OUTPUT_ROM"
+    pushd bin/smjoin > /dev/null
+    node smjoin-create.js --config config/smjoin-create-config.js
+    popd > /dev/null
 fi
 if [ $? -ne 0 ]; then
     echo "❌ SMJoin combination failed!"
@@ -130,7 +138,12 @@ echo "✅ SMJoin combination completed successfully"
 echo ""
 
 echo "📊 Final ROM Statistics:"
-ls -la "$OUTPUT_ROM"
+if [ -f "$OUTPUT_ROM" ]; then
+    ls -la "$OUTPUT_ROM"
+    echo "✅ Build completed successfully!"
+else
+    echo "❌ Output ROM not found at $OUTPUT_ROM"
+fi
 echo ""
 
 if [ "$SKIP_TESTING" = true ]; then
@@ -146,6 +159,7 @@ else
     fi
     if [ "$KEEP_SERVER_RUNNING" = true ]; then
         echo "  -> Server will be kept running after tests complete"
+        pushd bin/smjoin > /dev/null
         if [ -n "$TEST_FILTER" ] && [ "$VERBOSE" = true ]; then
             node smjoin-test.js --nokill-romserver --testFilter "$TEST_FILTER" --verbose
         elif [ -n "$TEST_FILTER" ]; then
@@ -155,7 +169,9 @@ else
         else
             node smjoin-test.js --nokill-romserver
         fi
+        popd > /dev/null
     else
+        pushd bin/smjoin > /dev/null
         if [ -n "$TEST_FILTER" ] && [ "$VERBOSE" = true ]; then
             node smjoin-test.js --testFilter "$TEST_FILTER" --verbose
         elif [ -n "$TEST_FILTER" ]; then
@@ -165,6 +181,7 @@ else
         else
             node smjoin-test.js
         fi
+        popd > /dev/null
     fi
     if [ $? -ne 0 ]; then
         echo "❌ ROM tests failed!"
@@ -176,3 +193,6 @@ echo ""
 echo "🎉 AP6 Complete Build Pipeline finished successfully!"
 echo "Output: $OUTPUT_ROM"
 echo "=================================================="
+
+# Restore original directory
+popd > /dev/null

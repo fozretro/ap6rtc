@@ -28,6 +28,27 @@ echo "  -> Removed DS \$BF7F-*+1 padding line"
 # First build at $8000 (original address)
 echo "Building at \$8000..."
 ./bin/b-em/b-em -autoboot -sp9 -vroot ./dev/i2c
+
+# Check for compilation errors by examining the output
+echo "Checking compilation output..."
+tr -s '\r' < ./dev/i2c/I2COUT | tr '\001' ' ' | tr '\f' ' ' | tr '\r' '\n' > /tmp/i2c_compile_output.txt
+
+# Check if ROM was created and has reasonable size
+if [ ! -f ./dev/i2c/I2CROM ] || [ ! -s ./dev/i2c/I2CROM ]; then
+    echo "❌ Compilation failed at \$8000 - no ROM file created!"
+    echo "Compiler output:"
+    cat /tmp/i2c_compile_output.txt
+    exit 1
+fi
+
+# Check for error messages in the output
+if grep -i "\*\*\*\*\*\* Err\|Assembly complete.*[1-9][0-9]* errors\|Assembly complete.*[1-9] error" /tmp/i2c_compile_output.txt > /dev/null; then
+    echo "❌ Compilation failed at \$8000 - errors detected!"
+    echo "Compiler output:"
+    cat /tmp/i2c_compile_output.txt
+    exit 1
+fi
+
 cp ./dev/i2c/I2CROM ./dev/i2c/I2CROM_8000
 echo "  -> ROM size: $(wc -c < ./dev/i2c/I2CROM_8000) bytes"
 
@@ -39,6 +60,27 @@ echo "  -> ORG changed from \$8000 to \$8100"
 # Second build at $8100
 echo "Building at \$8100..."
 ./bin/b-em/b-em -autoboot -sp9 -vroot ./dev/i2c
+
+# Check for compilation errors by examining the output
+echo "Checking compilation output..."
+tr -s '\r' < ./dev/i2c/I2COUT | tr '\001' ' ' | tr '\f' ' ' | tr '\r' '\n' > /tmp/i2c_compile_output.txt
+
+# Check if ROM was created and has reasonable size
+if [ ! -f ./dev/i2c/I2CROM ] || [ ! -s ./dev/i2c/I2CROM ]; then
+    echo "❌ Compilation failed at \$8100 - no ROM file created!"
+    echo "Compiler output:"
+    cat /tmp/i2c_compile_output.txt
+    exit 1
+fi
+
+# Check for error messages in the output
+if grep -i "\*\*\*\*\*\* Err\|Assembly complete.*[1-9][0-9]* errors\|Assembly complete.*[1-9] error" /tmp/i2c_compile_output.txt > /dev/null; then
+    echo "❌ Compilation failed at \$8100 - errors detected!"
+    echo "Compiler output:"
+    cat /tmp/i2c_compile_output.txt
+    exit 1
+fi
+
 cp ./dev/i2c/I2CROM ./dev/i2c/I2CROM_8100
 echo "  -> ROM size: $(wc -c < ./dev/i2c/I2CROM_8100) bytes"
 
