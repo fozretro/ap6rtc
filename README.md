@@ -244,9 +244,9 @@ During testing of the complete AP6 ROM combination (including TreeROM), a versio
 
 **Problem Analysis:**
 - **Current TreeROM available**: Version 1.62 (8,704 bytes) - too large for 16KB ROM
-- **Original AP6v133t.rom used**: TreeROM Version 1.61 (smaller) - fits successfully
-- **Available space**: 3,497 bytes (after combining AP1v131, AP6v134, TUBEelk, AP6Count, I2C)
-- **Space needed**: 5,207 bytes more than available
+- **Original AP6v134t.rom used**: TreeCopy Version 1.61 (8,291 bytes) - fits successfully
+- **Available space**: 8,448 bytes (after combining AP1v131, AP6v134, TUBEelk, AP6Count, I2C)
+- **Space deficit**: 256 bytes (8,704 - 8,448 = 256 bytes)
 
 **Critical Discovery:**
 The original AP6v133t.rom (16,067 bytes) contained **5 ROMs without I2C**:
@@ -255,11 +255,11 @@ The original AP6v133t.rom (16,067 bytes) contained **5 ROMs without I2C**:
 
 Our current build includes **6 ROMs including I2C** (12,887 bytes), which is why adding TreeROM exceeds the 16KB limit.
 
-**Why All 6 ROMs Won't Fit:**
-- **Original 5-ROM combination**: 16,067 bytes (fits in 16KB with 317 bytes spare)
-- **Adding I2C ROM**: +5,136 bytes = 21,203 bytes total
-- **16KB limit**: 16,384 bytes
-- **Result**: 4,819 bytes over the limit
+**Detailed Size Analysis:**
+- **TreeCopy 1.61** (original): 8,291 bytes ✅
+- **TreeROM v1.62** (available): 8,704 bytes ❌ (256 bytes too large)
+- **Available space**: 8,448 bytes
+- **Size difference**: TreeROM v1.62 is 413 bytes larger than TreeCopy 1.61
 - **Conclusion**: The 16KB ROM space can accommodate either the original 5 ROMs OR 4 ROMs + I2C, but not all 6 ROMs together
 
 **Root Cause:**
@@ -267,8 +267,9 @@ The source code analysis at [MDFS TreeCopier](https://mdfs.net/Software/CommandS
 
 **Current Status:**
 - ✅ **4-ROM combination works perfectly**: AP1v131, AP6v134, TUBEelk, AP6Count, I2C (12,887 bytes)
-- ❌ **5-ROM combination fails**: Adding TreeROM 1.62 exceeds 16KB limit
+- ❌ **5-ROM combination fails**: Adding TreeROM 1.62 exceeds 16KB limit by 256 bytes
 - ✅ **All tests pass**: Complete build and test pipeline functional without TreeROM
+- ✅ **Binary analysis confirmed**: AP6v134t.rom contains TreeCopy 1.61 (8,291 bytes), not 1.62
 
 **Solution Options:**
 1. **Download TreeROM version 1.61** from MDFS (the version used in original AP6v133t.rom)
