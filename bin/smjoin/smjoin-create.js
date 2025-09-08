@@ -254,10 +254,26 @@ class SMJoin {
         this.log(`Saving output to: ${outputFile}`);
         this.log(`Final size: ${this.ptr} bytes (0x${this.ptr.toString(16)})`);
         
-        const output = this.mem.slice(0, this.ptr);
+        // Pad to exactly 16KB (16384 bytes) for BBC Micro sideways ROM
+        const ROM_SIZE = 16384;
+        if (this.ptr > ROM_SIZE) {
+            console.error(`Error: ROM size ${this.ptr} bytes exceeds 16KB limit (${ROM_SIZE} bytes)`);
+            process.exit(1);
+        }
+        
+        // Create output buffer padded to 16KB
+        const output = new Uint8Array(ROM_SIZE);
+        output.set(this.mem.slice(0, this.ptr), 0);
+        
+        // Fill remaining space with 0x00 (zero padding)
+        for (let i = this.ptr; i < ROM_SIZE; i++) {
+            output[i] = 0x00;
+        }
+        
         fs.writeFileSync(outputFile, output);
         
         console.log(`SMJoin completed: ${this.ptr} bytes written to ${outputFile}`);
+        console.log(`ROM padded to exactly ${ROM_SIZE} bytes (16KB)`);
     }
 
     // Initialize relocation processing
