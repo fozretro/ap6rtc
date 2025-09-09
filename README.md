@@ -193,12 +193,12 @@ What are all the other files?
 
 I like to collect all the files when working on a project for ease of use and future reference. Such as the **Lancs Assembler** in `/bin` or some of my very first explorations with accessing the AP6 RTC in `/dev/ap6rtc`. You can also find original files from Martin in `/dev/i2c/archive` as well. Finally, before Martin kindly shared his code I was researching `/src.softrtc` as starting point. So really all these files are not required to develop and build the I2CBeeb ROM as described above, but serve as a handy past reference. Maybe I will clear them out in the future.
 
-SMJoin Compatibility Implementation (Jan 2025)
+SMJoin Compatibility Implementation (Sept 2025)
 ------------------------------------------------
 
 **I2C ROM Successfully Integrated into Combined AP6 ROM System ✅**
 
-Successfully implemented SMJoin compatibility for the I2C ROM, enabling it to be combined with other AP6 ROMs into a single 16KB ROM image.
+Successfully implemented SMJoin compatibility for the I2C ROM, enabling it to be combined with other AP6 ROMs into a single 16KB ROM image. For detailed technical information about the ROM relocation and chaining mechanisms, see [SMJOIN.md](SMJOIN.md).
 
 **Key Achievements:**
 - **5 ROMs successfully combined**: AP1v131, AP6v134, TUBEelk, AP6Count, I2C
