@@ -8,11 +8,11 @@
 
 \version strings, short and long (with biuld)
 \this target should include
-\ inc\bus\E.asm               I2CBUS
-\ inc\rtc\DS3231.asm          I2CRTC
+\ inc\bus\EAP6.asm               I2CBUS
+\ inc\rtc\PCF8583.asm            I2CRTC
 version	MACRO
-          ASC	'3.2E'		\version string with CR and..	
+          ASC	'3.2EAP6'      \version string with CR and..	
           ENDM
 versionl  MACRO
-          ASC	'3.2 ELK  130925#' \ Must be 16 characters ending in #, with DDMMYY
-          ENDM          
+          ASC	'3.2 EAP6 050625#' \ Must be 16 characters ending in #, with DDMMYY 
+          ENDM

@@ -14,5 +14,5 @@ version	MACRO
           ASC	'3.2E'		\version string with CR and..	
           ENDM
 versionl  MACRO
-          ASC	'3.2 ELK  130925#' \ Must be 16 characters ending in #, with DDMMYY
+          ASC	'3.2 ELK  050625#' \ Must be 16 characters ending in #, with DDMMYY
           ENDM          

@@ -14,5 +14,5 @@ version	MACRO
           ASC	'3.2EAP6'      \version string with CR and..	
           ENDM
 versionl  MACRO
-          ASC	'I2C 3.2BAP6 050625' \ DDMMYY       
+          ASC	'3.2 EAP6 130925#' \ Must be 16 characters ending in #, with DDMMYY 
           ENDM
