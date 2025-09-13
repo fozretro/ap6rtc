@@ -35,14 +35,14 @@ module.exports = {
             pageAlignment: false
         },
         {
-            path: "../../roms/AP6Count-v0.05.rom",
-            name: "AP6Count",
-            pageAlignment: false
-        },
-        {
             path: "tmp/i2c-reloc.rom",
             name: "I2C",
             pageAlignment: true 
+        },
+        {
+            path: "../../roms/AP6Count-v0.05.rom",
+            name: "AP6Count",
+            pageAlignment: false
         }
     ],
     
