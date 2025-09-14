@@ -3,6 +3,15 @@ I2CBeeb for Acorn Electron Plus 1 and AP6
 
 This project got started as a means to explore and implement RTC commands and others that make use of the RTC (a `PCF8583`) within the Electron **AP6** by Dave Hitchens. StarDot forum discussion [here](https://www.stardot.org.uk/forums/viewtopic.php?t=28720). 
 
+Status - BeebAsm Migration Complete (Sep 2025)
+----------------------------------------------
+
+The main source code has been successfully migrated from Lancs Assembler to BeebAsm and is now located in `/src`. This migration represents a significant improvement to the development workflow, eliminating the need to run B-em emulator to compile with the Lancs Assembler. The development process is now much faster with native compilation on modern systems, and provides full compatibility with modern editors such as Visual Studio Code and its 6502 tooling extensions.
+
+The migration required careful attention to assembler syntax differences, particularly converting high/low byte operators from Lancs `>/<` syntax to BeebAsm `HI()/LO()` functions, and fixing endianness issues by converting `DFDB` (big-endian) to `EQUB HI(), LO()` format. The result is byte-for-byte compatibility with the original Lancs Assembler ROMs, verified through comprehensive binary comparison testing using both manual `cmp` commands and custom Python comparison tools.
+
+The build system is being updated to focus around the `/src` directory, with primary build scripts now generating AP6 support ROMs using the modern BeebAsm toolchain. While the core migration is complete, the build scripts are still in progress of being fully updated to take advantage of the new native compilation workflow. The Electron AP6 ROM variant has been successfully built and tested with native compilation, while the BBC Micro and Electron AP5 variants remain to be validated with the new build system.
+
 Status - v3.2 Release
 ---------------------
 
