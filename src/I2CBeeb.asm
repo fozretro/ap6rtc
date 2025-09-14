@@ -112,125 +112,125 @@
 \-------------------------------------------------------------------------------
 \Constants etc. defined here
 
-		INCLUDE I2CVER
+		INCLUDE INCTARGET
 
-OSASCI	EQU	$FFE3		\print A to screen
-OSWRCH	EQU	$FFEE		\write A to output stream
-OSNEWL	EQU	$FFE7		\print new line
-OSBYTE	EQU	$FFF4		\OSBYTE
-OSRDCH	EQU	$FFE0		\read character from input stream
+OSASCI	=	$FFE3		\print A to screen
+OSWRCH	=	$FFEE		\write A to output stream
+OSNEWL	=	$FFE7		\print new line
+OSBYTE	=	$FFF4		\OSBYTE
+OSRDCH	=	$FFE0		\read character from input stream
 
-OSW_A	EQU	$EF		\A at time of unknown OSWORD call
-OSW_X	EQU	$F0		\X at .....
-OSW_Y	EQU	$F1		\Y at .....
+OSW_A	=	$EF		\A at time of unknown OSWORD call
+OSW_X	=	$F0		\X at .....
+OSW_Y	=	$F1		\Y at .....
 
-COMVEC	EQU	$0234		\command execution vector (IND3V)
-cli	EQU	$F2		\command line pointer - use (cli),Y
-ivars	EQU	$0400		\BASIC integer % variable base address
+COMVEC	=	$0234	\command execution vector (IND3V)
+cli		=	$F2		\command line pointer - use (cli),Y
+ivars	=	$0400	\BASIC integer % variable base address
 
-bufloc	EQU	$CE		\zp,y pointer to i2c buffer for RxB..
-				\..and RxD. Normally $0A00 but can..
-				\..also be $0380 during RTC access.
+bufloc	=	$CE		\zp,y pointer to i2c buffer for RxB..
+					\..and RxD. Normally $0A00 but can..
+					\..also be $0380 during RTC access.
 
-i2cbuf	EQU	$0A00		\i2c Tx and Rx data buffer (to $0AFF)
-eeplo	EQU	$60		\24C32 target address lo-byte for r/w
-eephi	EQU	$61		\24C32 target address hi-byte for r/w
-spare	EQU	$62		\not used 
-bcdt	EQU	$63		\temporary for bcd tens
-bcdu	EQU	$64		\temporary for bcd units
-i2cslot	EQU	$65		\sideways rom slot id of i2c rom
-zpreg	EQU	$66		\transient store for Pxr registers
-i2cstat	EQU	$67		\i2c transaction status 0=good
-i2cdev	EQU	$68		\i2c slave device address
-i2creg	EQU	$69		\i2c slave device target register
-i2cbyte	EQU	$6A		\i2c rx or tx byte
-temp1	EQU	$6B		\command transient temporary #1
-temp2	EQU	$6C		\command transient temporary #2
-htextl	EQU	$6D		\help text pointer lo / general flag
-htexth	EQU	$6E		\help text pointer hi / general flag
-comdata	EQU	$6F		\temp Y store during command parsing
+i2cbuf	=	$0A00	\i2c Tx and Rx data buffer (to $0AFF)
+eeplo	=	$60		\24C32 target address lo-byte for r/w
+eephi	=	$61		\24C32 target address hi-byte for r/w
+spare	=	$62		\not used 
+bcdt	=	$63		\temporary for bcd tens
+bcdu	=	$64		\temporary for bcd units
+i2cslot	=	$65		\sideways rom slot id of i2c rom
+zpreg	=	$66		\transient store for Pxr registers
+i2cstat	=	$67		\i2c transaction status 0=good
+i2cdev	=	$68		\i2c slave device address
+i2creg	=	$69		\i2c slave device target register
+i2cbyte	=	$6A		\i2c rx or tx byte
+temp1	=	$6B		\command transient temporary #1
+temp2	=	$6C		\command transient temporary #2
+htextl	=	$6D		\help text pointer lo / general flag
+htexth	=	$6E		\help text pointer hi / general flag
+comdata	=	$6F		\temp Y store during command parsing
 
-devidlo	EQU	$08		\lowest i2c device id to interrogate
-devidhi	EQU	$77		\highest i2c device id to interrogate
+devidlo	=	$08		\lowest i2c device id to interrogate
+devidhi	=	$77		\highest i2c device id to interrogate
 
-EEP32	EQU	$57		\AT24C32 eeprom I2C slave address
-cs	EQU	$7F		\seconds	  :	Bits 6-0 Mask $7F
-cm	EQU	$7F		\minutes	  :	Bits 6-0 Mask $7F
-ch	EQU	$3F		\hours	  :	Bits 5-0 Mask $3F
-cwd	EQU	$07		\weekday	  :	Bits 3-0 Mask $07
-cdd	EQU	$3F		\day	  :	Bits 5-0 Mask $3F
-cmm	EQU	$1F		\month	  :	Bits 4-0 Mask $1F
-cyy	EQU	$FF		\year	  :	Bits 7-0 Mask $FF
-deg	EQU	$7F		\temperatue :	Bits 6-0 Mask $7F
+EEP32	=	$57		\AT24C32 eeprom I2C slave address
+cs	=	$7F		\seconds	  :	Bits 6-0 Mask $7F
+cm	=	$7F		\minutes	  :	Bits 6-0 Mask $7F
+ch	=	$3F		\hours	  :	Bits 5-0 Mask $3F
+cwd	=	$07		\weekday	  :	Bits 3-0 Mask $07
+cdd	=	$3F		\day	  :	Bits 5-0 Mask $3F
+cmm	=	$1F		\month	  :	Bits 4-0 Mask $1F
+cyy	=	$FF		\year	  :	Bits 7-0 Mask $FF
+deg	=	$7F		\temperatue :	Bits 6-0 Mask $7F
 
-buf00	EQU	$0380		\temp RTC buffer 0 (secs)
-buf01	EQU	$0381		\temp RTC buffer 1 (mins)
-buf02	EQU	$0382		\temp RTC buffer 2 (hours)
-buf03	EQU	$0383		\temp RTC buffer 3 (day)
-buf04	EQU	$0384		\temp RTC buffer 4 (date)
-buf05	EQU	$0385		\temp RTC buffer 5 (month)
-buf06	EQU	$0386		\temp RTC buffer 6 (year)
-buf07	EQU	$0387		\temp RTC buffer 7
-buf08	EQU	$0388		\temp RTC buffer 8
-buf09	EQU	$0389		\temp RTC buffer 9
+buf00	=	$0380		\temp RTC buffer 0 (secs)
+buf01	=	$0381		\temp RTC buffer 1 (mins)
+buf02	=	$0382		\temp RTC buffer 2 (hours)
+buf03	=	$0383		\temp RTC buffer 3 (day)
+buf04	=	$0384		\temp RTC buffer 4 (date)
+buf05	=	$0385		\temp RTC buffer 5 (month)
+buf06	=	$0386		\temp RTC buffer 6 (year)
+buf07	=	$0387		\temp RTC buffer 7
+buf08	=	$0388		\temp RTC buffer 8
+buf09	=	$0389		\temp RTC buffer 9
 \..
-buf12	EQU	$038C		\temp RTC buffer 12 (Alarm Hours 2)
+buf12	=	$038C		\temp RTC buffer 12 (Alarm Hours 2)
 \..
-buf17	EQU	$0391		\temp RTC buffer 17 (temp MSB)
-buf18	EQU	$0392		\temp RTC buffer 18 (temp LSB)
+buf17	=	$0391		\temp RTC buffer 17 (temp MSB)
+buf18	=	$0392		\temp RTC buffer 18 (temp LSB)
 
 
-cr	EQU	13		\<cr>
-lf	EQU	10		\<lf>
-spc	EQU	32		\<space>
-colon	EQU	58		\<:>
-dash	EQU	45		\<->
-bkspc	EQU	8		\<backspace> (ascii 'BS')
-upper	EQU	$DF		\lower to upper case mask (b5=0 on AND)
-lower	EQU	$20		\upper to lower case mask (b5=1 on ORA)
+cr	=	13		\<cr>
+lf	=	10		\<lf>
+spc	=	32		\<space>
+colon	=	58		\<:>
+dash	=	45		\<->
+bkspc	=	8		\<backspace> (ascii 'BS')
+upper	=	$DF		\lower to upper case mask (b5=0 on AND)
+lower	=	$20		\upper to lower case mask (b5=1 on ORA)
 
 \end of declarations
 
-	INCLUDE 	I2CBUS		\include I2C bus marcos
+	INCLUDE 	INCBUS		\include I2C bus marcos
 
 	ORG	$8000		\sideways rom address start (to $BFFF)
 
 \-------------------------------------------------------------------------------
-romstart	DFB	0,0,0		\no language entry (3 nulls)
+.romstart	EQUB	0,0,0		\no language entry (3 nulls)
 	JMP	service		\to service entry
-	DFB	$82		\ROM type : Service + 6502 code
-	DFB	(copyr-romstart)	\offset to copyright string
-title	DFB	0		\version
-	ASC	'I2C'		\title string
-	DFB	0		\..and null terminator
+	EQUB	$82		\ROM type : Service + 6502 code
+	EQUB	(copyr-romstart)	\offset to copyright string
+.title	EQUB	0		\version
+	EQUS	"I2C"		\title string
+	EQUB	0		\..and null terminator
 	version
-copyr	DFB	0		\copyright string..
-	ASC	'(C) M.P.Barr 2018'
-	DFB	0		\..'framed' by nulls
+.copyr	EQUB	0		\copyright string..
+	EQUS	"(C) M.P.Barr 2018"
+	EQUB	0		\..'framed' by nulls
 
 \end of ROM header
 
 \-------------------------------------------------------------------------------
 \Service entry and start of rom code
 
-service	CMP	#1		\A=1, autoboot? ('Break' or switch on)
+.service	CMP	#1		\A=1, autoboot? ('Break' or switch on)
 	BNE	serv_a1		\no, next check
 	JMP	boot		\else goto boot handler (print time)
-serv_a1	CMP	#4		\A=4, unknown command?
+.serv_a1	CMP	#4		\A=4, unknown command?
 	BNE	serv_a2		\no, next check
 	JMP	command		\else goto command handler
-serv_a2	CMP	#8		\A=8, Unrecognised OSWORD?
+.serv_a2	CMP	#8		\A=8, Unrecognised OSWORD?
 	BNE	serv_a3		\no, next check
 	JMP	xosword		\else goto unknown OSWORD handler
-serv_a3	CMP	#9		\A=9, *HELP entered?
+.serv_a3	CMP	#9		\A=9, *HELP entered?
 	BNE	serv_x		\no, next check
 	JMP	help		\yes, goto help handler
-serv_x	RTS			\not a call we want so exit
+.serv_x	RTS			\not a call we want so exit
 
 \-------------------------------------------------------------------------------
 \Handler for *HELP or *HELP xxx where xxx could be our help cue which is 'I2C'
 
-help	LDA	(cli),Y		\get last non-space chr after *HELP
+.help	LDA	(cli),Y		\get last non-space chr after *HELP
 	CMP	#cr		\just a <cr> ?
 	BNE	bighelp		\no, more text typed so see if it's us
 
@@ -240,15 +240,15 @@ help	LDA	(cli),Y		\get last non-space chr after *HELP
 	PHA
 	JSR	OSNEWL		\blank line leader (Acorn protocol)
 	LDX	#1		\indexing title with X
-help_a1	LDA	title,X		\get a title chr
+.help_a1	LDA	title,X		\get a title chr
 	BNE	help_a2		\not a null so goto print it
 	LDA	#spc		\else replace with a <space>
-help_a2	JSR	OSASCI		\print the chr
+.help_a2	JSR	OSASCI		\print the chr
 	INX			\increment index
 	CPX	#(copyr-title)	\test for the end of 'title'+'version'
 	BNE	help_a1		\not finished so loop for next chr
 
-help_a4	JSR	OSNEWL		\print new line
+.help_a4	JSR	OSNEWL		\print new line
 	PLA			\else the *HELP<cr> command must be..
 	TAX			\..passed on for other Roms
 	PLA			\so restore the regs
@@ -256,16 +256,16 @@ help_a4	JSR	OSNEWL		\print new line
 	LDA	#9		\restore the HELP code for other Roms
 	RTS			\and return
 
-bighelp	TYA			\*HELP abc.. typed so is it us?
+.bighelp	TYA			\*HELP abc.. typed so is it us?
 	PHA			\save the regs
 	TXA
 	PHA
 	LDX	#0		\X will be our rom name pointer
-help_a3	LDA	(cli),Y		\get next user chr
+.help_a3	LDA	(cli),Y		\get next user chr
 	CMP	#$61		\check if chr is lower case
 	BMI	help_b3		\not, so continue
 	AND	#upper		\else force to upper case
-help_b3	CMP	myname,x		\compare with next myname chr
+.help_b3	CMP	myname,x		\compare with next myname chr
 	BNE	help_a4		\no match so exit no action
 	CMP	#cr		\did we match on 2 <cr>'s ?
 	BEQ	help_a5	\yes, it's us then so goto service
@@ -276,12 +276,12 @@ help_b3	CMP	myname,x		\compare with next myname chr
 \User typed *HELP I2C so we need to list our commands from 'comtab' and
 \for convention, we will first print the full rom title as for normal *HELP
 
-help_a5	JSR	OSNEWL		\blank line leader (Acorn protocol)
+.help_a5	JSR	OSNEWL		\blank line leader (Acorn protocol)
 	LDX	#1		\X used as index for title
-help_b1	LDA	title,X		\get a title chr
+.help_b1	LDA	title,X		\get a title chr
 	BNE	help_b2		\not a null so goto print it
 	LDA	#spc		\else replace with a <space>
-help_b2	JSR	OSASCI		\print the chr
+.help_b2	JSR	OSASCI		\print the chr
 	INX			\increment index
 	CPX	#(copyr-title)	\test for the end of 'title'+'version'
 	BNE	help_b1		\not finished so loop for next chr
@@ -290,15 +290,15 @@ help_b2	JSR	OSASCI		\print the chr
 	JSR	OSASCI		\OSASCI will add a <lf>
 
 				\now process help text
-	LDA	#>comtab		\initialise character pointer
+	LDA	#LO(comtab)		\initialise character pointer
 	STA	htextl
-	LDA	#<comtab
+	LDA	#HI(comtab)
 	STA	htexth
 	LDY	#0		\Y used as character index (always 0)
-help_a6	LDA	#spc		\indent each command by two <spaces>
+.help_a6	LDA	#spc		\indent each command by two <spaces>
 	JSR	OSASCI
 	JSR	OSASCI
-help_a8	LDA	(htextl),Y	\get a chr from table
+.help_a8	LDA	(htextl),Y	\get a chr from table
 	BMI	help_a7		\-ve means end of command or of table
 	JSR	OSASCI		\else print chr
 	INC	htextl		\and continue with this command..
@@ -306,7 +306,7 @@ help_a8	LDA	(htextl),Y	\get a chr from table
 	INC	htexth
 	BNE	help_a8		\unconditional loop back
 
-help_a7	LDA	(htextl),Y	\get the -ve chr again
+.help_a7	LDA	(htextl),Y	\get the -ve chr again
 	CMP	#$FF		\was it $FF and end of table?
 	BEQ	help_a9		\yes, goto exit
 	LDA	#cr		\else <cr><lf> after each command
@@ -317,7 +317,7 @@ help_a7	LDA	(htextl),Y	\get the -ve chr again
 	INC	htexth
 	BNE	help_a6		\not at end yet so loop back for next
 
-help_a9	PLA			\else finished extended help so..
+.help_a9	PLA			\else finished extended help so..
 	TAX			\..restore regs
 	PLA
 	TAY
@@ -327,13 +327,13 @@ help_a9	PLA			\else finished extended help so..
 \-------------------------------------------------------------------------------
 \Main unknown MOS *<command> interpreter - entered when A=4
 
-command	TXA			\save X
+.command	TXA			\save X
 	PHA
 	LDX	#$FF		\X will index through command table
 	DEY			\X & Y will immediately be incremented
 	TYA			\save Y on the stack for restoration..
 	PHA			\..(re-increment if passing on)
-comm_a1	INY			\incr pointers
+.comm_a1	INY			\incr pointers
 	INX
 	LDA	comtab,X		\test for end of table = $FF
 	CMP	#$FF
@@ -342,7 +342,7 @@ comm_a1	INY			\incr pointers
 	CMP	#$61		\check if chr is lower case
 	BMI	comm_a6		\not, so continue
 	AND	#upper		\else force to upper case
-comm_a6	CMP	#cr		\if <cr> or <space> then one more test
+.comm_a6	CMP	#cr		\if <cr> or <space> then one more test
 	BEQ	comm_a5		\<cr> - end of user command
 	CMP	#spc
 	BEQ	comm_a5		\<spc> - end of user command
@@ -350,19 +350,19 @@ comm_a6	CMP	#cr		\if <cr> or <space> then one more test
 	BNE	comm_a2		\no match, skip this command
 	JMP	comm_a1		\else repeat for next chr
 
-comm_a5	LDA	comtab,X		\get equivalent comtab command chr
+.comm_a5	LDA	comtab,X		\get equivalent comtab command chr
 	BMI	comm_a3		\$8x, this is a command match so..
 				\..goto get exe address
 	CMP	#spc
 	BNE	comm_a2		\not <space> or $8x so skip
 
-comm_a0	INX			\matched a command with parameters
+.comm_a0	INX			\matched a command with parameters
 	LDA	comtab,X		\so move along to exe address
 	BPL	comm_a0
 	BNE	comm_a3		\and goto get exe address
 
-comm_a2	DEX			\back one chr so we don't miss the $8x
-comm_a7	INX			\increment pointer
+.comm_a2	DEX			\back one chr so we don't miss the $8x
+.comm_a7	INX			\increment pointer
 	LDA	comtab,X		\get next chr of failed comtab command
 	BPL	comm_a7		\repeat till we hit the -ve exe address
 	INX			\then skip the second address byte
@@ -371,7 +371,7 @@ comm_a7	INX			\increment pointer
 	TAY
 	JMP	comm_a1		\and do it all again
 
-comm_a3	STY	comdata		\save Y which points to any user data
+.comm_a3	STY	comdata		\save Y which points to any user data
 	LDA	comtab,X		\get command exeHi from comtab..
 	STA	COMVEC+1		\..and place in vector
 	INX			\point X at next addres byte
@@ -383,7 +383,7 @@ comm_a3	STY	comdata		\save Y which points to any user data
 	PHA			\re-save on stack
 	JMP	(COMVEC)		\and execute the command!
 
-comm_a4	PLA			\wasn't one of our commands so..
+.comm_a4	PLA			\wasn't one of our commands so..
 	TAY
 	INY			\restore Y to it's MOS value
 	PLA			\restore X
@@ -395,52 +395,52 @@ comm_a4	PLA			\wasn't one of our commands so..
 \Command table as	'*COMMAND <spc> *HELP dialogue'
 \		 <command label>
 
-comtab	ASC	'I2C'
-	DFDB	stari2c
-	ASC	'I2CRESET'
-	DFDB	starrst
-	ASC	'I2CQUERY (Q)'
-	DFDB	i2cquery
-	ASC	'I2CTXB <addr> (<#nn>) <byte>(;)'
-	DFDB	i2ctxb
-	ASC	'I2CTXD <addr> (<#nn>) <no.bytes>(;)'
-	DFDB	i2ctxd
-	ASC	'I2CRXB <addr> (<#nn>) (A%-Z%)'
-	DFDB	i2crxb
-	ASC	'I2CRXD <addr> (<#nn>) <no.bytes>'
-	DFDB	i2crxd
-	ASC	'I2CSTOP'
-	DFDB	starstp
+.comtab	EQUS	"I2C"
+	EQUB 	HI(stari2c), LO(stari2c)
+	EQUS	"I2CRESET"
+	EQUB	HI(starrst), LO(starrst)
+	EQUS	"I2CQUERY (Q)"
+	EQUB	HI(i2cquery), LO(i2cquery)
+	EQUS	"I2CTXB <addr> (<#nn>) <byte>(;)"
+	EQUB	HI(i2ctxb), LO(i2ctxb)
+	EQUS	"I2CTXD <addr> (<#nn>) <no.bytes>(;)"
+	EQUB	HI(i2ctxd), LO(i2ctxd)
+	EQUS	"I2CRXB <addr> (<#nn>) (A%-Z%)"
+	EQUB	HI(i2crxb), LO(i2crxb)
+	EQUS	"I2CRXD <addr> (<#nn>) <no.bytes>"
+	EQUB	HI(i2crxd), LO(i2crxd)
+	EQUS	"I2CSTOP"
+	EQUB	HI(starstp), LO(starstp)
 
-	ASC	'TBRK'
-	DFDB	xtbrk
-	ASC	'TIME'
-	DFDB	xtime
-	ASC	'DATE'
-	DFDB	xdate
-	ASC	'TEMP'
-	DFDB	xtemp
-	ASC	'NOW'
-	DFDB	xnow
-	ASC	'NOW$'
-	DFDB	xi2crtc
-	ASC	'TSET <hh:mm:ss>'
-	DFDB	xtset
-	ASC	'DSET <day> <dd-mm-yy>'
-	DFDB	xdset
+	EQUS	"TBRK"
+	EQUB	HI(xtbrk), LO(xtbrk)
+	EQUS	"TIME"
+	EQUB	HI(xtime), LO(xtime)
+	EQUS	"DATE"
+	EQUB	HI(xdate), LO(xdate)
+	EQUS	"TEMP"
+	EQUB	HI(xtemp), LO(xtemp)
+	EQUS	"NOW"
+	EQUB	HI(xnow), LO(xnow)
+	EQUS	"NOW$"
+	EQUB	HI(xi2crtc), LO(xi2crtc)		
+	EQUS	"TSET <hh:mm:ss>"
+	EQUB	HI(xtset), LO(xtset)
+	EQUS	"DSET <day> <dd-mm-yy>"
+	EQUB	HI(xdset), LO(xdset)
 
-	DFB	$FF		\end of table marker
+	EQUB	$FF		\end of table marker
 
 \-------------------------------------------------------------------------------
 
-myname	STR	'I2C'		\our name in upper case for *H.I2C
+.myname	EQUS	"I2C", cr		\our name in upper case for *H.I2C
 
 \-------------------------------------------------------------------------------
 \Prints full time & date (as per *NOW) on <Break> This is a user selectable
 \feature and can be toggled on or off using *TBREAK which toggles the ToB
 \flag. Entered via MOS reset/boot call with A=1
 
-boot	TYA			\save registers
+.boot	TYA			\save registers
 	PHA
 	TXA
 	PHA
@@ -451,7 +451,7 @@ boot	TYA			\save registers
 	BEQ	boot_x		\if zero, skip header
 	JSR	xxnow		\else do the header printing
 
-boot_x	PLA			\restore the registers
+.boot_x	PLA			\restore the registers
 	TAX
 	PLA
 	TAY
@@ -461,26 +461,26 @@ boot_x	PLA			\restore the registers
 \------------------------------------------------------------------------------
 \Handler for OSWORD calls implemented in I2C rom. Currently, $0E Type 1 and 4 
 
-xosword	LDA	OSW_A		\get unknown OSWORD call
+.xosword	LDA	OSW_A		\get unknown OSWORD call
 	CMP	#14		\is it a Real Time Clock call?
 	BNE	xosw_a2		\not RTC read, try next
 	LDY	#0		\else test OWORD 14 function
 	LDA	(OSW_X),Y		\Type is provided by caller at XY+0
 	CMP	#0		\is it function 0? (Compact *TIME/TIME$)
 	BNE	xosw_a0
-	JMP	OSW$0E0		\handle function 0
-xosw_a0	CMP	#4		\is it our new time$ call?
+	JMP	OSW0E0		\handle function 0
+.xosw_a0	CMP	#4		\is it our new time$ call?
 	BNE	xosw_a1		\not a Type 4, try next type
-	JMP	OSW$0E4		\else jump to our OSWORD &0E Type 4
-xosw_a1	CMP	#1		\Type 1? 
+	JMP	OSW0E4		\else jump to our OSWORD &0E Type 4
+.xosw_a1	CMP	#1		\Type 1? 
 	BNE	xosw_a2		\no, test next OSWORD call
-	JMP	OSW$0E1		\else jump to our OSWORD &0E Type 1
+	JMP	OSW0E1		\else jump to our OSWORD &0E Type 1
 				
-xosw_a2	LDA	OSW_A		\get unknown OSWORD call
+.xosw_a2	LDA	OSW_A		\get unknown OSWORD call
 	NOP			\further OSWORD tests go here
 
-xosx	LDA	#8		\not an RTC call so restore A
-xosxx	RTS			\and return flagging command untaken
+.xosx	LDA	#8		\not an RTC call so restore A
+.xosxx	RTS			\and return flagging command untaken
 
 \------------------------------------------------------------------------------
 \OSWORD call &0E Type 1 emulation - requests BCD output of the RTC into a
@@ -488,7 +488,7 @@ xosxx	RTS			\and return flagging command untaken
 \only call but can be implemented on an Elk with an RTC. This implementation
 \faithfully reproduces the returned parameter block of OSWORD &0E Type 1 
 
-OSW$0E1	JSR	getrtc		\first fetch rtc data block and then
+.OSW0E1	JSR	getrtc		\first fetch rtc data block and then
 				\get DS3231 BCD values, mask & save..
 	LDA	buf06		\year
 	AND	#cyy
@@ -527,7 +527,7 @@ OSW$0E1	JSR	getrtc		\first fetch rtc data block and then
 \string noting that here, the string is returned at the address pointed to by
 \the OSWORD entry XY (lo/hi)
 
-OSW$0E4	JSR	xxi2crtc		\duplicate *NOW$ function
+.OSW0E4	JSR	xxi2crtc		\duplicate *NOW$ function
 
 	LDA	#0		\claim call and return to MOS
 	RTS			\simple RTS, registers not preserved
@@ -536,7 +536,7 @@ OSW$0E4	JSR	xxi2crtc		\duplicate *NOW$ function
 \OSWORD call &0E Type 0 - returns an ASCII BCD time and date string in Compact format
 \This is needed for Master Compact *TIME/TIME$. Format: "Day, DD MMM YYYY.HH:MM:SS"
 
-OSW$0E0:
+.OSW0E0:
     JSR getrtc     ; get RTC time & date to buffer
     LDY #0         ; start at beginning of output buffer
     
@@ -545,17 +545,17 @@ OSW$0E0:
     AND #cwd       ; mask
     SEC            ; subtract 1 to index days as 0..6
     SBC #1
-    ASL            ; multiply by 4 (days are 3 chr + <cr>)
-    ASL
+    ASL A            ; multiply by 4 (days are 3 chr + <cr>)
+    ASL A
     TAX            ; index days array with X
-comp_day_loop	LDA days,X	; get a day chr
+.comp_day_loop	LDA days,X	; get a day chr
 	CMP #cr		; <cr> and end of day?
 	BEQ comp_day_end	; yes, day string finished
 	STA (OSW_X),Y	; store day chr in buffer
 	INY
 	INX		; incr day chr read pointer
 	BNE comp_day_loop	; and loop for next day chr
-comp_day_end
+.comp_day_end
     
     ; Add "," after day
     LDA #','
@@ -576,19 +576,19 @@ comp_day_end
     CMP #$10       ; is it >= 10?
     BCC comp_month_adj	; no, skip adjustment
     SBC #$06       ; adjust for BCD
-comp_month_adj	SEC		; subtract 1 to index months as 0..11
+.comp_month_adj	SEC		; subtract 1 to index months as 0..11
 	SBC #1
-	ASL		; multiply by 4 (months are 3 chr + <cr>)
-	ASL
+	ASL A		; multiply by 4 (months are 3 chr + <cr>)
+	ASL A
 	TAX		; index months array with X
-comp_month_loop	LDA months,X	; get a month chr
+.comp_month_loop	LDA months,X	; get a month chr
 	CMP #cr		; <cr> and end of month?
 	BEQ comp_month_end	; yes, month string finished
 	STA (OSW_X),Y	; store month chr in buffer
 	INY
 	INX		; incr month chr read pointer
 	BNE comp_month_loop	; and loop for next month chr
-comp_month_end
+.comp_month_end
     
     ; Space after month
     LDA #' '
@@ -607,13 +607,13 @@ comp_month_end
     STA (OSW_X),Y
     INY
     BNE comp_year_ok
-comp_century21	LDA #'2'	; 20xx
+.comp_century21	LDA #'2'	; 20xx
 	STA (OSW_X),Y
 	INY
 	LDA #'0'
 	STA (OSW_X),Y
 	INY
-comp_year_ok
+.comp_year_ok
     PLA            ; restore year
     JSR byte2hex   ; convert to hex string
     
@@ -648,7 +648,7 @@ comp_year_ok
     RTS
 
 ; Helper routine to convert byte to hex string (00-99)
-byte2hex	PHA		\save original value
+.byte2hex	PHA		\save original value
 	LSR A		\get high nibble
 	LSR A
 	LSR A
@@ -666,18 +666,18 @@ byte2hex	PHA		\save original value
 	RTS
 
 ; Month names array (3 chars + <cr> each)
-months	STR	"Jan"
-	STR	"Feb"
-	STR	"Mar"
-	STR	"Apr"
-	STR	"May"
-	STR	"Jun"
-	STR	"Jul"
-	STR	"Aug"
-	STR	"Sep"
-	STR	"Oct"
-	STR	"Nov"
-	STR	"Dec"
+.months	EQUS	"Jan", cr
+	EQUS	"Feb", cr
+	EQUS	"Mar", cr	
+	EQUS	"Apr", cr
+	EQUS	"May", cr
+	EQUS	"Jun", cr
+	EQUS	"Jul", cr
+	EQUS	"Aug", cr
+	EQUS	"Sep", cr
+	EQUS	"Oct", cr
+	EQUS	"Nov", cr
+	EQUS	"Dec", cr
 
 \------------------------------------------------------------------------------
 \Command to toggle Time-on-Break (ToB) function. Uses storage in the RTC
@@ -685,23 +685,23 @@ months	STR	"Jan"
 \switch. At each call, toggles the ToB flag stored in the RTC per /inc/rtc
  
 				\read existing flag state..
-xtbrk	JSR	getrtc		\fetch rtc data block
+.xtbrk	JSR	getrtc		\fetch rtc data block
 	LDA	buf12		\get Alarm 2 Hour (=ToB)
 	AND	#$0F		\isolate bits 3-0
 	BEQ	xtb1		\if zero, goto set
 	LDA	#0		\else currently on, turn off	
 	BEQ	xtb2		\and goto write zero
-xtb1	LDA	#1		\currently off, turn on
+.xtb1	LDA	#1		\currently off, turn on
 
-xtb2	STA	$6A		\tx byte (1 or 0 ToB flag)
+.xtb2	STA	$6A		\tx byte (1 or 0 ToB flag)
 	JSR	wtbrk		\store state in RTC ram (see /inc/rtc)
 
 	LDA	$6A		\report On or Off
 	BEQ	xtb3		\0 SO goto 'Off'
 	LDA	#6		\else 1 so 'On'
 	BNE	xtb4
-xtb3	LDA	#5
-xtb4	JSR	xmess		\print 'On' or 'Off'
+.xtb3	LDA	#5
+.xtb4	JSR	xmess		\print 'On' or 'Off'
 
 	PLA			\finished so..
 	TAY			\MOS command graceful exit
@@ -713,8 +713,8 @@ xtb4	JSR	xmess		\print 'On' or 'Off'
 \------------------------------------------------------------------------------
 \*I2C - sets a confirm-present byte and records the slot id of this I2C rom
 
-i2cgo	NOP			\assembler call entry point
-stari2c	LDA	#$2C		\set zpreg to $2C..
+.i2cgo	NOP			\assembler call entry point
+.stari2c	LDA	#$2C		\set zpreg to $2C..
 	STA	zpreg		\..to confirm rom present
 	LDA	&F4		\record our rom id
 	STA	i2cslot
@@ -730,11 +730,11 @@ stari2c	LDA	#$2C		\set zpreg to $2C..
 \*I2CRESET - performs a reset by ensuring no device is waiting for master clock
 \pulses and by issuing a stop -> idle.
 
-rstgo	NOP			\assembler call entry point
+.rstgo	NOP			\assembler call entry point
 	SEI
-starrst	JSR	i2creset		\call internal routine
+.starrst	JSR	i2creset		\call internal routine
 
-rstx	PLA			\MOS command graceful exit
+.rstx	PLA			\MOS command graceful exit
 	TAY
 	PLA
 	TAX
@@ -745,9 +745,9 @@ rstx	PLA			\MOS command graceful exit
 \-------------------------------------------------------------------------------
 \To 'reset' any hung devices, issues nine clock pulses followed by an i2c stop
 
-i2creset	LDX	#9		\issuing nine clocks
+.i2creset	LDX	#9		\issuing nine clocks
 	scllo			\start with clock lo
-rstc	i2clock
+.rstc	i2clock
 	DEX
 	BNE 	rstc		\loop for nine ticks
 	i2cstop			\issue a stop
@@ -756,11 +756,11 @@ rstc	i2clock
 \-------------------------------------------------------------------------------
 \*I2CSTOP - external rom star-command wrapper for internal I2C stop routine
 
-stpgo	NOP			\assembler call entry point
+.stpgo	NOP			\assembler call entry point
 	SEI
-starstp	i2cstop			\call internal routine
+.starstp	i2cstop			\call internal routine
 
-stpx	PLA			\MOS command graceful exit
+.stpx	PLA			\MOS command graceful exit
 	TAY
 	PLA
 	TAX
@@ -771,7 +771,7 @@ stpx	PLA			\MOS command graceful exit
 \-------------------------------------------------------------------------------
 \*I2CQUERY - find connected i2c devices
 
-i2cquery	LDA	#0		\reset quiet flag
+.i2cquery	LDA	#0		\reset quiet flag
 	STA	htexth
 	LDY	comdata		\restore Y to correct CLI value
 	LDA	(cli),Y		\command only, no parameters?
@@ -781,7 +781,7 @@ i2cquery	LDA	#0		\reset quiet flag
 	BCC	qrygo		\parse ok, continue
 	JMP	qryx		\else error occurred, exit
 
-qrygo	NOP			\assembler call entry point
+.qrygo	NOP			\assembler call entry point
 	SEI
 	LDA	#$FF		\init responding list to none
 	STA	i2cbuf 
@@ -791,10 +791,10 @@ qrygo	NOP			\assembler call entry point
 	BNE	qry3		\yes, skip output
 	LDA	#1		\else print text leader
 	JSR	xmess
-qry3	LDA	#devidlo		\first device id
+.qry3	LDA	#devidlo		\first device id
 	STA	temp1		\current id counter
 
-qryloop	i2cstart			\issue a device address with read
+.qryloop	i2cstart			\issue a device address with read
 	LDA	temp1		\next device id to interrogate
 	SEC			\C = 1 = Read
 	JSR	i2caddr
@@ -812,9 +812,9 @@ qryloop	i2cstart			\issue a device address with read
 	JSR	OSASCI
 	LDA	temp1
 	JSR	hex
-qry4	INC	temp2		\increment device counter
+.qry4	INC	temp2		\increment device counter
 
-qry1	LDA	temp1		\last id to interrogate?
+.qry1	LDA	temp1		\last id to interrogate?
 	CMP	#devidhi
 	BEQ	qry2
 
@@ -822,7 +822,7 @@ qry1	LDA	temp1		\last id to interrogate?
 	INC	temp1		\increment id
 	JMP	qryloop		\and loop to interrogate next
 
-qry2	i2cstop			\finished, issue stop
+.qry2	i2cstop			\finished, issue stop
 	LDA	#$FF		\mark end of responding devices
 	LDX	temp2		\with $FF
 	STA	i2cbuf,X 
@@ -834,9 +834,9 @@ qry2	i2cstop			\finished, issue stop
 	LDA	#2		\else report no replies
 	JSR	xmess
 	BEQ	qryx		\and exit
-qnewl	JSR	OSNEWL		\tidy dev list with a new line
+.qnewl	JSR	OSNEWL		\tidy dev list with a new line
 
-qryx	PLA			\MOS command graceful exit
+.qryx	PLA			\MOS command graceful exit
 	TAY
 	PLA
 	TAX
@@ -848,7 +848,7 @@ qryx	PLA			\MOS command graceful exit
 \Command line parser for i2cquery - returns Carry clear if ok else reports error
 \and returns Carry set.
 
-qryparse	CMP	#spc		\parameter so next should be <spc>
+.qryparse	CMP	#spc		\parameter so next should be <spc>
 	BNE	qryerr		\no, exit via syntax error
 	INY			\step along
 	LDA	(cli),Y		\fetch parameter
@@ -858,17 +858,17 @@ qryparse	CMP	#spc		\parameter so next should be <spc>
 	CLC			\no errors
 	BCC	qrypx		\and exit
 
-qryerr	LDA	#3		\report syntax error
+.qryerr	LDA	#3		\report syntax error
 	JSR	xmess
 	SEC
 
-qrypx	RTS			\exit
+.qrypx	RTS			\exit
 
 \-------------------------------------------------------------------------------
 \*I2CTXB - transmit a single byte to a slave.
 \Syntax is : *I2CTXB <addr> (<#nn>) <byte>(;)
 
-i2ctxb	LDY	comdata		\restore Y to correct CLI value
+.i2ctxb	LDY	comdata		\restore Y to correct CLI value
 	LDA	(cli),Y		\command only, no address?
 	CMP	#13
 	BNE	txb1		\no, begin command
@@ -876,11 +876,11 @@ i2ctxb	LDY	comdata		\restore Y to correct CLI value
 	JSR	xmess
 	JMP	txbx		\and exit
 
-txb1	JSR	txbparse		\parse command line
+.txb1	JSR	txbparse		\parse command line
 	BCC	txbgo		\parse ok, continue
 	JMP	txbx		\else error occurred, exit
 
-txbgo	NOP			\assembler call entry point
+.txbgo	NOP			\assembler call entry point
 	SEI
 	LDA	#0		\begin i2c tx with clear status
 	STA	i2cstat
@@ -899,20 +899,20 @@ txbgo	NOP			\assembler call entry point
 	JSR	i2ctxbyte		\and send it
 	JSR	i2crxack		\ACK from slave?
 	BCS	txberr1		\no, abort on error	
-txb2	LDA	i2cbyte		\fetch data byte for transmit
+.txb2	LDA	i2cbyte		\fetch data byte for transmit
 	JSR	i2ctxbyte		\and send it
 	JSR	i2crxack		\ACK from slave?
 	BCC	txb3		\yes, exit good tx
 
-txberr1	LDA	i2cstat		\Tx ACK error so set b0 in status
+.txberr1	LDA	i2cstat		\Tx ACK error so set b0 in status
 	ORA	#1
 	STA	i2cstat
 
-txb3	LDA	htextl		\stop inhibited ?
+.txb3	LDA	htextl		\stop inhibited ?
 	BNE	txbx		\yes, skip to exit
 	i2cstop			\else issue an i2c stop
 
-txbx	PLA			\MOS command graceful exit
+.txbx	PLA			\MOS command graceful exit
 	TAY
 	PLA
 	TAX
@@ -924,7 +924,7 @@ txbx	PLA			\MOS command graceful exit
 \Command line parser for i2ctxb - returns Carry clear if ok else reports error
 \and returns Carry set.
 
-txbparse	CMP	#spc		\next chr should be <space>
+.txbparse	CMP	#spc		\next chr should be <space>
 	BNE	txbperr		\error
 	LDA	#0		\reset inhibit 'i2c stop' flag
 	STA	htextl		\re-using rom help zp
@@ -937,7 +937,7 @@ txbparse	CMP	#spc		\next chr should be <space>
 	CMP	#&80		\else max i2c 7-bit address is $7F
 	BPL	txbperr		\address out of range (>$7F)
 
-txbp4	INY			\device address ok
+.txbp4	INY			\device address ok
 	LDA	(cli),Y		\next chr should be <space>
 	CMP	#spc
 	BNE	txbperr		\error
@@ -948,7 +948,7 @@ txbp4	INY			\device address ok
 	BNE	txbp1		\not an #
 	DEX			\set X=$FF when # present
 	INY			\if #, adjust Y to point at hex digits
-txbp1	JSR	clbyte		\next two digits should be hex ms/ls
+.txbp1	JSR	clbyte		\next two digits should be hex ms/ls
 	BCS	txbperr		\error
 	CPX	#$FF		\if X=$FF, we have register no.
 	BNE	txbp2		\else we now have tx byte
@@ -962,7 +962,7 @@ txbp1	JSR	clbyte		\next two digits should be hex ms/ls
 	JSR	clbyte		\fetch tx byte
 	BCS	txbperr		\error
 
-txbp2	STA	i2cbyte		\save txbyte
+.txbp2	STA	i2cbyte		\save txbyte
 	STA	i2cbuf		\and in i2c buffer
 	STX	temp2		\save a copy of X - i2c register flag
 	INY			\next chr could be ';' or <Return>
@@ -972,25 +972,25 @@ txbp2	STA	i2cbyte		\save txbyte
 	INC	htextl		\else ; so set inhibit flag to 1
 	INY
 	LDA	(cli),Y		\last chr now must be <Return>
-txbp3	CMP	#cr
+.txbp3	CMP	#cr
 	BNE	txbperr		\error
           JSR       txbval              \perform additional validation unique to the underlying RTC
           BCS       txbpx               \additional validation does its own error ouptut
 	CLC			\else flag cl good
 	BCC	txbpx		\and exit
 
-txbperr	LDA	#3		\report syntax error
+.txbperr	LDA	#3		\report syntax error
 	JSR	xmess
 	SEC			\flag error with Carry set
 
-txbpx	RTS
+.txbpx	RTS
 
 \-------------------------------------------------------------------------------
 \*I2CTXD - transmit a contiguous sequence of N bytes to a slave. Tx bytes are
 \buffered in i2cbuf ($0A00) before calling command. For 256 bytes, <no.bytes>
 \is entered as 00. Syntax is : *I2CTXD <addr> (<#nn>) <no.bytes>(;)
 
-i2ctxd	LDY	comdata		\restore Y to correct CLI value
+.i2ctxd	LDY	comdata		\restore Y to correct CLI value
 	LDA	(cli),Y		\command only, no address?
 	CMP	#13
 	BNE	txd1		\no, begin command
@@ -998,11 +998,11 @@ i2ctxd	LDY	comdata		\restore Y to correct CLI value
 	JSR	xmess
 	JMP	txdx		\and exit
 
-txd1	JSR	txdparse		\parse command line
+.txd1	JSR	txdparse		\parse command line
 	BCC	txdgo		\parse ok, continue
 	JMP	txdx		\else error occurred, exit
 
-txdgo	NOP			\assembler call entry point
+.txdgo	NOP			\assembler call entry point
 	SEI
 	LDA	#0		\begin i2c tx with clear status
 	STA	i2cstat
@@ -1019,8 +1019,8 @@ txdgo	NOP			\assembler call entry point
 	JSR	i2crxack		\ACK from slave?
 	BCS	txderr1		\no, abort on error
 
-txd2	LDX	#0		\zero data index
-txd3	LDA	i2cbuf,X		\fetch a data byte for transmit
+.txd2	LDX	#0		\zero data index
+.txd3	LDA	i2cbuf,X		\fetch a data byte for transmit
 	JSR	i2ctxbyte		\and send it
 	JSR	i2crxack		\ACK from slave?
 	BCS	txderr1		\no, abort on error
@@ -1029,15 +1029,15 @@ txd3	LDA	i2cbuf,X		\fetch a data byte for transmit
 	BNE	txd3		\no, loop for next
 	BEQ	txd4		\finished tx so good exit
 
-txderr1	LDA	i2cstat		\Tx ACK error so set b0 in status
+.txderr1	LDA	i2cstat		\Tx ACK error so set b0 in status
 	ORA	#1
 	STA	i2cstat
 
-txd4	LDA	htextl		\stop inhibited ?
+.txd4	LDA	htextl		\stop inhibited ?
 	BNE	txdx		\yes, skip to exit
 	i2cstop			\else issue an i2c stop
 
-txdx	PLA			\MOS command graceful exit
+.txdx	PLA			\MOS command graceful exit
 	TAY
 	PLA
 	TAX
@@ -1049,7 +1049,7 @@ txdx	PLA			\MOS command graceful exit
 \Command line parser for i2ctxd - returns Carry clear if ok else reports error
 \and returns Carry set.
 
-txdparse	CMP	#spc		\next chr should be <space>
+.txdparse	CMP	#spc		\next chr should be <space>
 	BNE	txdperr		\error
 	INY
 	JSR	clbyte		\next two digits should be i2c address
@@ -1068,7 +1068,7 @@ txdparse	CMP	#spc		\next chr should be <space>
 	BNE	txdp1		\not an #
 	DEX			\set X=$FF when # present
 	INY			\if #, adjust Y to point at hex digits
-txdp1	JSR	clbyte		\next two digits should be hex ms/ls
+.txdp1	JSR	clbyte		\next two digits should be hex ms/ls
 	BCS	txdperr		\error
 	CPX	#$FF		\if X=$FF, we have register no.
 	BNE	txdp2		\else we now have number of tx bytes
@@ -1081,7 +1081,7 @@ txdp1	JSR	clbyte		\next two digits should be hex ms/ls
 	JSR	clbyte		\fetch number of tx bytes
 	BCS	txdperr		\error
 
-txdp2	STA	i2cbyte		\save number of tx bytes
+.txdp2	STA	i2cbyte		\save number of tx bytes
 	INY			\next chr could be ';' or <Return>
 	LDA	(cli),Y
 	CMP	#';'		\inhibit i2c stop switch?
@@ -1089,18 +1089,18 @@ txdp2	STA	i2cbyte		\save number of tx bytes
 	INC	htextl		\else ; so set inhibit flag to 1
 	INY
 	LDA	(cli),Y		\last chr now must be <Return>
-txdp3	CMP	#cr
+.txdp3	CMP	#cr
 	BNE	txdperr		\error
           JSR       txdval              \perform additional validation unique to the underlying RTC
           BCS       txdpx               \additional validation does its own error ouptut
 	CLC			\flag cl good
 	BCC	txdpx		\and exit
 
-txdperr	LDA	#3		\report syntax error
+.txdperr	LDA	#3		\report syntax error
 	JSR	xmess
 	SEC			\flag error with Carry set
 
-txdpx	RTS
+.txdpx	RTS
 
 \-------------------------------------------------------------------------------
 \Parses next two chrs of command line assuming they are either an explicit
@@ -1108,7 +1108,7 @@ txdpx	RTS
 \pointing to the first character of the subject pair.	
 \Returns the hex byte in A with Carry clear else returns Carry set on error
 
-clbyte	INY			\step on to second char and..
+.clbyte	INY			\step on to second char and..
 	LDA	(cli),Y		\..is it a % ?
 	CMP	#'%'
 	BNE	clbhex
@@ -1119,14 +1119,14 @@ clbyte	INY			\step on to second char and..
 	INY			\valid, adjust Y to end of % pair
 	BCC	clbgood		\% value fetched, goto good exit
 
-clbhex	DEY			\assume hex so re-point to ms digit
+.clbhex	DEY			\assume hex so re-point to ms digit
 	LDA	(cli),Y
 	JSR	aschex		\validate and convert to true hex
 	BMI	clberr		\if A -ve, illegal character
-	ASL
-	ASL
-	ASL
-	ASL
+	ASL A
+	ASL A
+	ASL A
+	ASL A
 	AND	#$F0
 	STA	temp1
 	INY
@@ -1134,12 +1134,12 @@ clbhex	DEY			\assume hex so re-point to ms digit
 	JSR	aschex		\validate and convert to true hex
 	BMI	clberr		\if A -ve, illegal character
 	ORA	temp1		\combine ls and ms digits
-clbgood	CLC			\byte good, return Carry clear
+.clbgood	CLC			\byte good, return Carry clear
 	BCC	clbx
 
-clberr	SEC			\error, return Carry set
+.clberr	SEC			\error, return Carry set
 
-clbx	RTS
+.clbx	RTS
 
 \-------------------------------------------------------------------------------
 \Validates integer variable identifier preceding % to be A-Z and if so, fetches
@@ -1147,14 +1147,14 @@ clbx	RTS
 \error via Carry set.
 \BASIC A-Z % LS byte is located at ($0400 + (4 * (ascii-hex - $40)))
 
-intvar	CMP	#'A'		\chr below 'A' ?
+.intvar	CMP	#'A'		\chr below 'A' ?
 	BMI	iverr		\yes, error
 	CMP	#'['		\chr above or = '[' (next chr after Z)
 	BPL	iverr		\yes, error
 	SEC			\else calc (4 * (ascii-hex - $40))
 	SBC	#$40
-	ASL
-	ASL
+	ASL A
+	ASL A
 	STA	htexth		\save $0400 A-Z offset for RXB 
 	STX	zpreg		\briefly preserve X for indexed read
 	TAX
@@ -1163,15 +1163,15 @@ intvar	CMP	#'A'		\chr below 'A' ?
 	CLC			\flag no error (C=0)
 	BCC	ivx
 
-iverr	SEC			\flag error (C=1)
+.iverr	SEC			\flag error (C=1)
 
-ivx	RTS
+.ivx	RTS
 
 \-------------------------------------------------------------------------------
 \*I2CRXB - reads a single byte from a slave
 \Syntax is : *I2CRXB <addr> (<#nn>) (A%-Z%)
 
-i2crxb	LDY	comdata		\restore Y to correct CLI value
+.i2crxb	LDY	comdata		\restore Y to correct CLI value
 	LDA	(cli),Y		\command only, no address?
 	CMP	#13
 	BNE	rxb1		\no, begin command
@@ -1179,16 +1179,16 @@ i2crxb	LDY	comdata		\restore Y to correct CLI value
 	JSR	xmess
 	JMP	rxbx		\and exit
 
-rxb1	LDX	#>i2cbuf		\set I2C buffer to $0A00
+.rxb1	LDX	#LO(i2cbuf)		\set I2C buffer to $0A00
 	STX	bufloc
-	LDX	#<i2cbuf
+	LDX	#HI(i2cbuf)
 	STX	bufloc+1
 
 	JSR	rxbparse		\parse command line
 	BCC	rxbgo		\parse ok, continue
 	JMP	rxbx		\else error occurred, exit
 
-rxbgo	NOP			\assembler call entry point
+.rxbgo	NOP			\assembler call entry point
 	SEI
 	LDA	#0		\begin i2c rx with clear status
 	STA	i2cstat
@@ -1198,12 +1198,12 @@ rxbgo	NOP			\assembler call entry point
 	LDX	temp2		\are we specifying a register?
 	BEQ	rxb2		\no, RnW = read is correct
 	CLC			\else toggle to RnW = write
-rxb2	JSR	i2caddr		\send address
+.rxb2	JSR	i2caddr		\send address
 	JSR	i2crxack		\ACK from slave?
 	BCC	rxb6		\yes, continue
 	JMP	rxberr1		\else abort on error
 
-rxb6	LDX	temp2		\is a register specified?
+.rxb6	LDX	temp2		\is a register specified?
 	BEQ	rxb3		\no, skip to rx data
 	LDA	i2creg	 	\else fetch register number
 	JSR	i2ctxbyte		\and send it
@@ -1216,7 +1216,7 @@ rxb6	LDX	temp2		\is a register specified?
 	JSR	i2crxack		\ACK from slave?
 	BCS	rxberr1		\no, abort on error
 
-rxb3	JSR	i2crxbyte		\read one byte from slave
+.rxb3	JSR	i2crxbyte		\read one byte from slave
 	LDY	#0		\store rx byte in i2c input buffer
 	STA	(bufloc),Y
 
@@ -1231,17 +1231,17 @@ rxb3	JSR	i2crxbyte		\read one byte from slave
 	INX
 	STA	ivars,X
 
-rxb5	SEC			\single byte read so send NACK
+.rxb5	SEC			\single byte read so send NACK
 	JSR	i2ctxack
 	JMP	rxb4		\and exit via i2c stop
 
-rxberr1	LDA	i2cstat		\Rx ACK error so set b1 in status
+.rxberr1	LDA	i2cstat		\Rx ACK error so set b1 in status
 	ORA	#2
 	STA	i2cstat
 
-rxb4	i2cstop			\issue an i2c stop
+.rxb4	i2cstop			\issue an i2c stop
 
-rxbx	PLA			\MOS command graceful exit
+.rxbx	PLA			\MOS command graceful exit
 	TAY
 	PLA
 	TAX
@@ -1253,7 +1253,7 @@ rxbx	PLA			\MOS command graceful exit
 \Command line parser for i2crxb - returns Carry clear if ok else reports error
 \and returns Carry set.
 
-rxbparse	CMP	#spc		\next chr should be <space>
+.rxbparse	CMP	#spc		\next chr should be <space>
 	BNE	rxbperr		\error
 	LDA	#0
 	STA	temp2		\default register specified to 'no'
@@ -1290,7 +1290,7 @@ rxbparse	CMP	#spc		\next chr should be <space>
 	BNE	rxbperr		\error
 
 	INY			\move pointer to chr after <space>
-rxbp2	INY			\step on one chr to possible %
+.rxbp2	INY			\step on one chr to possible %
 	LDA	(cli),Y		\only a var % is valid now
 	CMP	#'%'
 	BNE	rxbperr		\error
@@ -1302,21 +1302,21 @@ rxbp2	INY			\step on one chr to possible %
 	CMP	#cr
 	BNE	rxbperr		\error
 
-rxbp1	CLC			\flag cl good
+.rxbp1	CLC			\flag cl good
 	BCC	rxbpx		\and exit
 
-rxbperr	LDA	#3		\report syntax error
+.rxbperr	LDA	#3		\report syntax error
 	JSR	xmess
 	SEC			\flag error with Carry set
 
-rxbpx	RTS
+.rxbpx	RTS
 
 \-------------------------------------------------------------------------------
 \*I2CRXD - receives a contiguous sequence of N (specified) bytes from a slave.
 \The received bytes are stored in i2cbuf ($0A00). For 256 bytes, <no.bytes>
 \N is entered as 100. Syntax is : *I2CRXD <addr> (<#nn>) <no.bytes>
 
-i2crxd	LDY	comdata		\restore Y to correct CLI value
+.i2crxd	LDY	comdata		\restore Y to correct CLI value
 	LDA	(cli),Y		\command only, no address?
 	CMP	#13
 	BNE	rxd1		\no, begin command
@@ -1324,16 +1324,16 @@ i2crxd	LDY	comdata		\restore Y to correct CLI value
 	JSR	xmess
 	JMP	rxdx		\and exit
 
-rxd1	LDX	#>i2cbuf		\set I2C buffer to $0A00
+.rxd1	LDX	#LO(i2cbuf)		\set I2C buffer to $0A00
 	STX	bufloc
-	LDX	#<i2cbuf
+	LDX	#HI(i2cbuf)
 	STX	bufloc+1
 
 	JSR	rxdparse		\parse command line
 	BCC	rxdgo		\parse ok, continue
 	JMP	rxdx		\else error occurred, exit
 
-rxdgo	NOP			\assembler call entry point
+.rxdgo	NOP			\assembler call entry point
 	SEI
 	LDA	#0		\begin i2c tx with clear status
 	STA	i2cstat
@@ -1343,12 +1343,12 @@ rxdgo	NOP			\assembler call entry point
 	LDX	temp2		\are we specifying a register?
 	BEQ	rxd2		\no, RnW = read is correct
 	CLC			\else toggle to RnW = write
-rxd2	JSR	i2caddr		\send address
+.rxd2	JSR	i2caddr		\send address
 	JSR	i2crxack		\ACK from slave?
 	BCC	rxd7		\yes, continue
 	JMP	rxderr1		\else abort on error
 
-rxd7	LDX	temp2		\is a register specified?
+.rxd7	LDX	temp2		\is a register specified?
 	BEQ	rxd3		\no, skip to rx data
 	LDA	i2creg	 	\else fetch register number
 	JSR	i2ctxbyte		\and send it
@@ -1361,8 +1361,8 @@ rxd7	LDX	temp2		\is a register specified?
 	JSR	i2crxack		\ACK from slave?
 	BCS	rxderr1		\no, abort on error
 
-rxd3	LDY	#0		\zero data index
-rxd4	JSR	i2crxbyte		\read a byte from slave
+.rxd3	LDY	#0		\zero data index
+.rxd4	JSR	i2crxbyte		\read a byte from slave
 	STA	(bufloc),Y	\store rx byte in i2c input buffer
 	INY			\increment data index
 	CPY	i2cbyte		\all done?
@@ -1371,17 +1371,17 @@ rxd4	JSR	i2crxbyte		\read a byte from slave
 	JSR	i2ctxack		\..so send ACK
 	JMP	rxd4		\and loop
 
-rxd5	SEC			\finished reads so..
+.rxd5	SEC			\finished reads so..
 	JSR	i2ctxack		\..send NACK
 	JMP	rxd6		\and exit via i2cstop
 
-rxderr1	LDA	i2cstat		\Rx ACK error so set b1 in status
+.rxderr1	LDA	i2cstat		\Rx ACK error so set b1 in status
 	ORA	#2
 	STA	i2cstat
 
-rxd6	i2cstop			\issue an i2c stop
+.rxd6	i2cstop			\issue an i2c stop
 
-rxdx	PLA			\MOS command graceful exit
+.rxdx	PLA			\MOS command graceful exit
 	TAY
 	PLA
 	TAX
@@ -1393,7 +1393,7 @@ rxdx	PLA			\MOS command graceful exit
 \Command line parser for i2crxd - returns Carry clear if ok else reports error
 \and returns Carry set.
 
-rxdparse	CMP	#spc		\next chr should be <space>
+.rxdparse	CMP	#spc		\next chr should be <space>
 	BNE	rxdperr		\error
 	INY
 	JSR	clbyte		\next two digits should be i2c address
@@ -1412,7 +1412,7 @@ rxdparse	CMP	#spc		\next chr should be <space>
 	BNE	rxdp1		\not an #
 	DEX			\set X=$FF when # present
 	INY			\if #, adjust Y to point at hex digits
-rxdp1	JSR	clbyte		\next two digits should be hex ms/ls
+.rxdp1	JSR	clbyte		\next two digits should be hex ms/ls
 	BCS	rxdperr		\error
 	CPX	#$FF		\if X=$FF, we have register no.
 	BNE	rxdp2		\else we now have number of tx bytes
@@ -1425,7 +1425,7 @@ rxdp1	JSR	clbyte		\next two digits should be hex ms/ls
 	JSR	clbyte		\fetch number of tx bytes
 	BCS	rxdperr		\error
 
-rxdp2	STA	i2cbyte		\save number of tx bytes
+.rxdp2	STA	i2cbyte		\save number of tx bytes
 	BEQ	rxdperr		\zero is not valid
 	STX	temp2		\save a copy of X - i2c register flag
 	INY			\last chr could be <Return> or '0'
@@ -1444,20 +1444,20 @@ rxdp2	STA	i2cbyte		\save number of tx bytes
 	CMP	#cr		\<Return> ?
 	BNE	rxdperr		\no, error
 
-rxdp3	CLC			\flag cl good
+.rxdp3	CLC			\flag cl good
 	BCC	rxdpx		\and exit
 
-rxdperr	LDA	#3		\report syntax error
+.rxdperr	LDA	#3		\report syntax error
 	JSR	xmess
 	SEC			\flag error with Carry set
 
-rxdpx	RTS
+.rxdpx	RTS
 
 \-------------------------------------------------------------------------------
 \i2caddr - writes 7-bit device address + RnW to bus
 \Right-aligned 7-bit address is passed in A, RnW in Carry : 1=Read, 0=Write
  
-i2caddr	STA	zpreg		\preserve X & Y
+.i2caddr	STA	zpreg		\preserve X & Y
 	TXA
 	PHA
 	TYA
@@ -1465,10 +1465,10 @@ i2caddr	STA	zpreg		\preserve X & Y
 	LDA	zpreg
 
 	PHP			\save Carry (RnW) state
-	ASL			\adjust 7-bit address to high 7 bits
+	ASL	A		\adjust 7-bit address to high 7 bits
 
 	LDY	#7		\pass 7 address bits thru C, MS to LS
-adloop	ASL			\shift top bit into C
+.adloop	ASL	A		\shift top bit into C
 	TAX			\temp save remaining address bits in X
 	i2cdbit			\send current address bit to SDA
 	i2clock			\clock it
@@ -1489,28 +1489,28 @@ adloop	ASL			\shift top bit into C
 \i2crxack - tests slave acknowledge for ACK (SDA=lo) or NACK (SDA=hi) after a
 \write. Carry returns set for NACK or clear for ACK.
 
-i2crxack	sclhi
+.i2crxack	sclhi
 	sdahi
 	LDA	upiob		\get response
 	AND	#getsda
 	CLC			\Carry mirrors RxACK
 	BEQ	rxax
 	SEC
-rxax	scllo
+.rxax	scllo
 	RTS
 
 \-------------------------------------------------------------------------------
 \i2ctxack - transmits ACK as SDA=0 or NACK as SDA=1. On entry, Carry indicates
 \required acknowledge state. ( ACK=Carry reset , NACK=Carry set )
 
-i2ctxack	i2cdbit			\send acknowledge to SDA
+.i2ctxack	i2cdbit			\send acknowledge to SDA
 	i2clock			\and clock it
 	RTS
 
 \-------------------------------------------------------------------------------
 \i2crxbyte - receives a single 8-bit byte from slave and returns in A
 
-i2crxbyte	TXA			\preserve X & Y
+.i2crxbyte	TXA			\preserve X & Y
 	PHA
 	TYA
 	PHA
@@ -1519,14 +1519,14 @@ i2crxbyte	TXA			\preserve X & Y
 	sdahi
 	LDX	#0		\build rx byte in X
 	LDY	#8		\8 bits to receive
-rxloop	sclhi			\clock hi
+.rxloop	sclhi			\clock hi
 	LDA	upiob		\read a data bit (sent MS to LS)
 	AND	#getsda
 	CLC
 	BEQ	rxby1
 	SEC
-rxby1	TXA
-	ROL			\rotate bit from C into rx byte LS
+.rxby1	TXA
+	ROL	A		\rotate bit from C into rx byte LS
 	TAX			\save temporarily in X
 	scllo			\clock lo
 	DEY
@@ -1545,7 +1545,7 @@ rxby1	TXA
 \-------------------------------------------------------------------------------
 \i2ctxbyte - transmits a single 8-bit byte to slave. Byte passed in A.
 
-i2ctxbyte	STA	zpreg		\preserve X & Y
+.i2ctxbyte	STA	zpreg		\preserve X & Y
 	TXA
 	PHA
 	TYA
@@ -1554,8 +1554,8 @@ i2ctxbyte	STA	zpreg		\preserve X & Y
 
 	LDY	#8		\tx 8 individual bits
 	TAX			\copy byte into X
-txloop	TXA
-	ASL			\shift each bit into Carry
+.txloop	TXA
+	ASL	A		\shift each bit into Carry
 	TAX
 	i2cdbit			\send the bit on SDA
 	i2clock			\clock it
@@ -1582,11 +1582,11 @@ txloop	TXA
 \Calls xxi2crtc which is implemented for OSWORD #14 and so this call sets up
 \OSW_X and OS_Y to point to &0A00 as if derived from an OSWORD call.
 
-	INCLUDE 	I2CRTC
+	INCLUDE 	INCRTC
 
-xi2crtc	LDA	#>i2cbuf		\set up OSW_X and OSW_Y to &0A00
+.xi2crtc	LDA	#LO(i2cbuf)		\set up OSW_X and OSW_Y to &0A00
 	STA	OSW_X
-	LDA	#<i2cbuf
+	LDA	#HI(i2cbuf)
 	STA	OSW_Y
 	LDY	#0		\Y indexes succesive buffer writes 
 
@@ -1603,14 +1603,14 @@ xi2crtc	LDA	#>i2cbuf		\set up OSW_X and OSW_Y to &0A00
 \Local subroutine for xi2crtc to allow calling from elsewhere within our rom
 \See xi2crtc header for details. Time & Date string is stored at OSW_X/OSW_Y
 
-xxi2crtc	JSR	getrtc		\get rtc time & date to buffer
+.xxi2crtc	JSR	getrtc		\get rtc time & date to buffer
 	LDA	buf02		\get BCD hours
 	AND	#ch		\mask
 	PHA			\save
-	LSR			\convert BCD hours tens to ASCII
-	LSR
-	LSR
-	LSR
+	LSR	A		\convert BCD hours tens to ASCII
+	LSR A
+	LSR A
+	LSR A
 	CLC
 	ADC	#$30
 	STA	(OSW_X),Y		\hours tens = $0A00
@@ -1627,10 +1627,10 @@ xxi2crtc	JSR	getrtc		\get rtc time & date to buffer
 	LDA	buf01		\get BCD minutes
 	AND	#cm		\mask
 	PHA			\save
-	LSR			\convert BCD mins tens to ASCII
-	LSR
-	LSR
-	LSR
+	LSR	A		\convert BCD mins tens to ASCII
+	LSR A
+	LSR A
+	LSR A
 	CLC
 	ADC	#$30
 	INY
@@ -1648,10 +1648,10 @@ xxi2crtc	JSR	getrtc		\get rtc time & date to buffer
 	LDA	buf00		\get seconds
 	AND	#cs		\mask
 	PHA			\save
-	LSR			\convert BCD secs tens to ASCII
-	LSR
-	LSR
-	LSR
+	LSR	A		\convert BCD secs tens to ASCII
+	LSR A
+	LSR A
+	LSR A
 	CLC
 	ADC	#$30
 	INY
@@ -1672,10 +1672,10 @@ xxi2crtc	JSR	getrtc		\get rtc time & date to buffer
 	AND	#cwd		\mask
 	SEC			\subtract 1 to index days as 0..6
 	SBC	#1
-	ASL			\multiply by 4 (days are 3 chr + <cr>)
-	ASL
+	ASL	A		\multiply by 4 (days are 3 chr + <cr>)
+	ASL A
 	TAX			\index days array with X
-i2r_a1	LDA	days,X		\get a day chr
+.i2r_a1	LDA	days,X		\get a day chr
 	CMP	#cr		\<cr> and end of day?
 	BEQ	i2r_a2		\yes, day string finished
 	INY
@@ -1683,7 +1683,7 @@ i2r_a1	LDA	days,X		\get a day chr
 	INX			\incr day chr read pointer
 	BNE	i2r_a1		\and loop for next day chr
 
-i2r_a2	LDX	zpreg		\restore X
+.i2r_a2	LDX	zpreg		\restore X
 	LDA	#spc		\space delimiter to end day
 	INY
 	STA	(OSW_X),Y
@@ -1691,10 +1691,10 @@ i2r_a2	LDX	zpreg		\restore X
 	LDA	buf04		\get BCD date
 	AND	#cdd		\mask
 	PHA			\save
-	LSR			\convert BCD date tens to ASCII
-	LSR
-	LSR
-	LSR
+	LSR	A		\convert BCD date tens to ASCII
+	LSR A
+	LSR A
+	LSR A
 	CLC
 	ADC	#$30
 	INY
@@ -1712,10 +1712,10 @@ i2r_a2	LDX	zpreg		\restore X
 	LDA	buf05		\get BCD month
 	AND	#cmm		\mask
 	PHA			\save
-	LSR			\convert BCD month tens to ASCII
-	LSR
-	LSR
-	LSR
+	LSR	A		\convert BCD month tens to ASCII
+	LSR A
+	LSR A
+	LSR A
 	CLC
 	ADC	#$30
 	INY
@@ -1733,10 +1733,10 @@ i2r_a2	LDX	zpreg		\restore X
 	LDA	buf06		\get year
 	AND	#cyy		\mask
 	PHA			\save
-	LSR			\convert BCD year tens to ASCII
-	LSR
-	LSR
-	LSR
+	LSR	A		\convert BCD year tens to ASCII
+	LSR A
+	LSR A
+	LSR A
 	CLC
 	ADC	#$30
 	INY
@@ -1769,7 +1769,7 @@ i2r_a2	LDX	zpreg		\restore X
 	ADC	#$30
 	INY
 	STA	(OSW_X),Y		\temp units = $0A17
-	FI
+	ENDIF
 
 	LDA	#cr		\finish full string with <cr> ($0D)
 	INY
@@ -1781,7 +1781,7 @@ i2r_a2	LDX	zpreg		\restore X
 \*TIME
 \Prints time at current cursor position formatted as <hh:mm:ss> (24hr format)
 
-xtime	JSR	getrtc		\get rtc time & date to buffer
+.xtime	JSR	getrtc		\get rtc time & date to buffer
 	LDX	#0		\direct '*' call so end with <cr>
 	JSR	xxtime		\call time output
 
@@ -1796,7 +1796,7 @@ xtime	JSR	getrtc		\get rtc time & date to buffer
 \Local subroutine for xtime to allow calling from elsewhere within our rom
 \Call with X -ve to skip <cr> after time output
 
-xxtime	TXA			\save X to later test whether this is..
+.xxtime	TXA			\save X to later test whether this is..
 	PHA			\..a direct *TIME or an indirect call
 
 	LDA	buf02		\get hours
@@ -1818,13 +1818,13 @@ xxtime	TXA			\save X to later test whether this is..
 				\..and if so, skip the <cr>
 	LDA	#cr		\else finish with a <cr><lf>
 	JSR	OSASCI
-time_a1	RTS			\and return
+.time_a1	RTS			\and return
 
 \------------------------------------------------------------------------------
 \*DATE
 \Prints date at current cursor position formatted as <Day dd-mm-yy>
 
-xdate	JSR	getrtc		\get rtc time & date to buffer
+.xdate	JSR	getrtc		\get rtc time & date to buffer
 	LDX	#0		\direct '*' call so end with <cr>
 	JSR	xxdate		\call date output
 
@@ -1839,23 +1839,23 @@ xdate	JSR	getrtc		\get rtc time & date to buffer
 \Local subroutine for xdate to allow calling from elsewhere within our rom
 \Call with X -ve to skip <cr> after date output
 
-xxdate	TXA			\save X to later test whether this is..
+.xxdate	TXA			\save X to later test whether this is..
 	PHA			\..a direct *DATE or an indirect call
 
 	LDA	buf03		\get weekday
 	AND	#cwd		\mask
 	SEC			\subtract 1 to index days as 0..6
 	SBC	#1
-	ASL			\multiply by 4 (days are 3 chr + <cr>)
-	ASL
+	ASL	A		\multiply by 4 (days are 3 chr + <cr>)
+	ASL A
 	TAX			\index days array with X
-date_a1	LDA	days,X		\get a day chr
+.date_a1	LDA	days,X		\get a day chr
 	CMP	#cr		\<cr> and end of day?
 	BEQ	date_a2		\yes, onto date
 	JSR	OSASCI		\else print day chr
 	INX			\incr pointer
 	BNE	date_a1		\and loop for next day chr
-date_a2	LDA	#spc		\print a space delimiter
+.date_a2	LDA	#spc		\print a space delimiter
 	JSR	OSASCI
 	LDA	buf04		\get date
 	AND	#cdd		\mask
@@ -1876,13 +1876,13 @@ date_a2	LDA	#spc		\print a space delimiter
 				\..and if so, skip the <cr>
 	LDA	#cr		\else finish with a <cr><lf>
 	JSR	OSASCI
-date_a3	RTS			\and return
+.date_a3	RTS			\and return
 
 \------------------------------------------------------------------------------
 \*TEMP
 \Prints temperature at current cursor position formatted as <t>"<units>" (tbd)
 
-xtemp	JSR	getrtc		\get rtc time & date to buffer
+.xtemp	JSR	getrtc		\get rtc time & date to buffer
 	LDX	#0		\direct '*' call so end with <cr>
 	JSR	xxtemp		\call temperature output
 
@@ -1897,7 +1897,7 @@ xtemp	JSR	getrtc		\get rtc time & date to buffer
 \Local subroutine for xtemp to allow calling from elsewhere within our rom
 \Call with X -ve to skip <cr> after temp output
 
-xxtemp	TXA			\save X to later test whether this is..
+.xxtemp	TXA			\save X to later test whether this is..
 	PHA			\..a direct *TEMP or an indirect call
 
 	IF 	RTC_TEMP		\conditional compile if RTC temp supported
@@ -1910,20 +1910,20 @@ xxtemp	TXA			\save X to later test whether this is..
 	ELSE
 	LDA	#7		\display not implemented
 	JSR	xmess
-	FI
+	ENDIF
 	
 	PLA			\get entry X which is $FF if this is..
 	BMI	temp_ax		\..an indirect call from elsewhere..
 				\..and if so, skip the <cr>
 	LDA	#cr		\else finish with a <cr><lf>
 	JSR	OSASCI
-temp_ax	RTS			\and return
+.temp_ax	RTS			\and return
 
 \------------------------------------------------------------------------------
 \*NOW
 \Prints date, time & temperature on one line by calling xxdate, xxtime & xxtemp
 
-xnow	JSR	getrtc		\get rtc time & date to buffer
+.xnow	JSR	getrtc		\get rtc time & date to buffer
 	JSR	xxnow		\call time & date output
 
 	PLA			\MOS command graceful exit
@@ -1936,7 +1936,7 @@ xnow	JSR	getrtc		\get rtc time & date to buffer
 \..............................................................................
 \Local subroutine for xnow to allow calling from elsewhere within our rom
 
-xxnow	LDX	#$FF		\this will signal no <cr> after time
+.xxnow	LDX	#$FF		\this will signal no <cr> after time
 	JSR	xxtime		\print time
 	LDA	#spc		\delimit time & date with two spaces
 	JSR	OSASCI
@@ -1952,7 +1952,7 @@ xxnow	LDX	#$FF		\this will signal no <cr> after time
 	ELSE
 	LDX	#0		\<cr> after date
 	JSR	xxdate		\print date
-	FI
+	ENDIF
 
 	RTS			\and return
 
@@ -1960,7 +1960,7 @@ xxnow	LDX	#$FF		\this will signal no <cr> after time
 \*TSET
 \Allows user to set the time by typing *TSET hh:mm:ss (must be exact format)
 
-xtset	JSR	getrtc		\poulate buffer with current t&d
+.xtset	JSR	getrtc		\poulate buffer with current t&d
 	LDA	#colon		\set parser delimiter to ':' for time
 	STA	temp2
 	JSR	tdparse		\get BCD time into buf00-buf02
@@ -1982,7 +1982,7 @@ xtset	JSR	getrtc		\poulate buffer with current t&d
 	LDX	#0		\read back and display time as reponse
 	JSR	xxtime		\call with X +ve to give <cr><lf>
 
-xtset_x	PLA			\MOS command graceful exit
+.xtset_x	PLA			\MOS command graceful exit
 	TAY
 	PLA
 	TAX
@@ -1991,23 +1991,23 @@ xtset_x	PLA			\MOS command graceful exit
 
 \..............................................................................
 
-xtset_err	CLD			\D flag might be set if error occurred
+.xtset_err	CLD			\D flag might be set if error occurred
 	LDX	#$FF		\index message on X
-xtset_a1	INX			\move along message
+.xtset_a1	INX			\move along message
 	LDA	tseterr,X		\get a chr
 	JSR	OSASCI		\print it
 	CMP	#cr		\<cr> and end?
 	BNE	xtset_a1		\no, loop
 	BEQ	xtset_x		\else goto exit xtset
 
-tseterr	STR	'TSET time format (24hr) : <hh:mm:ss>'
+.tseterr	EQUS	"TSET time format (24hr) : <hh:mm:ss>", cr
 
 \------------------------------------------------------------------------------
 \*DSET
 \Allows user to set the date by typing *DSET <day> <dd-mm-yy> where <day> is
 \first three characters of Monday-Sunday. (Must be this exact format)
 
-xdset	JSR	getrtc		\poulate buffer with current t&d
+.xdset	JSR	getrtc		\poulate buffer with current t&d
 	JSR	dparse		\process <day> into buf03 (1-7:Mon-Sun)
 	BMI	xdset_err		\format error detected, abort err
 
@@ -2035,7 +2035,7 @@ xdset	JSR	getrtc		\poulate buffer with current t&d
 	LDX	#0		\read back and display date as reponse
 	JSR	xxdate		\call with X +ve to give <cr><lf>
 
-xdset_x	PLA			\MOS command graceful exit
+.xdset_x	PLA			\MOS command graceful exit
 	TAY
 	PLA
 	TAX
@@ -2044,16 +2044,16 @@ xdset_x	PLA			\MOS command graceful exit
 
 \..............................................................................
 
-xdset_err	CLD			\D flag might be set if error occurred
+.xdset_err	CLD			\D flag might be set if error occurred
 	LDX	#$FF		\index message on X
-xdset_a1	INX			\move along message
+.xdset_a1	INX			\move along message
 	LDA	dseterr,X		\get a chr
 	JSR	OSASCI		\print it
 	CMP	#cr		\<cr> and end?
 	BNE	xdset_a1		\no, loop
 	BEQ	xdset_x		\else goto exit xtset
 
-dseterr	STR	'DSET date format : <day> <dd-mm-yy>'
+.dseterr	EQUS	"DSET date format : <day> <dd-mm-yy>", cr
 
 \------------------------------------------------------------------------------
 \Routine called by tset and dset to parse command line for time as hh:mm:ss
@@ -2065,12 +2065,12 @@ dseterr	STR	'DSET date format : <day> <dd-mm-yy>'
 \different for time and date. If a format error is encountered A returns -ve
 \else A returns +ve.
 
-tdparse	LDY	comdata		\point Y to <spc> or <cr> after command
+.tdparse	LDY	comdata		\point Y to <spc> or <cr> after command
 	LDA	(cli),Y		\get the chr
 	CMP	#cr		\<cr>?
 	BNE	tdp_a1		\no, continue
 	JMP	tdp_err		\else error, no time/date supplied
-tdp_a1	INY			\move along user data
+.tdp_a1	INY			\move along user data
 	LDA	(cli),Y		\get next chr
 	CMP	#spc		\another <spc>?
 	BEQ	tdp_a1		\yes, keep skipping
@@ -2081,14 +2081,14 @@ tdp_a1	INY			\move along user data
 	CMP	temp2		\must be ':' or '-'
 	BEQ	tdp_a5		\yes, continue
 	JMP	tdp_err		\else format error
-tdp_a5	INY			\move to next delimiter
+.tdp_a5	INY			\move to next delimiter
 	INY
 	INY
 	LDA	(cli),Y		\get the chr
 	CMP	temp2		\must be ':' or '-'
 	BEQ	tdp_a6		\yes, continue
 	JMP	tdp_err		\else format error
-tdp_a6	INY			\finally, move to where <cr> should be
+.tdp_a6	INY			\finally, move to where <cr> should be
 	INY
 	INY
 	LDA	(cli),Y		\get the chr
@@ -2096,8 +2096,8 @@ tdp_a6	INY			\finally, move to where <cr> should be
 	BEQ	tdp_a7		\yes, continue
 	JMP	tdp_err		\else format error
 
-tdp_a7	LDY	comdata		\point Y at start of data again
-tdp_a2	LDA	(cli),Y		\check each digit for >='0' and =<'9'..
+.tdp_a7	LDY	comdata		\point Y at start of data again
+.tdp_a2	LDA	(cli),Y		\check each digit for >='0' and =<'9'..
 	CMP	temp2		\..or one of the delimiters
 	BEQ	tdp_a3		\delimiter so goto move along 
 	SEC			\else do 0-9 check
@@ -2105,7 +2105,7 @@ tdp_a2	LDA	(cli),Y		\check each digit for >='0' and =<'9'..
 	BCC	tdp_err		\no, out of range
 	SBC	#10		\should now be max. 9 so take 10 off
 	BCS	tdp_err		\no, greater than 9 so out of range
-tdp_a3	INY			\incr pointer
+.tdp_a3	INY			\incr pointer
 	TYA			\when Y is 8 bigger than comdata..
 	SEC			\..we should be at the <cr>
 	SBC	comdata
@@ -2156,7 +2156,7 @@ tdp_a3	INY			\incr pointer
 	LDA	#1
 	BPL	tdp_x		\and exit with A +ve, no error
 
-tdp_a4	LDA	buf07		\date so use buf04 to buf06
+.tdp_a4	LDA	buf07		\date so use buf04 to buf06
 	STA	buf06		\year
 	LDA	buf08
 	STA	buf05		\month
@@ -2165,18 +2165,18 @@ tdp_a4	LDA	buf07		\date so use buf04 to buf06
 	LDA	#1
 	BPL	tdp_x		\and exit with A +ve, no error
 
-tdp_err	LDA	#-1		\flag error to tset or dset
-tdp_x	RTS			\and return
+.tdp_err	LDA	#255		\flag error to tset or dset
+.tdp_x	RTS			\and return
 
 \------------------------------------------------------------------------------
 \Additional parse to extract day of the week from *DSET <day> <dd-mm-yy> where
 \<day> is first three characters of Monday-Sunday
 
-dparse	LDY	comdata		\point Y to <spc> or <cr> after command
+.dparse	LDY	comdata		\point Y to <spc> or <cr> after command
 	LDA	(cli),Y		\get the chr
 	CMP	#cr		\<cr>?
 	BEQ	dp_err		\if yes, error, no date supplied
-dp_a1	INY			\move along user data
+.dp_a1	INY			\move along user data
 	LDA	(cli),Y		\get next user chr
 	CMP	#spc		\another <spc>?
 	BEQ	dp_a1		\yes, keep skipping
@@ -2202,9 +2202,9 @@ dp_a1	INY			\move along user data
 
 				\*** ready to match day from 'days''
 	LDX	#$FF		\X will index through 'days'
-dp_a2	LDY	comdata		\move back to first user chr
+.dp_a2	LDY	comdata		\move back to first user chr
 	DEY			\decrement Y ready for first incr
-dp_a3	INY			\move along user day         
+.dp_a3	INY			\move along user day         
 	INX			\move along table
 	LDA	days,X		\get a table chr
 	BMI	dp_err		\end of table, no match, abort err
@@ -2212,18 +2212,18 @@ dp_a3	INY			\move along user day
 	BEQ	dp_match
 	CMP	(cli),Y		\compare with user day chr
 	BEQ	dp_a3		\both match, onto next chr
-dp_a4	INX			\not this table day, move to next
+.dp_a4	INX			\not this table day, move to next
 	LDA	days,X		\by finding the next <cr>
 	CMP	#cr		\<cr>?
 	BNE	dp_a4		\no, try next chr
 	BEQ	dp_a2		\end of this table day so start..
 				\..again on next table day
 
-dp_match	TXA			\X is now table day index * 4 - 1
+.dp_match	TXA			\X is now table day index * 4 - 1
 	CLC			\so add 1..
 	ADC	#1
-	LSR			\..divide by 4..
-	LSR
+	LSR	A		\..divide by 4..
+	LSR A
 	STA	buf03		\..and save day (1-7) in buf03
 	LDA	#3		\re-adjust comdata pointer..
 	CLC			\..to space after <day> by adding 3
@@ -2232,15 +2232,15 @@ dp_match	TXA			\X is now table day index * 4 - 1
 	LDA	#1		\set A +ve to flag success
 	BNE	dp_x		\and exit
 
-dp_err	LDA	#-1		\flag -ve error to dset
-dp_x	RTS			\and return
+.dp_err	LDA	#255		\flag -ve error to dset
+.dp_x	RTS			\and return
 
 \------------------------------------------------------------------------------
 \Generic RTC 24C32 read routine. On entry, eeprom start address is held in
 \eephi & eeplo and number of bytes to read is held in A where 0 = 256 bytes.
 \RXD is used for the read so returned bytes are in i2cbuf ($A00 onwards)   
 
-eeprd	PHA			\temporarily save number of bytes
+.eeprd	PHA			\temporarily save number of bytes
 	LDA	#EEP32		\target i2c device id (here eeprom)
 	STA	$68
 	STA	$6D		\$6D<>0 means no Stop after txb
@@ -2272,7 +2272,7 @@ eeprd	PHA			\temporarily save number of bytes
 \eephi & eeplo and number of bytes to write is held in A where 0 = 256 bytes.
 \TXD is used for the write so bytes to transmit are in i2cbuf ($A00 onwards)   
 
-eepwr	PHA			\temporarily save number of bytes
+.eepwr	PHA			\temporarily save number of bytes
 	LDA	#EEP32		\target i2c device id (here eeprom)
 	STA	$68
 	STA	$6D		\$6D<>0 means no Stop after txb
@@ -2306,11 +2306,11 @@ eepwr	PHA			\temporarily save number of bytes
 \pre-validated for 0-9 range. On entry, Ascii bytes should be passed with
 \tens in bcdt and units in bcdu. BCD returned in A
 
-asc_bcd	LDA	bcdt		\fetch tens
-	ASL			\shift lower nibble to upper
-	ASL
-	ASL
-	ASL
+.asc_bcd	LDA	bcdt		\fetch tens
+	ASL	A		\shift lower nibble to upper
+	ASL A
+	ASL A
+	ASL A
 	STA	temp1		\and save
 	LDA	bcdu		\fetch units
 	AND	#$0F		\clear ascii offset
@@ -2321,17 +2321,17 @@ asc_bcd	LDA	bcdt		\fetch tens
 \-------------------------------------------------------------------------------
 \Converts a BCD byte in A to true hex - returned in A
 
-bcdhex	PHA			\save bcd temporarily
+.bcdhex	PHA			\save bcd temporarily
 	LDA	#0
 	STA	temp1		\temp1 will 'count' the hex
 	PLA			\recover bcd
 	SEC
 	SED			\decimal mode
-bcdh_1	SBC	#1		\decrement A in decimal
+.bcdh_1	SBC	#1		\decrement A in decimal
 	BMI	bcdh_x		\if bcd gone negative, finished
 	INC	temp1		\increment hex (INC is not decimal)
 	BNE	bcdh_1		\always loop
-bcdh_x	LDA	temp1		\transfer hex result to A
+.bcdh_x	LDA	temp1		\transfer hex result to A
 	CLD
 	RTS			\and return
 	
@@ -2339,22 +2339,22 @@ bcdh_x	LDA	temp1		\transfer hex result to A
 \Takes a hex byte in A and reurns BCD conversion in A. Max entry value should be
 \$63 which converts to maximum byte BCD of 99 - aimed at time/date so byte only.
 
-hexbcd	STA	temp1		\performs a simple BCD incremental
+.hexbcd	STA	temp1		\performs a simple BCD incremental
 	SED			\count in A whilst decrementing the
 	CLC			\source hex value in temp1 to zero 
 	LDA	#0
-hb_a1	DEC	temp1
+.hb_a1	DEC	temp1
 	BMI	hb_a2
 	ADC	#1
 	BNE	hb_a1
-hb_a2	CLD
+.hb_a2	CLD
 	RTS
 
 \-------------------------------------------------------------------------------
 \Takes an ascii-hex character in A and returns the true hex nibble equivalent
 \also in A. If the input character is not 0-9 or A-F then a returns -ve.
 
-aschex	CMP	#$30		\< "0"
+.aschex	CMP	#$30		\< "0"
 	BMI	aherr		\yes, error
 	CMP	#$47		\< "G"
 	BPL	aherr		\no, error
@@ -2364,47 +2364,47 @@ aschex	CMP	#$30		\< "0"
 	BMI	aherr		\yes, illegal character (: - @)
 	SEC			\else adjust A-F to follow 0-9
 	SBC	#7
-ah_a1	AND	#$0F		\adjust 0-F ascii to 0-F true hex
+.ah_a1	AND	#$0F		\adjust 0-F ascii to 0-F true hex
 	RTS
 
-aherr	LDA	#$FF		\set A -ve to flag error
+.aherr	LDA	#$FF		\set A -ve to flag error
 	RTS
 
 \-------------------------------------------------------------------------------
 \Prints A in hex
 
-hex	PHA			\save number
-	LSR			\shift high nibble to low
-	LSR
-	LSR
-	LSR
+.hex	PHA			\save number
+	LSR	A		\shift high nibble to low
+	LSR A
+	LSR A
+	LSR A
 	CLC
 	ADC	#$30		\always need at least $30 adding
 	CMP	#$3A		\digit > 9?
 	BCC	hex_a1		\no, goto print
 	CLC			\else add another 7
 	ADC	#7
-hex_a1	JSR	OSASCI		\print high nibble
+.hex_a1	JSR	OSASCI		\print high nibble
 	PLA			\retrieve original number
-hexnib	AND	#$0F		\mask for lower nibble
+.hexnib	AND	#$0F		\mask for lower nibble
 	CLC
 	ADC	#$30		\always need at least $30 adding
 	CMP	#$3A		\digit > 9?
 	BCC	hex_a2		\no, goto print
 	CLC			\else add another 7
 	ADC	#7
-hex_a2	JSR	OSASCI		\print low nibble
+.hex_a2	JSR	OSASCI		\print low nibble
 
 	RTS			\and return
 
 \------------------------------------------------------------------------------
 \Decimal print subroutine : prints BCD (note) in A to screen
 
-dec_print PHA			\save a copy of A
-	LSR			\shift high nibble (tens) to low nibble
-	LSR
-	LSR
-	LSR
+.dec_print PHA			\save a copy of A
+	LSR	A		\shift high nibble (tens) to low nibble
+	LSR A
+	LSR A
+	LSR A
 	CLC			\add in ascii offset for numbers
 	ADC	#$30
 	JSR	OSASCI		\print tens
@@ -2422,27 +2422,27 @@ dec_print PHA			\save a copy of A
 \Messages are selected via A = <message number> in the max. range 0-15
 \Note 1 : exits A = 0 and thus caller can branch always via BEQ on return
 
-txt0	versionl
-txt1	ASC	'ACK Rx'
-txt1a	DFB	$27
-txt1b	ASC	'd from :}'
-txt2	ASC	' No devices.   #'
-txt3	ASC	'Bad syntax!    #'
-txt4	ASC	'degC   '
-txt4a	DFB	$7F,$7F,$7F
-txt4b	ASC	'     }'
-txt5	ASC	'Off            #'
-txt6	ASC	'On             #'
-txt7	ASC	'Not Available  }'
-txt8	ASC	'Reserved       #'
+.txt0	versionl
+.txt1	EQUS	"ACK Rx"
+.txt1a	EQUB	$27
+.txt1b	EQUS	"d from :}"
+.txt2	EQUS	" No devices.   #"
+.txt3	EQUS	"Bad syntax!    #"
+.txt4	EQUS	"degC   "
+.txt4a	EQUB	$7F,$7F,$7F
+.txt4b	EQUS	"     }"
+.txt5	EQUS	"Off            #"
+.txt6	EQUS	"On             #"
+.txt7	EQUS	"Not Available  }"
+.txt8	EQUS	"Reserved       #"
 
 
-xmess	ASL			\multiply message number by 16
-	ASL
-	ASL
-	ASL
+.xmess	ASL	A		\multiply message number by 16
+	ASL A
+	ASL A
+	ASL A
 	TAX
-xmess1	LDA	txt0,X		\get a character
+.xmess1	LDA	txt0,X		\get a character
 	CMP	#'#'		\end of message # ?
 	BEQ	xmessx		\yes, exit with <cr>
 	CMP	#'}'		\end of message } ?
@@ -2451,70 +2451,72 @@ xmess1	LDA	txt0,X		\get a character
 	INX			\increment index
 	BNE	xmess1		\loop for next character
 
-xmessx	LDA	#13		\for messages ending with <cr>
+.xmessx	LDA	#13		\for messages ending with <cr>
 	JSR	OSASCI
-xmnocr	LDA	#0		\always return A=0
+.xmnocr	LDA	#0		\always return A=0
 	RTS			\return
 
 \------------------------------------------------------------------------------
 \Array of days of the week
 
-days	STR	'Sun'		\1..
-	STR	'Mon'
-	STR	'Tue'
-	STR	'Wed'
-	STR	'Thu'
-	STR	'Fri'
-	STR	'Sat'		\..7
+.days	EQUS	"Sun", cr		\1..
+	EQUS	"Mon", cr
+	EQUS	"Tue", cr
+	EQUS	"Wed", cr
+	EQUS	"Thu", cr
+	EQUS	"Fri", cr
+	EQUS	"Sat", cr		\..7
 
-	DFB	$FF		\end of table marker
+	EQUB	$FF		\end of table marker
 
 \-------------------------------------------------------------------------------
-\To create an Acorn 16k SWROM image, pad from here to $BF7F with zeroes
+\To create an Acorn 16k SWROM image, pad from here (based on 16 commands below at 8 bytes each))
 
-	DS	$BF7F-*+1		\writes n x $00 to object file
+	IF PAD
+		SKIP 8000-(16*8)
+	ENDIF
 
 \-------------------------------------------------------------------------------
 \Jump table to allow 16 commands to be called from assembler with fixed call
 \addresses irrespective of i2c rom version re-compilations.
 
-cmd1	DFB	$EA,$8A,$48,$98,$48,$4C	\I2CRESET	($BF80)
-	DFW	rstgo
-cmd2	DFB	$EA,$8A,$48,$98,$48,$4C	\I2CQUERY	($BF88)
-	DFW	qrygo
-cmd3	DFB	$EA,$8A,$48,$98,$48,$4C	\I2CTXB	($BF90)
-	DFW	txbgo
-cmd4	DFB	$EA,$8A,$48,$98,$48,$4C	\I2CTXD	($BF98)
-	DFW	txdgo
-cmd5	DFB	$EA,$8A,$48,$98,$48,$4C	\I2CRXB	($BFA0)
-	DFW	rxbgo
-cmd6	DFB	$EA,$8A,$48,$98,$48,$4C	\I2CRXD	($BFA8)
-	DFW	rxdgo
-cmd7	DFB	$EA,$8A,$48,$98,$48,$4C	\I2CSTOP	($BFB0)
-	DFW	stpgo
-cmd8	DFB	$EA,$8A,$48,$98,$48,$4C	\TBRK	($BFB8)
-	DFW	xtbrk
-cmd9	DFB	$EA,$8A,$48,$98,$48,$4C	\TIME	($BFC0)
-	DFW	xtime
-cmd10	DFB	$EA,$8A,$48,$98,$48,$4C	\DATE	($BFC8)
-	DFW	xdate
-cmd11	DFB	$EA,$8A,$48,$98,$48,$4C	\TEMP	($BFD0)
-	DFW	xtemp
-cmd12	DFB	$EA,$8A,$48,$98,$48,$4C	\NOW	($BFD8)
-	DFW	xnow
-cmd13	DFB	$EA,$8A,$48,$98,$48,$4C	\NOW$	($BFE0)
-	DFW	xi2crtc
-cmd14	DFB	$EA,$8A,$48,$98,$48,$4C	\TSET	($BFE8)
-	DFW	xtset
-cmd15	DFB	$EA,$8A,$48,$98,$48,$4C	\DSET	($BFF0)
-	DFW	xdset
-cmd16	DFB	$EA,$8A,$48,$98,$48,$4C	\I2C	($BFF8)
-	DFW	i2cgo
+.cmd1	EQUB	$EA,$8A,$48,$98,$48,$4C	\I2CRESET	($BF80)
+		EQUW	rstgo
+.cmd2	EQUB	$EA,$8A,$48,$98,$48,$4C	\I2CQUERY	($BF88)
+		EQUW	qrygo
+.cmd3	EQUB	$EA,$8A,$48,$98,$48,$4C	\I2CTXB	($BF90)
+		EQUW	txbgo
+.cmd4	EQUB	$EA,$8A,$48,$98,$48,$4C	\I2CTXD	($BF98)
+		EQUW	txdgo
+.cmd5	EQUB	$EA,$8A,$48,$98,$48,$4C	\I2CRXB	($BFA0)
+		EQUW	rxbgo
+.cmd6	EQUB	$EA,$8A,$48,$98,$48,$4C	\I2CRXD	($BFA8)
+		EQUW	rxdgo
+.cmd7	EQUB	$EA,$8A,$48,$98,$48,$4C	\I2CSTOP	($BFB0)
+		EQUW	stpgo
+.cmd8	EQUB	$EA,$8A,$48,$98,$48,$4C	\TBRK	($BFB8)
+		EQUW	xtbrk
+.cmd9	EQUB	$EA,$8A,$48,$98,$48,$4C	\TIME	($BFC0)
+		EQUW	xtime
+.cmd10	EQUB	$EA,$8A,$48,$98,$48,$4C	\DATE	($BFC8)
+		EQUW	xdate
+.cmd11	EQUB	$EA,$8A,$48,$98,$48,$4C	\TEMP	($BFD0)
+		EQUW	xtemp
+.cmd12	EQUB	$EA,$8A,$48,$98,$48,$4C	\NOW	($BFD8)
+		EQUW	xnow
+.cmd13	EQUB	$EA,$8A,$48,$98,$48,$4C	\NOW$	($BFE0)
+		EQUW	xi2crtc
+.cmd14	EQUB	$EA,$8A,$48,$98,$48,$4C	\TSET	($BFE8)
+		EQUW	xtset
+.cmd15	EQUB	$EA,$8A,$48,$98,$48,$4C	\DSET	($BFF0)
+		EQUW	xdset
+.cmd16	EQUB	$EA,$8A,$48,$98,$48,$4C	\I2C	($BFF8)
+		EQUW	i2cgo
 
 \-------------------------------------------------------------------------------
 \*** End of I2C Rom ***
 \
 \Checksum32 = $????????
+.romend
 
-
-
+SAVE romstart, romend

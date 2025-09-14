@@ -12,109 +12,109 @@
 \ PCF8583 RTS clock built into it, along with pin headers for additional devices
 
 				\AP6 interface registers
-ap6reg	EQU 	$FCD6		\AP6 control register
-xsdahi	EQU 	&80		\TODO Explain bitmask
-xsdalo	EQU 	&7F		\TODO Explain bitmask
-xsclhi	EQU 	&40		\TODO Explain bitmask
-xscllo	EQU 	&BF		\TODO Explain bitmask
-ap6regc	EQU	$62		\last written value to AP6 control reg
-ap6idle	EQU 	$11		\idle value of AP6 ctrl reg
+ap6reg	= 	$FCD6		\AP6 control register
+xsdahi	= 	&80		\TODO Explain bitmask
+xsdalo	= 	&7F		\TODO Explain bitmask
+xsclhi	= 	&40		\TODO Explain bitmask
+xscllo	= 	&BF		\TODO Explain bitmask
+ap6regc	=	$62		\last written value to AP6 control reg
+ap6idle	= 	$11		\idle value of AP6 ctrl reg
 
-upiob	EQU	ap6reg		\alias
-getsda	EQU 	xsdahi		\alias
+upiob	=	ap6reg		\alias
+getsda	= 	xsdahi		\alias
 
 \-------------------------------------------------------------------------------
 \*** Macro definitions ***
 \-------------------------------------------------------------------------------
 
-sclhi	MACRO
+MACRO sclhi
 	LDA 	ap6regc
 	ORA 	#(xsclhi)
 	STA 	ap6regc
 	STA 	ap6reg
-	ENDM
+ENDMACRO
 	
 \-------------------------------------------------------------------------------
 \SCL (clock) driven lo by adjusting the AP6 control register, see AP6 manual
 
-scllo	MACRO
+MACRO scllo
 	LDA 	ap6regc
 	AND 	#(xscllo)
 	STA 	ap6regc
 	STA 	ap6reg
-	ENDM
+ENDMACRO
 
 \-------------------------------------------------------------------------------
 \Allows SDA (data) to float hi by adjusting the AP6 control register, see AP6 manual
 
-sdahi	MACRO
+MACRO sdahi
 	LDA	ap6regc
 	ORA	#(xsdahi)
 	STA	ap6regc
 	STA	ap6reg
-	ENDM
+ENDMACRO
 
 \-------------------------------------------------------------------------------
 \SDA (data) driven lo by adjusting the AP6 control register, see AP6 manual
 
-sdalo	MACRO
+MACRO sdalo
 	LDA	ap6regc
 	AND	#(xsdalo)
 	STA	ap6regc
 	STA	ap6reg
-	ENDM
+ENDMACRO
 
 \-------------------------------------------------------------------------------
 \i2cdbit - sets SDA hi or lo to mirror Carry flag
 
-i2cdbit	MACRO
-	BCC	dblo@$MC
+MACRO i2cdbit
+	BCC	dblo
 	sdahi			\C=1, SDA=1
-	BCS	dbx@$MC
-dblo@$MC	sdalo			\C=0, SDA=0
-dbx@$MC	NOP
-	ENDM
+	BCS	dbx
+.dblo	sdalo			\C=0, SDA=0
+.dbx	NOP
+ENDMACRO
 
 \-------------------------------------------------------------------------------
 \i2clock - generates a single positive pulse on SCL
 
-i2clock	MACRO
+MACRO i2clock
 	sclhi
 	scllo
-	ENDM
+ENDMACRO
 
 \-------------------------------------------------------------------------------
 \Sets Clock and Data lines high - the I2C idle state
 
-i2cidle	MACRO
+MACRO i2cidle
 	scllo
 	sdahi
 	sclhi
-	ENDM
+ENDMACRO
 
 \-------------------------------------------------------------------------------
 \i2cstop - issues an I2C STOP by a sequence of SCL>lo, SDA>lo, SCL>hi, SDA>hi.
 \This puts the bus into the I2C IDLE state.
 
-i2cstop	MACRO
+MACRO i2cstop
 	scllo
 	sdalo
 	sclhi
 	sdahi			\SCL & SDA now high
-	ENDM
+ENDMACRO
 
 \-------------------------------------------------------------------------------
 \i2cstart - issues an I2C START by a sequence of SDA>lo, <delay>, SCL>lo.
 \Sets idle state (both hi) first.
 
-i2cstart	MACRO
+MACRO i2cstart
 	LDA #ap6idle		\idle value for AP6
 	STA ap6reg		\set AP6 reg (write only) to known state
 	STA ap6regc		\maintain a copy of the last written value
 	i2cidle
 	sdalo
 	scllo
-	ENDM
+ENDMACRO
 
 \-------------------------------------------------------------------------------
 \*** End of Macro definitions ***

@@ -19,3 +19,6 @@ eng.traineddata
 
 # Python cache
 __pycache__/
+
+# Build output directories
+src/out/

@@ -10,9 +10,9 @@
 \this target should include
 \ inc\bus\EAP6.asm               I2CBUS
 \ inc\rtc\PCF8583.asm            I2CRTC
-version	MACRO
-          ASC	'3.2EAP6'      \version string with CR and..	
-          ENDM
-versionl  MACRO
-          ASC	'3.2 EAP6 050625#' \ Must be 16 characters ending in #, with DDMMYY 
-          ENDM
+MACRO version
+          EQUS	"3.2EAP6"      \version string with CR and..	
+ENDMACRO
+MACRO versionl
+          EQUS	"3.2 EAP6 130925#" \ Must be 16 characters ending in #, with DDMMYY 
+ENDMACRO

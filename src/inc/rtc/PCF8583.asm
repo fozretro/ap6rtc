@@ -12,8 +12,8 @@
 \ is no impact the to the main structure of the code regardless of RTC used.
 \ The PCF8583 is fitted to an Acorn Electron AP6 expansion for the Plus 1
 
-RTC	EQU	$50		\AP6 RTC I2C Slave Address (PCF8583 Build) 
-RTC_TEMP	EQU	0		\no tempurate support for this RTC
+RTC	=	$50		\AP6 RTC I2C Slave Address (PCF8583 Build) 
+RTC_TEMP	=	0		\no tempurate support for this RTC
 
 \-------------------------------------------------------------------------------
 \ Notes
@@ -29,10 +29,10 @@ RTC_TEMP	EQU	0		\no tempurate support for this RTC
 \-------------------------------------------------------------------------------
 \Gets time and date parameters from RTC into buffer buf00-buf07 @ $0380
 
-getrtc
-	LDX	#>i2cbuf		\set I2C buffer to $0A00
+.getrtc
+	LDX	#LO(i2cbuf)		\set I2C buffer to $0A00
 	STX	bufloc
-	LDX	#<i2cbuf
+	LDX	#HI(i2cbuf)
 	STX	bufloc+1		\set up rxd call to fetch all RTC data				
 	LDA	#RTC		\PCF8583 RTC device id
 	STA	$68
@@ -50,7 +50,7 @@ getrtc
 \First copies t&d bytes across to the main I2C buffer at $0A00 and then
 \performs the write using an internal txd call.
 
-writetd				
+.writetd				
 	JSR 	toPCF8583		\copy t&d data (bufXX) to I2C buffer ($A00)
 	LDA	#RTC		\set up txd call
 	STA	$68		\slave address
@@ -70,7 +70,7 @@ writetd
 \ On calling this subscrounte &6A arrives with (bit 0) 0 or 1 depending on toggle state
 \ On returning the caller expects &6A to be untouched
 
-wtbrk	
+.wtbrk	
 	LDA 	&6A		\toggle value 0 or 1
 	PHA			\stores to return &6A back to caller in orignal state
 	STA	buf12		\copy toggle value to DS3231 buffer
@@ -91,7 +91,7 @@ wtbrk
 
 \-------------------------------------------------------------------------------
 \Copies from PCF8583 data in &A00 to DS3231 bufXX
-fromPCF8583
+.fromPCF8583
           \ Check for a year change
           JSR       checkYearChange
 	\ Seconds
@@ -153,7 +153,7 @@ fromPCF8583
 \ Following logic is ported from getYear https://github.com/xoseperez/pcf8583/blob/master/src/PCF8583.cpp          
 \ This routine deals with software support needed by PCF8583 as it only stores 0-3 years
 \ Refer to the above C++ code for more information
-checkYearChange
+.checkYearChange
 
           \ On read keep the last year set in sync with current device year by comparing the two values
           LDA       &A11                \ Read byte with last set year in
@@ -203,11 +203,11 @@ checkYearChange
 	STA	$6D		\ $6D=0 means Stop after txb
 	JSR	cmd3		\ Send the byte via txb(go)
 
-nochange  RTS
+.noChange  RTS
 
 \------------------------------------------------------------------------------
 \Copies from DS3231 data in bufXX to PCF8583 data in $A00
-toPCF8583
+.toPCF8583
 	\ Seconds
 	LDA 	buf00		\ DS3231
 	STA	&A02		\ > PCF8583 - Seconds (02h reg)
@@ -261,7 +261,7 @@ toPCF8583
 \Additional command line validation for I2CTXB
 \routine needs to output its own error message and return carry set if in error state
 \in this case we are perventing the user overwriting to regsiters below h11
-txbval
+.txbval
           LDA       i2cdev              \ Validation only applies when writing to PCF8583
           CMP       #RTC
           BNE       etxbval             \ skip if device is not PCF8583
@@ -272,13 +272,13 @@ txbval
           JSR	xmess
           SEC                           \ confirm we are in error to caller
           RTS
-etxbval   CLC                           \ no error
+.etxbval  CLC                           \ no error
           RTS
 
 \------------------------------------------------------------------------------
 \Additional command line validation for I2CTXD
 \routine needs to output its own error message and return carry set if in error state
 \in this case we are perventing the user overwriting free ram used by this ROM when using PCF8583
-txdval    
+.txdval    
           JSR       txbval              \ regards of bytes written check start register
           RTS          
