@@ -11,7 +11,7 @@
 \ The marcos below assume the BBC Micro analog port is the I2C bus interface
 \ Assumes System 6522 VIA @ $FE40 and uses PB5=SDA , PB4=SCL
 
-				\System VIA (6522) Registers
+\System VIA (6522) Registers
 upiob	=	$FE40		\I/O Register B
 upddrb	=	$FE42		\Data Direction Register B
  
@@ -34,10 +34,12 @@ MACRO sclhi
 	LDA	upddrb		\set SCL to input (0 = float hi/read)
 	AND	#xsclhi		\only clear b4 of DDR
 	STA	upddrb
-.cstr	LDA	upiob		\wait for b4 to transit high
+.cstr	
+	LDA	upiob		\wait for b4 to transit high
 	AND	#getscl
 	BEQ	cstr		\clock lo, wait...
-.sclx	NOP			\clock hi, continue
+.sclx	
+	NOP				\clock hi, continue
 ENDMACRO
 
 \-------------------------------------------------------------------------------
@@ -78,10 +80,12 @@ ENDMACRO
 
 MACRO i2cdbit
 	BCC	dblo
-	sdahi			\C=1, SDA=1
+	sdahi				\C=1, SDA=1
 	BCS	dbx
-.dblo	sdalo			\C=0, SDA=0
-.dbx	NOP
+.dblo	
+	sdalo				\C=0, SDA=0
+.dbx	
+	NOP
 ENDMACRO
 
 \-------------------------------------------------------------------------------

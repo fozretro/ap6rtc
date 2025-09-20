@@ -35,21 +35,21 @@ MACRO sclhi
 	LDA	upifr		\first clear any CB2 flag in IFR
 	ORA	#$08
 	STA	upifr
-
 	LDA	uppcr		\set CB2 to input in 6522 PCR
 	AND	#$1F
 	ORA	#$60		\011x xxxx
 	STA	uppcr
-
-.cstr	LDA	upifr		\wait for CB2 to transit high
+.cstr	
+	LDA	upifr		\wait for CB2 to transit high
 	AND	#$08
 	BNE	sclx		\clock hi, exit immediately
-	LDA	$FF		\else slave is clock stretching so..
+	LDA	$FF			\else slave is clock stretching so..
 	AND	#&80		\test for user <Esc> press
 	BEQ	cstr		\no <Esc> so re-test clock status
 	LDA	#$7C		\<Esc> pressed - process and exit
 	JSR	OSBYTE
-.sclx	NOP			\either clock gone hi or <Esc> pressed
+.sclx	
+	NOP				\either clock gone hi or <Esc> pressed
 ENDMACRO
 	
 \-------------------------------------------------------------------------------
@@ -89,8 +89,10 @@ MACRO i2cdbit
 	BCC	dblo
 	sdahi			\C=1, SDA=1
 	BCS	dbx
-.dblo	sdalo			\C=0, SDA=0
-.dbx	NOP
+.dblo	
+	sdalo			\C=0, SDA=0
+.dbx	
+	NOP
 ENDMACRO
 
 \-------------------------------------------------------------------------------

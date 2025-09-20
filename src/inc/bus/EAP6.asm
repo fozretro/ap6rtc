@@ -28,20 +28,20 @@ getsda	= 	xsdahi		\alias
 \-------------------------------------------------------------------------------
 
 MACRO sclhi
-	LDA 	ap6regc
-	ORA 	#(xsclhi)
-	STA 	ap6regc
-	STA 	ap6reg
+	LDA ap6regc
+	ORA #(xsclhi)
+	STA ap6regc
+	STA ap6reg
 ENDMACRO
 	
 \-------------------------------------------------------------------------------
 \SCL (clock) driven lo by adjusting the AP6 control register, see AP6 manual
 
 MACRO scllo
-	LDA 	ap6regc
-	AND 	#(xscllo)
-	STA 	ap6regc
-	STA 	ap6reg
+	LDA ap6regc
+	AND #(xscllo)
+	STA ap6regc
+	STA ap6reg
 ENDMACRO
 
 \-------------------------------------------------------------------------------
@@ -71,8 +71,10 @@ MACRO i2cdbit
 	BCC	dblo
 	sdahi			\C=1, SDA=1
 	BCS	dbx
-.dblo	sdalo			\C=0, SDA=0
-.dbx	NOP
+.dblo	
+	sdalo			\C=0, SDA=0
+.dbx
+	NOP
 ENDMACRO
 
 \-------------------------------------------------------------------------------
@@ -100,7 +102,7 @@ MACRO i2cstop
 	scllo
 	sdalo
 	sclhi
-	sdahi			\SCL & SDA now high
+	sdahi				\SCL & SDA now high
 ENDMACRO
 
 \-------------------------------------------------------------------------------
@@ -109,8 +111,8 @@ ENDMACRO
 
 MACRO i2cstart
 	LDA #ap6idle		\idle value for AP6
-	STA ap6reg		\set AP6 reg (write only) to known state
-	STA ap6regc		\maintain a copy of the last written value
+	STA ap6reg			\set AP6 reg (write only) to known state
+	STA ap6regc			\maintain a copy of the last written value
 	i2cidle
 	sdalo
 	scllo
