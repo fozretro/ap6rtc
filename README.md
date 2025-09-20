@@ -1,7 +1,11 @@
-I2CBeeb for Acorn Electron Plus 1 and AP6
-=========================================
+I2CBeeb ROM for BBC Micro, Electron, Electron Plus 1 and AP6
+============================================================
 
 This project got started as a means to explore and implement RTC commands and others that make use of the RTC (a `PCF8583`) within the Electron **AP6** by Dave Hitchens. StarDot forum discussion [here](https://www.stardot.org.uk/forums/viewtopic.php?t=28720). It has now become a means to build the I2C Rom by MartinB (of StarDot) using the BeebAsm assembler for three targes, **BBC Micro**, **Electron** and **Electron Plus with AP6** (`/bin/buildi2c.sh`). Additionally it will also rebuild the AP6 Support ROM to include the I2C ROM (`/bin/buikdap6.sh`). All compiled output is in `/dist`.
+
+**IMPORTANT DISTRIBUTION NOTE**
+
+This repository `/dist` folder contains version **v3.2** and above of the **I2CBeeb** ROM. If you need the official I2CBeeb ROMs **v3.1**, see [thread](https://stardot.org.uk/forums/viewtopic.php?t=10966) for other variants. Looking forward, since this repo supports building all variants of the ROM, one option is this repository may become the main I2CBeeb repository in the future, or it may reside some other place. Currently the source code is only shared by Martin as attachments on StarDot and in this repository per his kind permission. 
 
 Status - BeebAsm Migration Complete (Sep 2025)
 ----------------------------------------------
@@ -19,11 +23,6 @@ Status - AP6 Target Beta
 ------------------------
 
 Current status is this variant of the **I2CBeeb ROM by MartinB** is working with a reasonble level of testing with an AP6. However it is currently labelled as **Beta**, so please expect some bugs and report on the thread. It can be downloaded from here `/dist/i2c/I2C32EAP6.rom`. See known issues below. 
-
-**IMPORTANT DISTRIBUTION NOTE**
-
-This repository is only for development and testing purposes, a final 
-distribution means for this AP6 version of the **I2CBeeb** ROM is still being considered. Please continue to use the official I2CBeeb ROMs [thread](https://stardot.org.uk/forums/viewtopic.php?t=10966) for other variants. Looking forward, since this repo supports building all variants of the ROM, one option is this repository may become the main I2CBeeb repository in the future, or it may reside some other place. Currently the source code is only shared by Martin as attachments on StarDot and in this repository per his kind permission. 
 
 Usage with AP6
 --------------
