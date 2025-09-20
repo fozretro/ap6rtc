@@ -4,7 +4,7 @@
         {
             "type": "process",
             "label": "simple.ssd",
-            "command": "./bin/build.sh",            
+            "command": "./bin/buildi2c.sh",            
             "problemMatcher": {
                 "owner": "6502",
                 "fileLocation": [

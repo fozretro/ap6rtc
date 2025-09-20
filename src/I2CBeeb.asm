@@ -193,7 +193,11 @@ lower	=	$20		\upper to lower case mask (b5=1 on ORA)
 
 	INCLUDE 	INCBUS		\include I2C bus marcos
 
-	ORG	$8000		\sideways rom address start (to $BFFF)
+	IF 			ALTBASE
+	ORG 		$8100		\sideways rom address start (used when building AP6Rom, see /bin/buildap6.sh)
+	ELSE
+	ORG 		$8000		\sideways rom address start
+	ENDIF
 
 \-------------------------------------------------------------------------------
 .romstart	EQUB	0,0,0		\no language entry (3 nulls)
@@ -1756,10 +1760,10 @@ lower	=	$20		\upper to lower case mask (b5=1 on ORA)
 	AND	#deg		\mask
 	JSR	hexbcd		\convert to BCD
 	PHA			\save
-	LSR			\convert BCD temp tens to ASCII
-	LSR
-	LSR
-	LSR
+	LSR	A		\convert BCD temp tens to ASCII
+	LSR A
+	LSR A
+	LSR A
 	CLC
 	ADC	#$30
 	INY
@@ -2468,12 +2472,12 @@ lower	=	$20		\upper to lower case mask (b5=1 on ORA)
 	EQUS	"Sat", cr		\..7
 
 	EQUB	$FF		\end of table marker
-
+.endOfCode
 \-------------------------------------------------------------------------------
 \To create an Acorn 16k SWROM image, pad from here (based on 16 commands below at 8 bytes each))
 
-	IF PAD
-		SKIP 8000-(16*8)
+	IF PAD=1
+		SKIP ($C000-endOfCode)-(16*8)
 	ENDIF
 
 \-------------------------------------------------------------------------------
@@ -2520,3 +2524,4 @@ lower	=	$20		\upper to lower case mask (b5=1 on ORA)
 .romend
 
 SAVE romstart, romend
+PUTBASIC "src/I2CBeeb.bas", "I2CTEST"

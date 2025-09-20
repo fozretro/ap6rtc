@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Build I2C32EAP6 ROM - creates two versions for relocation analysis
+# Build I2CEAP6 ROM - creates two versions for relocation analysis
 # This script compiles the I2C ROM twice (at $8000 and $8100) and copies to tmp/
 
 set -e
 
-echo "Building I2C32EAP6 ROM for relocation analysis..."
+echo "Building I2CEAP6 ROM for relocation analysis..."
 
 # Change to project root
 cd "$(dirname "$0")/../.."
@@ -13,81 +13,27 @@ cd "$(dirname "$0")/../.."
 # Create tmp directory
 mkdir -p bin/smjoin/tmp
 
-# Copy source files to /dev/i2c
-echo "Copying source files..."
-cp ./src.i2c/I2CBeeb.asm ./dev/i2c/I2C
-cp ./src.i2c/inc/bus/EAP6.asm ./dev/i2c/I2CBUS
-cp ./src.i2c/inc/rtc/PCF8583.asm ./dev/i2c/I2CRTC
-cp ./src.i2c/inc/targets/EAP6.asm ./dev/i2c/I2CVER
+# Build I2C ROM at $8000
+./bin/beebasm -i ./src/I2CBeeb.asm -do ./bin/smjoin/tmp/out.ssd -title I2C \
+    -S INCBUS="./src/inc/bus/EAP6.asm" \
+    -S INCRTC="./src/inc/rtc/PCF8583.asm" \
+    -S INCTARGET="./src/inc/targets/EAP6.asm" \
+    -D ALTBASE=0 \
+    -D PAD=0 \
+    -o "I2CEAP6"
+# Extract from ssd to output folder
+./bin/mmbutils/beeb getfile ./bin/smjoin/tmp/out.ssd ./bin/smjoin/tmp/8000
 
-# Remove padding for SMJoin builds
-echo "Removing padding for SMJoin compatibility..."
-sed -i '' '/DS	\$BF7F-\*+1/d' ./dev/i2c/I2C
-echo "  -> Removed DS \$BF7F-*+1 padding line"
-
-# First build at $8000 (original address)
-echo "Building at \$8000..."
-./bin/b-em/b-em -autoboot -sp9 -vroot ./dev/i2c
-
-# Check for compilation errors by examining the output
-echo "Checking compilation output..."
-tr -s '\r' < ./dev/i2c/I2COUT | tr '\001' ' ' | tr '\f' ' ' | tr '\r' '\n' > /tmp/i2c_compile_output.txt
-
-# Check if ROM was created and has reasonable size
-if [ ! -f ./dev/i2c/I2CROM ] || [ ! -s ./dev/i2c/I2CROM ]; then
-    echo "❌ Compilation failed at \$8000 - no ROM file created!"
-    echo "Compiler output:"
-    cat /tmp/i2c_compile_output.txt
-    exit 1
-fi
-
-# Check for error messages in the output
-if grep -i "\*\*\*\*\*\* Err\|Assembly complete.*[1-9][0-9]* errors\|Assembly complete.*[1-9] error" /tmp/i2c_compile_output.txt > /dev/null; then
-    echo "❌ Compilation failed at \$8000 - errors detected!"
-    echo "Compiler output:"
-    cat /tmp/i2c_compile_output.txt
-    exit 1
-fi
-
-cp ./dev/i2c/I2CROM ./dev/i2c/I2CROM_8000
-echo "  -> ROM size: $(wc -c < ./dev/i2c/I2CROM_8000) bytes"
-
-# Modify ORG to $8100 for second build
-echo "Modifying ORG to \$8100..."
-sed -i '' 's/ORG	\$8000/ORG	\$8100/' ./dev/i2c/I2C
-echo "  -> ORG changed from \$8000 to \$8100"
-
-# Second build at $8100
-echo "Building at \$8100..."
-./bin/b-em/b-em -autoboot -sp9 -vroot ./dev/i2c
-
-# Check for compilation errors by examining the output
-echo "Checking compilation output..."
-tr -s '\r' < ./dev/i2c/I2COUT | tr '\001' ' ' | tr '\f' ' ' | tr '\r' '\n' > /tmp/i2c_compile_output.txt
-
-# Check if ROM was created and has reasonable size
-if [ ! -f ./dev/i2c/I2CROM ] || [ ! -s ./dev/i2c/I2CROM ]; then
-    echo "❌ Compilation failed at \$8100 - no ROM file created!"
-    echo "Compiler output:"
-    cat /tmp/i2c_compile_output.txt
-    exit 1
-fi
-
-# Check for error messages in the output
-if grep -i "\*\*\*\*\*\* Err\|Assembly complete.*[1-9][0-9]* errors\|Assembly complete.*[1-9] error" /tmp/i2c_compile_output.txt > /dev/null; then
-    echo "❌ Compilation failed at \$8100 - errors detected!"
-    echo "Compiler output:"
-    cat /tmp/i2c_compile_output.txt
-    exit 1
-fi
-
-cp ./dev/i2c/I2CROM ./dev/i2c/I2CROM_8100
-echo "  -> ROM size: $(wc -c < ./dev/i2c/I2CROM_8100) bytes"
-
-# Copy to tmp directory
-echo "Copying intermediate files to tmp directory..."
-cp ./dev/i2c/I2CROM_8000 ./bin/smjoin/tmp/i2c-8000.rom
-cp ./dev/i2c/I2CROM_8100 ./bin/smjoin/tmp/i2c-8100.rom
+# Build I2C ROM at $8100
+./bin/beebasm -i ./src/I2CBeeb.asm -do ./bin/smjoin/tmp/out.ssd -title I2C \
+    -S INCBUS="./src/inc/bus/EAP6.asm" \
+    -S INCRTC="./src/inc/rtc/PCF8583.asm" \
+    -S INCTARGET="./src/inc/targets/EAP6.asm" \
+    -D ALTBASE=1 \
+    -D PAD=0 \
+    -o "I2CEAP6"    
+# Extract from ssd to output folder
+./bin/mmbutils/beeb getfile ./bin/smjoin/tmp/out.ssd ./bin/smjoin/tmp/8100
 
 echo "✅ Step 1 complete: Created i2c-8000.rom and i2c-8100.rom in bin/smjoin/tmp/"
 echo "Build complete! Intermediate ROMs ready for next step in bin/smjoin/tmp/"

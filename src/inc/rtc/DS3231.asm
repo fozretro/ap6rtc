@@ -12,15 +12,15 @@
 \ unlike the code in /inc/rtc/PCF8583.asm there is no translation needed
 \ as the main code for this ROM assumes the DS3231 format
 
-RTC	EQU	$68		\AP6 RTC I2C Slave Address (PCF8583 Build) 
-RTC_TEMP	EQU	-1		\tempurate is supported for this RTC
+RTC	=	$68		\AP6 RTC I2C Slave Address (PCF8583 Build) 
+RTC_TEMP	=	-1		\tempurate is supported for this RTC
 
 \-------------------------------------------------------------------------------
 \Gets time and date parameters from RTC into buffer buf00-buf07 @ $0380
 
-getrtc	LDA	#>buf00		\re-direct i2c buffer to buf00
+.getrtc	LDA	#LO(buf00)		\re-direct i2c buffer to buf00
 	STA	bufloc		\($0380)
-	LDA	#<buf00
+	LDA	#HI(buf00)
 	STA	bufloc+1
 				\set up rxd call to fetch all RTC data
 	LDA	#RTC		\DS3231 RTC device id
@@ -32,9 +32,9 @@ getrtc	LDA	#>buf00		\re-direct i2c buffer to buf00
 	STA	$6C		\reg-valid flag to non-zero
 	JSR	cmd6		\and make the rxd(go) call
 
-	LDA	#>i2cbuf		\reset I2C buffer to $0A00
+	LDA	#LO(i2cbuf)		\reset I2C buffer to $0A00
 	STA	bufloc
-	LDA	#<i2cbuf
+	LDA	#HI(i2cbuf)
 	STA	bufloc+1
 
 	RTS			\and return
@@ -44,8 +44,8 @@ getrtc	LDA	#>buf00		\re-direct i2c buffer to buf00
 \First copies the 7 t&d bytes across to the main I2C buffer at $0A00 and then
 \performs the write using an internal txd call.
 
-writetd	LDX	#0		\copy t&d data to I2C buffer
-wtd_a1	LDA	buf00,X
+.writetd	LDX	#0		\copy t&d data to I2C buffer
+.wtd_a1	LDA	buf00,X
 	STA	i2cbuf,X
 	INX
 	CPX	#7		\copying 7 bytes
@@ -69,7 +69,7 @@ wtd_a1	LDA	buf00,X
 \the 12th register is used (when enabled) for alaram functionlity so safe to use
 \since this ROM does not support this feature of the RTC
 
-wtbrk	
+.wtbrk	
 	LDA	#RTC		\target i2c device id (here rtc)
 	STA	$68
 	STA	$6C		\$6C<>0 mean register specified in $69
@@ -83,8 +83,8 @@ wtbrk
 \------------------------------------------------------------------------------
 \Additional command line validation for I2CTXB
 \routine needs to output its own error message and return carry set if in error state
-txbval    RTS       \ no additional validation for DS3231
+.txbval    RTS       \ no additional validation for DS3231
 
 \Additional command line validation for I2CTXD
 \routine needs to output its own error message and return carry set if in error state
-txdval    RTS       \ no additional validation for DS3231
+.txdval    RTS       \ no additional validation for DS3231

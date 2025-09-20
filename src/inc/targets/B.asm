@@ -10,9 +10,9 @@
 \this target should include
 \ inc\bus\B.asm               I2CBUS
 \ inc\rtc\DS3231.asm          I2CRTC
-version	MACRO
-          ASC	'3.2B'		\version string with CR and..	
-          ENDM
-versionl  MACRO
-          ASC	'3.2 BBC  050625#' \ Must be 16 characters ending in #, with DDMMYY          
-          ENDM          
+MACRO version
+          EQUS	"3.2B"		\version string with CR and..	
+ENDMACRO
+MACRO versionl
+          EQUS	"3.2 BBC  130925#" \ Must be 16 characters ending in #, with DDMMYY          
+ENDMACRO          

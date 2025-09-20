@@ -109,7 +109,7 @@ if [ -f "tmp/i2c-reloc.rom" ]; then
     echo "✅ Existing i2c-reloc.rom removed"
 fi
 
-node smjoin-reloc.js tmp/i2c-8000.rom tmp/i2c-8100.rom tmp/i2c-reloc.rom
+node smjoin-reloc.js tmp/8000/I2CEAP6 tmp/8100/I2CEAP6 tmp/i2c-reloc.rom
 popd > /dev/null
 if [ $? -ne 0 ]; then
     echo "❌ Relocation ROM creation failed!"
