@@ -122,11 +122,6 @@ function calculateTable(rom8000, rom8100) {
                 if (diff === 1) {
                     bits.push(1);
                     relocCount++;
-                    
-                    // Log first few relocations for debugging
-                    if (relocCount <= 10) {
-                        console.log(`  Relocation at offset ${i.toString(16).padStart(4, '0')}: 0x${byte8000.toString(16).padStart(2, '0')} -> 0x${byte8100.toString(16).padStart(2, '0')}`);
-                    }
                 } else {
                     bits.push(0);
                 }
@@ -154,9 +149,6 @@ function calculateTable(rom8000, rom8100) {
         
         if (bitCount === 8) {
             relocTable.push(currentByte);
-            if (currentByte !== 0) {
-                console.log(`  Reloc byte ${relocTable.length - 1}: 0x${currentByte.toString(16).padStart(2, '0')} (${currentByte.toString(2).padStart(8, '0')})`);
-            }
             currentByte = 0;
             bitCount = 0;
         }
@@ -165,9 +157,6 @@ function calculateTable(rom8000, rom8100) {
     // Flush final partial byte if needed
     if (bitCount > 0) {
         relocTable.push(currentByte);
-        if (currentByte !== 0) {
-            console.log(`  Reloc byte ${relocTable.length - 1}: 0x${currentByte.toString(16).padStart(2, '0')} (${currentByte.toString(2).padStart(8, '0')}) - final partial byte`);
-        }
     }
 
     console.log(`Compressed to ${relocTable.length} bytes`);

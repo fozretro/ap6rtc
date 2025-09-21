@@ -1,15 +1,8 @@
 #!/bin/bash
 set -e # Exit immediately if a command exits with a non-zero status.
 
-# Get the directory where this script is located
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# Get the project root directory (parent of bin directory)
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-
-# Note: We'll use subshells for directory changes to avoid affecting the user's shell
-
 # Configuration file for SMJoin
-SMJOIN_CONFIG="bin/smjoin/config/smjoin-create-config.js"
+SMJOIN_CONFIG="bin/buildap6/config/smjoin-create-config.js"
 OUTPUT_ROM="dist/ap6.rom"
 
 # Parse command line arguments
@@ -59,6 +52,12 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+echo "🚀 Build Node.js Tools"
+echo "============================="
+pushd ./bin/buildap6
+npm install
+popd
+
 echo "🚀 AP6 Complete Build Pipeline"
 echo "============================="
 if [ "$SKIP_I2C_BUILD" = true ]; then
@@ -69,20 +68,17 @@ if [ "$SKIP_TESTING" = true ]; then
 fi
 echo ""
 
-# Change to project root directory
-pushd "$PROJECT_ROOT" > /dev/null
-
 # Clear tmp folder when not skipping I2C build
 if [ "$SKIP_I2C_BUILD" = false ]; then
     echo "🧹 Clearing temporary build files..."
-    rm -rf bin/smjoin/tmp/*
+    rm -rf bin/buildap6/tmp/*
     echo "✅ Temporary files cleared"
     echo ""
 fi
 
 if [ "$SKIP_I2C_BUILD" = false ]; then
     echo "📦 Step 1: Building I2C EAP6 Join ROM..."
-    ./bin/smjoin/smjoin-build-i2c-rom.sh
+    ./bin/buildap6/smjoin-build-i2c-rom.sh
     if [ $? -ne 0 ]; then
         echo "❌ I2C EAP6 Join build failed!"
         exit 1
@@ -90,7 +86,7 @@ if [ "$SKIP_I2C_BUILD" = false ]; then
     echo "✅ I2C EAP6 Join build completed successfully"
 else
     echo "📦 Step 1: Skipping I2C EAP6 Join ROM build..."
-    if [ ! -f "./bin/smjoin/tmp/i2c-8000.rom" ] || [ ! -f "./bin/smjoin/tmp/i2c-8100.rom" ]; then
+    if [ ! -f "./bin/buildap6/tmp/i2c-8000.rom" ] || [ ! -f "./bin/buildap6/tmp/i2c-8100.rom" ]; then
         echo "❌ Required I2C ROM files not found. Run without --skip-i2c-build first."
         exit 1
     fi
@@ -100,7 +96,7 @@ echo ""
 
 
 echo "🔗 Step 2: Creating relocation ROM..."
-pushd bin/smjoin > /dev/null
+pushd bin/buildap6 > /dev/null
 
 # Remove existing i2c-reloc.rom if it exists
 if [ -f "tmp/i2c-reloc.rom" ]; then
@@ -119,14 +115,14 @@ echo "✅ Relocation ROM created successfully"
 echo ""
 
 echo "🔗 Step 3: Combining ROMs with SMJoin..."
-# Add bin/smjoin to PATH so we can run the script directly
-export PATH="bin/smjoin:$PATH"
+# Add bin/buildap6 to PATH so we can run the script directly
+export PATH="bin/buildap6:$PATH"
 if [ "$VERBOSE" = true ]; then
-    pushd bin/smjoin > /dev/null
+    pushd bin/buildap6 > /dev/null
     node smjoin-create.js --config config/smjoin-create-config.js --verbose
     popd > /dev/null
 else
-    pushd bin/smjoin > /dev/null
+    pushd bin/buildap6 > /dev/null
     node smjoin-create.js --config config/smjoin-create-config.js
     popd > /dev/null
 fi
@@ -159,7 +155,7 @@ else
     fi
     if [ "$KEEP_SERVER_RUNNING" = true ]; then
         echo "  -> Server will be kept running after tests complete"
-        pushd bin/smjoin > /dev/null
+        pushd bin/buildap6 > /dev/null
         if [ -n "$TEST_FILTER" ] && [ "$VERBOSE" = true ]; then
             node smjoin-test.js --nokill-romserver --testFilter "$TEST_FILTER" --verbose
         elif [ -n "$TEST_FILTER" ]; then
@@ -171,7 +167,7 @@ else
         fi
         popd > /dev/null
     else
-        pushd bin/smjoin > /dev/null
+        pushd bin/buildap6 > /dev/null
         if [ -n "$TEST_FILTER" ] && [ "$VERBOSE" = true ]; then
             node smjoin-test.js --testFilter "$TEST_FILTER" --verbose
         elif [ -n "$TEST_FILTER" ]; then
@@ -193,6 +189,3 @@ echo ""
 echo "🎉 AP6 Complete Build Pipeline finished successfully!"
 echo "Output: $OUTPUT_ROM"
 echo "=================================================="
-
-# Restore original directory
-popd > /dev/null

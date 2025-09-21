@@ -1,8 +1,7 @@
 {
   "rom_mappings": {
     "AP6.rom": "roms/ap6/AP6v134t.rom",
-    "I2C.rom": "dist/i2c/I2C32EAP6.rom",
     "LatestAP6.rom": "dist/ap6.rom",
-    "LatestI2C8000.rom": "bin/smjoin/tmp/8000/I2CEAP6"
+    "LatestI2C8000.rom": "bin/buildap6/tmp/8000/I2CEAP6"
   }
 }

@@ -4,7 +4,7 @@
         {
             "type": "process",
             "label": "simple.ssd",
-            "command": "./bin/buildi2c.sh",            
+            "command": "./bin/build.sh",            
             "problemMatcher": {
                 "owner": "6502",
                 "fileLocation": [
@@ -28,7 +28,7 @@
         },
         {
             "type": "process",
-            "label": "Run 'simple.ssd' in Emulator",
+            "label": "Run 'i2c.ssd' in Emulator",
             "command": "/Applications/b2debug.app/Contents/MacOS/b2",
             "group": {
                 "kind": "test",
@@ -36,7 +36,7 @@
             },           
             "args": [
                 "-0",
-                "dist/ap6rtc.ssd",
+                "dist/i2c.ssd",
                 "-b"
             ]
         }

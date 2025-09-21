@@ -165,9 +165,5 @@ rtcAddr=&73
 
 .end
  
-PUTFILE "dev/ap6rtc/!BOOT", "!BOOT", &0000
-PUTFILE "dist/i2c/I2C32B.rom", "I2CB", &8000
-PUTFILE "dist/i2c/I2C32E.rom", "I2CE", &8000
-PUTFILE "dist/i2c/I2C32EAP6.rom", "I2CAP6", &8000
-PUTBASIC "src/rtc.bas", "RTCTEST"
+PUTBASIC "rtc.bas", "RTCTEST"
 SAVE "RTC", begin, end, exec 

@@ -14,14 +14,6 @@ module.exports = {
             expectedElements: ['RH', 'Flus', '1', '32K', 'BASIC'] // Check for key text using OCR
         },
         {
-            name: 'I2C.rom',
-            rom: 'I2C.rom',
-            expectedSize: 16384,
-            description: 'Original I2C ROM - unmodified I2C ROM for comparison',
-            expectedElements: ['I2C', '3.2EAP6', 'OS', '1.00'], // Check for I2C version info after *HELP
-            bootCommands: ['*HELP']
-        },
-        {
             name: 'LatestI2C8000.rom',
             rom: 'LatestI2C8000.rom',
             expectedSize: 4951,

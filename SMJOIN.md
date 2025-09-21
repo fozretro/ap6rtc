@@ -293,7 +293,7 @@ For ROMs that cannot use BBC BASIC's `PROCsm_table` function, use the Node.js po
 #### Step 2: Run Node.js Relocation Tool
 **Use the Node.js tool to generate SMJoin-compatible ROM:**
 ```bash
-cd bin/smjoin
+cd bin/buildap6
 node smjoin-reloc.js rom_8000.bin rom_8100.bin output_rom.bin
 ```
 
@@ -461,7 +461,7 @@ The Node.js SMJoin tools support configuration files to externalize ROM definiti
 
 ### SMJoin Create Configuration (`smjoin-create-config.js`)
 
-**Location:** `bin/smjoin/config/smjoin-create-config.js`
+**Location:** `bin/buildap6/config/smjoin-create-config.js`
 
 This configuration file defines which ROMs to combine and their settings:
 
@@ -513,7 +513,7 @@ module.exports = {
 
 ### SMJoin Test Configuration (`smjoin-test-config.js`)
 
-**Location:** `bin/smjoin/config/smjoin-test-config.js`
+**Location:** `bin/buildap6/config/smjoin-test-config.js`
 
 This configuration file defines the automated test suite:
 
@@ -557,7 +557,7 @@ module.exports = {
 
 ### SMJoin Test Server Configuration (`smjoin-test-server-config.json`)
 
-**Location:** `bin/smjoin/config/smjoin-test-server-config.json`
+**Location:** `bin/buildap6/config/smjoin-test-server-config.json`
 
 This configuration file defines ROM mappings for the test server:
 
@@ -567,7 +567,7 @@ This configuration file defines ROM mappings for the test server:
     "AP6.rom": "roms/ap6/AP6v134t.rom",
     "I2C.rom": "dist/i2c/I2C32EAP6.rom", 
     "LatestAP6.rom": "dist/ap6.rom",
-    "LatestI2C8000.rom": "bin/smjoin/tmp/i2c-8000.rom"
+    "LatestI2C8000.rom": "bin/buildap6/tmp/i2c-8000.rom"
   }
 }
 ```
@@ -581,13 +581,13 @@ This configuration file defines ROM mappings for the test server:
 
 **SMJoin Create with config:**
 ```bash
-cd bin/smjoin
+cd bin/buildap6
 node smjoin-create.js --config config/smjoin-create-config.js
 ```
 
 **SMJoin Test with config:**
 ```bash
-cd bin/smjoin  
+cd bin/buildap6  
 node smjoin-test.js --config config/smjoin-test-config.js
 # Or use default config:
 node smjoin-test.js
@@ -595,7 +595,7 @@ node smjoin-test.js
 
 **Test Server with config:**
 ```bash
-cd bin/smjoin
+cd bin/buildap6
 python3 smjoin-test-server.py
 # Server automatically loads smjoin-test-server-config.json
 ```

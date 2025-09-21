@@ -11,8 +11,8 @@ node_modules/
 
 # Test screenshots
 screenshots/
-bin/smjoin/screenshots/
-bin/smjoin/tmp/
+bin/buildap6/screenshots/
+bin/buildap6/tmp/
 
 # Tesseract.js training data
 eng.traineddata

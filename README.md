@@ -1,7 +1,7 @@
 I2CBeeb ROM for BBC, Electron, Electron AP6
 ===========================================
 
-This project got started as a means to explore and implement RTC commands and others that make use of the RTC (a `PCF8583`) within the Electron **AP6** by Dave Hitchens. StarDot forum discussion [here](https://www.stardot.org.uk/forums/viewtopic.php?t=28720). It has now become a means to build the I2C Rom by MartinB (of StarDot) using the BeebAsm assembler for three targets, **BBC Micro**, **Electron** and **Electron Plus with AP6** (`/bin/buildi2c.sh`). Additionally it will also rebuild the AP6 Support ROM to include the I2C ROM (`/bin/buikdap6.sh`). All compiled output is in `/dist`.
+This project got started as a means to explore and implement RTC commands and others that make use of the RTC (a `PCF8583`) within the Electron **AP6** by Dave Hitchens. StarDot forum discussion [here](https://www.stardot.org.uk/forums/viewtopic.php?t=28720). It has now become a means to build the I2C Rom by MartinB (of StarDot) using the BeebAsm assembler for three targets, **BBC Micro**, **Electron** and **Electron Plus with AP6** (`/bin/build.sh`). Additionally tools in this project will also rebuild the AP6 Support ROM to include the I2C AP6 ROM (`/bin/buildap6/build.sh`) all be it without TreeROM due to size restrictions. All compiled output is in `/dist`.
 
 **IMPORTANT DISTRIBUTION NOTE**
 
@@ -46,7 +46,7 @@ Finally, note that the AP6, has I2C headers on board, meaning you can attach eas
 Building
 --------
 
-Build with `./bin/buildi2c.sh` and this will copmile using using BeebAsm. This will compile all three targets for BBC Micro, Acorn Electron and Acorn Electron Plus 1 AP6 in `/dist`. It will also update `/dev/eap6` and `/dev/roms` these folders work with virtual file systems such as the one in b-em - and supported by UPURSFS. The later use of UPURSFS allows compilation output to be directly loaded and test on a target machine.
+Build with `./bin/build.sh` and this will copmile using using BeebAsm. This will compile all three targets for BBC Micro, Acorn Electron and Acorn Electron Plus 1 AP6 in `/dist`. It will also update `/dev/eap6` and `/dev/roms` these folders work with virtual file systems such as the one in b-em - and supported by UPURSFS. The later use of UPURSFS allows compilation output to be directly loaded and test on a target machine.
 
 Some Year Testing
 -----------------
@@ -179,10 +179,10 @@ Successfully implemented SMJoin compatibility for the I2C ROM, enabling it to be
 
 **Build Tools:**
 - `bin/buildap6.sh` - Unified build pipeline script with testing flags
-- `bin/smjoin/smjoin-build-i2c-rom.sh` - Builds I2C ROM at both $8000 and $8100
-- `bin/smjoin/smjoin-reloc.js` - Node.js tool for relocation data generation
-- `bin/smjoin/smjoin-create.js` - Node.js port of BBC BASIC SMJoin tool
-- `bin/smjoin/smjoin-test.js` - Playwright-based ROM testing with emulator automation
+- `bin/buildap6/smjoin-build-i2c-rom.sh` - Builds I2C ROM at both $8000 and $8100
+- `bin/buildap6/smjoin-reloc.js` - Node.js tool for relocation data generation
+- `bin/buildap6/smjoin-create.js` - Node.js port of BBC BASIC SMJoin tool
+- `bin/buildap6/smjoin-test.js` - Playwright-based ROM testing with emulator automation
 - `dist/ap6.rom` - Final combined ROM output
 
 **Documentation:**

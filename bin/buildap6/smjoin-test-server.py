@@ -61,7 +61,7 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 return
             else:
                 # For local files, serve them directly
-                # Go up two levels from bin/smjoin/ to project root, then use target path
+                # Go up two levels from bin/buildap6/ to project root, then use target path
                 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
                 file_path = os.path.join(project_root, target)
                 print(f"[DEBUG] Looking for file: {file_path}")
