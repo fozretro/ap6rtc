@@ -454,7 +454,8 @@ lower	=	$20			\upper to lower case mask (b5=1 on ORA)
 	AND	#$0F		\isolate bits 3-0
 	BEQ	boot_x		\if zero, skip header
 	JSR	xxnow		\else do the header printing
-.boot_x	PLA			\restore the registers
+.boot_x	
+	PLA				\restore the registers
 	TAX
 	PLA
 	TAY
@@ -997,8 +998,8 @@ lower	=	$20			\upper to lower case mask (b5=1 on ORA)
 	LDA	#3				\report syntax error
 	JSR	xmess
 	SEC					\flag error with Carry set
-
-.txbpx	RTS
+.txbpx
+	RTS
 
 \-------------------------------------------------------------------------------
 \*I2CTXD - transmit a contiguous sequence of N bytes to a slave. Tx bytes are
@@ -2008,7 +2009,8 @@ lower	=	$20			\upper to lower case mask (b5=1 on ORA)
 	BNE	xtset_a1	\no, loop
 	BEQ	xtset_x		\else goto exit xtset
 
-.tseterr	EQUS	"TSET time format (24hr) : <hh:mm:ss>", cr
+.tseterr	
+	EQUS "TSET time format (24hr) : <hh:mm:ss>", cr
 
 \------------------------------------------------------------------------------
 \*DSET

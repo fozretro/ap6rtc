@@ -1,18 +1,10 @@
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\ Special note for this v3.1 AP6 Variant \
-\ Please read the README on GitHub       \
-\ https://github.com/fozretro/ap6rtc     \
-\ This contains more information on this \
-\ variant Martins code and intend usage  \
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
 \-------------------------------------------------------------------------------
 \ These implementations of 'getrtc', 'writetd' and 'wtbrk' are DS3231 compatible 
 \ The code below simply passes back and forth the data in bufXX to the device
 \ unlike the code in /inc/rtc/PCF8583.asm there is no translation needed
 \ as the main code for this ROM assumes the DS3231 format
 
-RTC	=	$68		\AP6 RTC I2C Slave Address (PCF8583 Build) 
+RTC			=	$68		\AP6 RTC I2C Slave Address (PCF8583 Build) 
 RTC_TEMP	=	-1		\tempurate is supported for this RTC
 
 \-------------------------------------------------------------------------------

@@ -1,26 +1,17 @@
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\ Special note for this v3.1 AP6 Variant \
-\ Please read the README on GitHub       \
-\ https://github.com/fozretro/ap6rtc     \
-\ This contains more information on this \
-\ variant Martins code and intend usage  \
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-
 \-------------------------------------------------------------------------------
 \ The marcos below assume the Acorn Electron AP5 I2C bus interface
 \ The AP5 is an port expansion cartridge for the Acorn Electron Plus 1 
 \ Assumes User Port 6522 @ $FCB0 and uses PB0=SDA , CB2=SCL
 
-				\User Port 6522 Registers
+						\User Port 6522 Registers
 upiob	=	$FCB0		\I/O Register B
 upddrb	=	$FCB2		\Data Direction Register B
 uppcr	=	$FCBC		\Peripheral Control Register
 upifr	=	$FCBD		\Interrupt Flag Register
 
-xsdahi	=	$FE		\AND #xsdahi = bit 0 reset = data hi
-xsdalo	=	$01		\OR #xsdalo = bit 0 set = data lo
-getsda	=	$01		\upiob AND #getsda to read data
+xsdahi	=	$FE			\AND #xsdahi = bit 0 reset = data hi
+xsdalo	=	$01			\OR #xsdalo = bit 0 set = data lo
+getsda	=	$01			\upiob AND #getsda to read data
 
 \-------------------------------------------------------------------------------
 \*** Macro definitions ***

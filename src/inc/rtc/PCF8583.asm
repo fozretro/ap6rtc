@@ -1,11 +1,3 @@
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\ Special note for this v3.1 AP6 Variant \
-\ Please read the README on GitHub       \
-\ https://github.com/fozretro/ap6rtc     \
-\ This contains more information on this \
-\ variant Martins code and intend usage  \
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
 \-------------------------------------------------------------------------------
 \ These implementations of 'getrtc', 'writetd' and 'wtbrk' are PFC8583 compatible 
 \ The code below respects DS3231 data layout assumptions in the main code so there is
