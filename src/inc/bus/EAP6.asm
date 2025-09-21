@@ -11,8 +11,8 @@
 \ The AP6 is an expansion fitted to the Acorn Electron Plus 1 and includes the 
 \ PCF8583 RTS clock built into it, along with pin headers for additional devices
 
-				\AP6 interface registers
-ap6reg	= 	$FCD6		\AP6 control register
+					\AP6 interface registers
+ap6reg	= 	$FCD6	\AP6 control register
 xsdahi	= 	&80		\TODO Explain bitmask
 xsdalo	= 	&7F		\TODO Explain bitmask
 xsclhi	= 	&40		\TODO Explain bitmask
