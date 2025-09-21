@@ -10,11 +10,11 @@
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\ Special note based on V3.1 code by Martin Barr	\
+\ Special note: Based on V3.1 code by Martin Barr	\
 \ Please read the README on GitHub      			\
 \ https://github.com/fozretro/i2cbeeb    			\
 \ This contains more information on this 			\
-\ variant Martins code and intend usage  			\
+\ variant of Martins code and intend usage  		\
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 \-------------------------------------------------------------------------------
@@ -118,19 +118,15 @@ OSWRCH	=	$FFEE		\write A to output stream
 OSNEWL	=	$FFE7		\print new line
 OSBYTE	=	$FFF4		\OSBYTE
 OSRDCH	=	$FFE0		\read character from input stream
-
 OSW_A	=	$EF			\A at time of unknown OSWORD call
 OSW_X	=	$F0			\X at .....
 OSW_Y	=	$F1			\Y at .....
-
 COMVEC	=	$0234		\command execution vector (IND3V)
 cli		=	$F2			\command line pointer - use (cli),Y
 ivars	=	$0400		\BASIC integer % variable base address
-
 bufloc	=	$CE			\zp,y pointer to i2c buffer for RxB..
 						\..and RxD. Normally $0A00 but can..
 						\..also be $0380 during RTC access.
-
 i2cbuf	=	$0A00		\i2c Tx and Rx data buffer (to $0AFF)
 eeplo	=	$60			\24C32 target address lo-byte for r/w
 eephi	=	$61			\24C32 target address hi-byte for r/w
@@ -148,20 +144,17 @@ temp2	=	$6C			\command transient temporary #2
 htextl	=	$6D			\help text pointer lo / general flag
 htexth	=	$6E			\help text pointer hi / general flag
 comdata	=	$6F			\temp Y store during command parsing
-
 devidlo	=	$08			\lowest i2c device id to interrogate
 devidhi	=	$77			\highest i2c device id to interrogate
-
 EEP32	=	$57			\AT24C32 eeprom I2C slave address
-cs	=	$7F				\seconds	: Bits 6-0 Mask $7F
-cm	=	$7F				\minutes	: Bits 6-0 Mask $7F
-ch	=	$3F				\hours	  	: Bits 5-0 Mask $3F
-cwd	=	$07				\weekday	: Bits 3-0 Mask $07
-cdd	=	$3F				\day	  	: Bits 5-0 Mask $3F
-cmm	=	$1F				\month	  	: Bits 4-0 Mask $1F
-cyy	=	$FF				\year	  	: Bits 7-0 Mask $FF
-deg	=	$7F				\temperatue : Bits 6-0 Mask $7F
-
+cs		=	$7F			\seconds	: Bits 6-0 Mask $7F
+cm		=	$7F			\minutes	: Bits 6-0 Mask $7F
+ch		=	$3F			\hours	  	: Bits 5-0 Mask $3F
+cwd		=	$07			\weekday	: Bits 3-0 Mask $07
+cdd		=	$3F			\day	  	: Bits 5-0 Mask $3F
+cmm		=	$1F			\month	  	: Bits 4-0 Mask $1F
+cyy		=	$FF			\year	  	: Bits 7-0 Mask $FF
+deg		=	$7F			\temperatue : Bits 6-0 Mask $7F
 buf00	=	$0380		\temp RTC buffer 0 (secs)
 buf01	=	$0381		\temp RTC buffer 1 (mins)
 buf02	=	$0382		\temp RTC buffer 2 (hours)
@@ -172,16 +165,14 @@ buf06	=	$0386		\temp RTC buffer 6 (year)
 buf07	=	$0387		\temp RTC buffer 7
 buf08	=	$0388		\temp RTC buffer 8
 buf09	=	$0389		\temp RTC buffer 9
-\..
+						\..
 buf12	=	$038C		\temp RTC buffer 12 (Alarm Hours 2)
-\..
+						\..
 buf17	=	$0391		\temp RTC buffer 17 (temp MSB)
 buf18	=	$0392		\temp RTC buffer 18 (temp LSB)
-
-
-cr	=	13				\<cr>
-lf	=	10				\<lf>
-spc	=	32				\<space>
+cr		=	13			\<cr>
+lf		=	10			\<lf>
+spc		=	32			\<space>
 colon	=	58			\<:>
 dash	=	45			\<->
 bkspc	=	8			\<backspace> (ascii 'BS')
@@ -199,15 +190,18 @@ lower	=	$20			\upper to lower case mask (b5=1 on ORA)
 	ENDIF
 
 \-------------------------------------------------------------------------------
-.romstart	EQUB	0,0,0		\no language entry (3 nulls)
-	JMP	service					\to service entry
+.romstart	
+	EQUB	0,0,0				\no language entry (3 nulls)
+	JMP		service				\to service entry
 	EQUB	$82					\ROM type : Service + 6502 code
 	EQUB	(copyr-romstart)	\offset to copyright string
-.title	EQUB	0				\version
+.title	
+	EQUB	0					\version
 	EQUS	"I2C"				\title string
 	EQUB	0					\..and null terminator
 	version
-.copyr	EQUB	0				\copyright string..
+.copyr	
+	EQUB	0					\copyright string..
 	EQUS	"(C) M.P.Barr 2018"
 	EQUB	0					\..'framed' by nulls
 
@@ -216,27 +210,32 @@ lower	=	$20			\upper to lower case mask (b5=1 on ORA)
 \-------------------------------------------------------------------------------
 \Service entry and start of rom code
 
-.service	CMP	#1		\A=1, autoboot? ('Break' or switch on)
+.service	
+	CMP	#1				\A=1, autoboot? ('Break' or switch on)
 	BNE	serv_a1			\no, next check
 	JMP	boot			\else goto boot handler (print time)
-.serv_a1	CMP	#4		\A=4, unknown command?
+.serv_a1	
+	CMP	#4				\A=4, unknown command?
 	BNE	serv_a2			\no, next check
 	JMP	command			\else goto command handler
-.serv_a2	CMP	#8		\A=8, Unrecognised OSWORD?
+.serv_a2	
+	CMP	#8				\A=8, Unrecognised OSWORD?
 	BNE	serv_a3			\no, next check
 	JMP	xosword			\else goto unknown OSWORD handler
-.serv_a3	CMP	#9		\A=9, *HELP entered?
+.serv_a3	
+	CMP	#9				\A=9, *HELP entered?
 	BNE	serv_x			\no, next check
 	JMP	help			\yes, goto help handler
-.serv_x	RTS				\not a call we want so exit
+.serv_x	
+	RTS					\not a call we want so exit
 
 \-------------------------------------------------------------------------------
 \Handler for *HELP or *HELP xxx where xxx could be our help cue which is 'I2C'
 
-.help	LDA	(cli),Y		\get last non-space chr after *HELP
+.help	
+	LDA	(cli),Y			\get last non-space chr after *HELP
 	CMP	#cr				\just a <cr> ?
 	BNE	bighelp			\no, more text typed so see if it's us
-
 	TYA					\*HELP<cr> so just need to print..
 	PHA					\..our title and return. Thus, first..
 	TXA					\..save the registers
@@ -252,7 +251,6 @@ lower	=	$20			\upper to lower case mask (b5=1 on ORA)
 	INX					\increment index
 	CPX	#(copyr-title)	\test for the end of 'title'+'version'
 	BNE	help_a1			\not finished so loop for next chr
-
 .help_a4	
 	JSR	OSNEWL			\print new line
 	PLA					\else the *HELP<cr> command must be..
@@ -261,8 +259,8 @@ lower	=	$20			\upper to lower case mask (b5=1 on ORA)
 	TAY
 	LDA	#9				\restore the HELP code for other Roms
 	RTS					\and return
-
-.bighelp	TYA			\*HELP abc.. typed so is it us?
+.bighelp	
+	TYA					\*HELP abc.. typed so is it us?
 	PHA					\save the regs
 	TXA
 	PHA
@@ -280,69 +278,64 @@ lower	=	$20			\upper to lower case mask (b5=1 on ORA)
 	INY					\else carry on comparing
 	INX					\increment both pointers
 	BNE	help_a3			\and loop back
-
-\User typed *HELP I2C so we need to list our commands from 'comtab' and
-\for convention, we will first print the full rom title as for normal *HELP
-
+						\User typed *HELP I2C so we need to list our commands from 'comtab' and
+						\for convention, we will first print the full rom title as for normal *HELP
 .help_a5	
-	JSR	OSNEWL		\blank line leader (Acorn protocol)
-	LDX	#1			\X used as index for title
+	JSR	OSNEWL			\blank line leader (Acorn protocol)
+	LDX	#1				\X used as index for title
 .help_b1	
-	LDA	title,X		\get a title chr
-	BNE	help_b2		\not a null so goto print it
-	LDA	#spc		\else replace with a <space>
+	LDA	title,X			\get a title chr
+	BNE	help_b2			\not a null so goto print it
+	LDA	#spc			\else replace with a <space>
 .help_b2	
-	JSR	OSASCI		\print the chr
-	INX				\increment index
+	JSR	OSASCI			\print the chr
+	INX					\increment index
 	CPX	#(copyr-title)	\test for the end of 'title'+'version'
-	BNE	help_b1		\not finished so loop for next chr
-
-	LDA	#cr			\tidy cursor to left
-	JSR	OSASCI		\OSASCI will add a <lf>
-
-					\now process help text
-	LDA	#LO(comtab)	\initialise character pointer
+	BNE	help_b1			\not finished so loop for next chr
+	LDA	#cr				\tidy cursor to left
+	JSR	OSASCI			\OSASCI will add a <lf>
+						\now process help text
+	LDA	#LO(comtab)		\initialise character pointer
 	STA	htextl
 	LDA	#HI(comtab)
 	STA	htexth
-	LDY	#0			\Y used as character index (always 0)
+	LDY	#0				\Y used as character index (always 0)
 .help_a6	
-	LDA	#spc		\indent each command by two <spaces>
+	LDA	#spc			\indent each command by two <spaces>
 	JSR	OSASCI
 	JSR	OSASCI
 .help_a8	
-	LDA	(htextl),Y	\get a chr from table
-	BMI	help_a7		\-ve means end of command or of table
-	JSR	OSASCI		\else print chr
-	INC	htextl		\and continue with this command..
-	BNE	help_a8		\..incrementing pointer
+	LDA	(htextl),Y		\get a chr from table
+	BMI	help_a7			\-ve means end of command or of table
+	JSR	OSASCI			\else print chr
+	INC	htextl			\and continue with this command..
+	BNE	help_a8			\..incrementing pointer
 	INC	htexth
-	BNE	help_a8		\unconditional loop back
-
+	BNE	help_a8			\unconditional loop back
 .help_a7	
-	LDA	(htextl),Y	\get the -ve chr again
-	CMP	#$FF		\was it $FF and end of table?
-	BEQ	help_a9		\yes, goto exit
-	LDA	#cr			\else <cr><lf> after each command
+	LDA	(htextl),Y		\get the -ve chr again
+	CMP	#$FF			\was it $FF and end of table?
+	BEQ	help_a9			\yes, goto exit
+	LDA	#cr				\else <cr><lf> after each command
 	JSR	OSASCI
-	INY				\at each command end incr pointer by two
-	INC	htextl		\..to skip action address
+	INY					\at each command end incr pointer by two
+	INC	htextl			\..to skip action address
 	BNE	help_a6
 	INC	htexth
-	BNE	help_a6		\not at end yet so loop back for next
-
+	BNE	help_a6			\not at end yet so loop back for next
 .help_a9	
-	PLA			\else finished extended help so..
-	TAX			\..restore regs
+	PLA					\else finished extended help so..
+	TAX					\..restore regs
 	PLA
 	TAY
-	LDA	#0		\set A=0 to inform MOS that we..
-	RTS			\..took the xHelp command, and exit!
+	LDA	#0				\set A=0 to inform MOS that we..
+	RTS					\..took the xHelp command, and exit!
 
 \-------------------------------------------------------------------------------
 \Main unknown MOS *<command> interpreter - entered when A=4
 
-.command	TXA			\save X
+.command	
+	TXA					\save X
 	PHA
 	LDX	#$FF			\X will index through command table
 	DEY					\X & Y will immediately be incremented
@@ -551,7 +544,7 @@ lower	=	$20			\upper to lower case mask (b5=1 on ORA)
 .OSW0E0:
     JSR getrtc		; get RTC time & date to buffer
     LDY #0			; start at beginning of output buffer    
-    ; Day of week (e.g., "Fri")
+   					; Day of week (e.g., "Fri")
     LDA buf03		; get 1-7 weekday number
     AND #cwd		; mask
     SEC				; subtract 1 to index days as 0..6
@@ -741,7 +734,8 @@ lower	=	$20			\upper to lower case mask (b5=1 on ORA)
 \*I2CRESET - performs a reset by ensuring no device is waiting for master clock
 \pulses and by issuing a stop -> idle.
 
-.rstgo	NOP				\assembler call entry point
+.rstgo	
+	NOP					\assembler call entry point
 	SEI
 .starrst	
 	JSR	i2creset		\call internal routine
@@ -885,7 +879,8 @@ lower	=	$20			\upper to lower case mask (b5=1 on ORA)
 \*I2CTXB - transmit a single byte to a slave.
 \Syntax is : *I2CTXB <addr> (<#nn>) <byte>(;)
 
-.i2ctxb	LDY	comdata		\restore Y to correct CLI value
+.i2ctxb	
+	LDY	comdata			\restore Y to correct CLI value
 	LDA	(cli),Y			\command only, no address?
 	CMP	#13
 	BNE	txb1			\no, begin command
@@ -1124,8 +1119,8 @@ lower	=	$20			\upper to lower case mask (b5=1 on ORA)
 	LDA	#3				\report syntax error
 	JSR	xmess
 	SEC					\flag error with Carry set
-
-.txdpx	RTS
+.txdpx	
+	RTS
 
 \-------------------------------------------------------------------------------
 \Parses next two chrs of command line assuming they are either an explicit
@@ -1133,7 +1128,8 @@ lower	=	$20			\upper to lower case mask (b5=1 on ORA)
 \pointing to the first character of the subject pair.	
 \Returns the hex byte in A with Carry clear else returns Carry set on error
 
-.clbyte	INY				\step on to second char and..
+.clbyte	
+	INY					\step on to second char and..
 	LDA	(cli),Y			\..is it a % ?
 	CMP	#'%'
 	BNE	clbhex
@@ -1477,8 +1473,8 @@ lower	=	$20			\upper to lower case mask (b5=1 on ORA)
 	LDA	#3				\report syntax error
 	JSR	xmess
 	SEC					\flag error with Carry set
-
-.rxdpx	RTS
+.rxdpx
+	RTS
 
 \-------------------------------------------------------------------------------
 \i2caddr - writes 7-bit device address + RnW to bus
@@ -1739,13 +1735,13 @@ lower	=	$20			\upper to lower case mask (b5=1 on ORA)
 	ADC	#$30
 	INY
 	STA	(OSW_X),Y		\month units = $0A11
-	LDA	#dash		\dash delimiter
+	LDA	#dash			\dash delimiter
 	INY
 	STA	(OSW_X),Y		\- = $0A12
-	LDA	buf06		\get year
-	AND	#cyy		\mask
-	PHA			\save
-	LSR	A		\convert BCD year tens to ASCII
+	LDA	buf06			\get year
+	AND	#cyy			\mask
+	PHA					\save
+	LSR	A				\convert BCD year tens to ASCII
 	LSR A
 	LSR A
 	LSR A
@@ -1753,20 +1749,20 @@ lower	=	$20			\upper to lower case mask (b5=1 on ORA)
 	ADC	#$30
 	INY
 	STA	(OSW_X),Y		\year tens = $0A13
-	PLA			\recover BCD year
-	AND	#$0F		\convert BCD year units to ASCII
+	PLA					\recover BCD year
+	AND	#$0F			\convert BCD year units to ASCII
 	ADC	#$30
 	INY
 	STA	(OSW_X),Y		\year units = $0A14
-	LDA	#spc		\space delimiter to end date
+	LDA	#spc			\space delimiter to end date
 	INY
 	STA	(OSW_X),Y
 	IF 	RTC_TEMP		\conditional compile if RTC supports temp
-	LDA	buf17		\get hex temperature
-	AND	#deg		\mask
-	JSR	hexbcd		\convert to BCD
-	PHA			\save
-	LSR	A		\convert BCD temp tens to ASCII
+	LDA	buf17			\get hex temperature
+	AND	#deg			\mask
+	JSR	hexbcd			\convert to BCD
+	PHA					\save
+	LSR	A				\convert BCD temp tens to ASCII
 	LSR A
 	LSR A
 	LSR A
@@ -1774,13 +1770,13 @@ lower	=	$20			\upper to lower case mask (b5=1 on ORA)
 	ADC	#$30
 	INY
 	STA	(OSW_X),Y		\temp tens = $0A16
-	PLA			\recover BCD temp
-	AND	#$0F		\convert BCD temp units to ASCII
+	PLA					\recover BCD temp
+	AND	#$0F			\convert BCD temp units to ASCII
 	ADC	#$30
 	INY
 	STA	(OSW_X),Y		\temp units = $0A17
 	ENDIF
-	LDA	#cr		\finish full string with <cr> ($0D)
+	LDA	#cr				\finish full string with <cr> ($0D)
 	INY
 	STA	(OSW_X),Y
 	RTS
@@ -2065,7 +2061,8 @@ lower	=	$20			\upper to lower case mask (b5=1 on ORA)
 	BNE	xdset_a1	\no, loop
 	BEQ	xdset_x		\else goto exit xtset
 
-.dseterr	EQUS	"DSET date format : <day> <dd-mm-yy>", cr
+.dseterr	
+	EQUS "DSET date format : <day> <dd-mm-yy>", cr
 
 \------------------------------------------------------------------------------
 \Routine called by tset and dset to parse command line for time as hh:mm:ss
@@ -2108,7 +2105,6 @@ lower	=	$20			\upper to lower case mask (b5=1 on ORA)
 	CMP	#cr			\<cr>?
 	BEQ	tdp_a7		\yes, continue
 	JMP	tdp_err		\else format error
-
 .tdp_a7	
 	LDY	comdata		\point Y at start of data again
 .tdp_a2	
@@ -2458,7 +2454,6 @@ lower	=	$20			\upper to lower case mask (b5=1 on ORA)
 .txt7	EQUS	"Not Available  }"
 .txt8	EQUS	"Reserved       #"
 
-
 .xmess	
 	ASL	A			\multiply message number by 16
 	ASL A
@@ -2494,20 +2489,21 @@ lower	=	$20			\upper to lower case mask (b5=1 on ORA)
 	EQUS	"Sat", cr		\..7
 	EQUB	$FF		\end of table marker
 .endOfCode
-\-------------------------------------------------------------------------------
+
+\-----------------------------------------------------------------------------------------------
 \To create an Acorn 16k SWROM image, pad from here (based on 16 commands below at 8 bytes each))
 
 	IF PAD=1
-		SKIP ($C000-endOfCode)-(16*8)
+	SKIP ($C000-endOfCode)-(16*8)
 	ENDIF
 
 \-------------------------------------------------------------------------------
 \Jump table to allow 16 commands to be called from assembler with fixed call
 \addresses irrespective of i2c rom version re-compilations.
 
-.cmd1	EQUB	$EA,$8A,$48,$98,$48,$4C	\I2CRESET	($BF80)
+.cmd1	EQUB	$EA,$8A,$48,$98,$48,$4C	\I2CRESET ($BF80)
 		EQUW	rstgo
-.cmd2	EQUB	$EA,$8A,$48,$98,$48,$4C	\I2CQUERY	($BF88)
+.cmd2	EQUB	$EA,$8A,$48,$98,$48,$4C	\I2CQUERY ($BF88)
 		EQUW	qrygo
 .cmd3	EQUB	$EA,$8A,$48,$98,$48,$4C	\I2CTXB	($BF90)
 		EQUW	txbgo
@@ -2517,7 +2513,7 @@ lower	=	$20			\upper to lower case mask (b5=1 on ORA)
 		EQUW	rxbgo
 .cmd6	EQUB	$EA,$8A,$48,$98,$48,$4C	\I2CRXD	($BFA8)
 		EQUW	rxdgo
-.cmd7	EQUB	$EA,$8A,$48,$98,$48,$4C	\I2CSTOP	($BFB0)
+.cmd7	EQUB	$EA,$8A,$48,$98,$48,$4C	\I2CSTOP ($BFB0)
 		EQUW	stpgo
 .cmd8	EQUB	$EA,$8A,$48,$98,$48,$4C	\TBRK	($BFB8)
 		EQUW	xtbrk
@@ -2540,8 +2536,6 @@ lower	=	$20			\upper to lower case mask (b5=1 on ORA)
 
 \-------------------------------------------------------------------------------
 \*** End of I2C Rom ***
-\
-\Checksum32 = $????????
 .romend
 
 SAVE romstart, romend
