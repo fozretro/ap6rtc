@@ -163,7 +163,7 @@ SMJoin Compatibility Implementation (Sept 2025)
 
 **I2C ROM Successfully Integrated into Combined AP6 ROM System ✅**
 
-Successfully implemented SMJoin compatibility for the I2C ROM, enabling it to be combined with other AP6 ROMs into a single 16KB ROM image. For detailed technical information about the ROM relocation and chaining mechanisms, see [SMJOIN.md](SMJOIN.md).
+Successfully implemented SMJoin compatibility for the I2C ROM, enabling it to be combined with other AP6 ROMs into a single 16KB ROM image. For detailed technical information about the ROM relocation and chaining mechanisms, see [smjoin.md](/bin/buildap6/smjoin.md).
 
 **Key Achievements:**
 - **5 ROMs successfully combined**: AP1v131, AP6v134, TUBEelk, AP6Count, I2C
